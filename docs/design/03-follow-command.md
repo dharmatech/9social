@@ -28,6 +28,8 @@ That is handled by `9social/refresh`.
 
 * One argument: a remote repository URL
 * After trimming leading/trailing whitespace, the URL must not be empty
+* At Level 1, the command accepts the URL string as given after trimming
+* It does not check whether the URL is reachable or whether it is a valid Git remote
 
 ---
 
@@ -62,19 +64,24 @@ That is handled by `9social/refresh`.
    * If `/usr/glenda/lib/9social/` does not exist:
 
      * create it
+     * if creation fails, print a short error message and exit with failure
 
 4. **Ensure following file exists**
 
    * If `/usr/glenda/lib/9social/following` does not exist:
 
      * create it
+     * if creation fails, print a short error message and exit with failure
 
 5. **Check for duplicates**
 
    * If the URL already exists as a full line in `following`:
 
-     * do nothing
-     * exit successfully
+      * do nothing
+      * exit successfully
+
+   * Duplicate matching is performed after trimming the input URL
+   * Different URL spellings remain distinct in Level 1
 
 6. **Append URL**
 
@@ -83,6 +90,7 @@ That is handled by `9social/refresh`.
      * write one newline first
 
    * Add the URL as a new line at the end of the file
+   * If the append fails, print a short error message and exit with failure
 
 ---
 
@@ -90,6 +98,14 @@ That is handled by `9social/refresh`.
 
 * **Success:** no output
 * **Failure:** print a short error message to standard error
+
+Suggested Level 1 error messages:
+
+* `usage: 9social/follow <url>`
+* `9social/follow: empty url`
+* `9social/follow: cannot create /usr/glenda/lib/9social`
+* `9social/follow: cannot create /usr/glenda/lib/9social/following`
+* `9social/follow: cannot update /usr/glenda/lib/9social/following`
 
 ---
 
@@ -124,6 +140,7 @@ https://github.com/dharmatech/9social-user-dennis.git
 * The `following` file is a strict list of repository URLs, one per line
 * Blank lines and comment lines are not part of the Level 1 format
 * In Level 1, `follow` records transport locations, not canonical feed identity
+* Files and directories are created with normal user defaults for the running environment
 
 ---
 
@@ -148,6 +165,16 @@ This keeps each command:
 This also means a feed may be reachable at multiple URLs.
 At Level 1, `follow` does not reconcile those URLs against the feed's `profile` identity.
 That reconciliation, if added later, belongs in higher-level refresh or indexing logic rather than in this command.
+
+---
+
+## Non-Goals For Level 1
+
+* No URL canonicalization beyond trimming leading/trailing whitespace
+* No network or repository reachability checks
+* No inspection of remote repository contents
+* No validation of feed structure or `profile`
+* No reconciliation between repository URLs and canonical feed identity
 
 ---
 
