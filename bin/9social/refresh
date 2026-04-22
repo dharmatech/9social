@@ -1,0 +1,74 @@
+#!/bin/rc
+
+social=$home^/lib/9social
+following=$social^/following
+feeds=$social^/feeds
+failed=()
+seen=()
+
+if(! ~ $#* 0){
+	echo 'usage: 9social/refresh' >[1=2]
+	exit usage
+}
+
+if(! test -d $feeds){
+	if(! mkdir -p $feeds >[2]/dev/null){
+		echo $0^': cannot create '^$feeds >[1=2]
+		exit 'cannot create feeds'
+	}
+}
+
+if(! test -e $following)
+	exit ''
+
+if(! test -r $following){
+	echo $0^': cannot read '^$following >[1=2]
+	exit 'cannot read following'
+}
+
+for(rawurl in `{cat $following}){
+	url=`{echo $rawurl | sed 's/^[ 	]*//; s/[ 	]*$//'}
+	if(! ~ $#url 0 && ! ~ $url ''){
+		name=`{basename $url .git}
+		if(~ $#name 0 || ~ $name ''){
+			echo $0^': clone failed: '^$url >[1=2]
+			failed=1
+		}
+		if not if(~ $name $seen){
+			echo $0^': name collision: '^$name >[1=2]
+			failed=1
+		}
+		if not {
+			seen=($seen $name)
+			feedpath=$feeds^'/'^$name
+			if(test -d $feedpath >[2]/dev/null){
+				if(! test -d $feedpath/.git){
+					echo $0^': not a git repository: '^$feedpath >[1=2]
+					failed=1
+				}
+				if not {
+					echo update $name
+					if(! @{cd $feedpath && git/pull -q >/dev/null}){
+						echo $0^': update failed: '^$name >[1=2]
+						failed=1
+					}
+				}
+			}
+			if not if(test -e $feedpath >[2]/dev/null){
+				echo $0^': not a git repository: '^$feedpath >[1=2]
+				failed=1
+			}
+			if not {
+				echo clone $url
+				if(! git/clone $url $feedpath >/dev/null){
+					echo $0^': clone failed: '^$url >[1=2]
+					failed=1
+				}
+			}
+		}
+	}
+}
+
+if(~ $#failed 0)
+	exit ''
+exit 'refresh failed'
