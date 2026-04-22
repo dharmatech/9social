@@ -184,7 +184,7 @@ The client builds a timeline by:
 
 1. Reading all posts from followed feeds
 2. Merging them
-3. Sorting by date (newest first)
+3. Sorting by date/time (newest first)
 4. Displaying summaries
 
 ---
@@ -258,6 +258,12 @@ date: ...
 title: ...
 
 Body...
+```
+
+In Level 1, `date` should use a UTC ISO 8601 timestamp, for example:
+
+```
+date: 1971-05-14T22:43:00Z
 ```
 
 ---

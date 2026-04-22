@@ -25,7 +25,7 @@ This is the primary read interface for 9social.
 
 ## Files Used
 
-* `/usr/glenda/lib/9social/feeds/`
+* `$home/lib/9social/feeds/`
 
 Each feed directory is expected to contain:
 
@@ -43,7 +43,7 @@ posts/
 * List all directories under:
 
 ```text
-/usr/glenda/lib/9social/feeds/
+$home/lib/9social/feeds/
 ```
 
 * Each directory represents one feed
@@ -59,6 +59,10 @@ For each feed:
 
   * `name`
   * `display`
+
+* For timeline output, use `display` as the primary author label
+* `name` may be kept as fallback metadata if needed
+* If `profile` is missing either `name` or `display`, skip the feed
 
 ---
 
@@ -91,6 +95,18 @@ For each post file:
 
   * content after the first blank line
 
+Required for Level 1 timeline rendering:
+
+* `date`
+* a valid header/body split
+
+Optional for Level 1 timeline rendering:
+
+* `id`
+* `author`
+* `title`
+* body text may be empty
+
 ---
 
 ### 5. Build post list
@@ -98,22 +114,27 @@ For each post file:
 Construct a list of posts containing:
 
 * date
-* author name (from profile)
+* display name (from profile)
+* short name (optional fallback metadata)
 * title (if present)
 * body (for preview)
 * file path (for reference)
+* filename (for stable sorting)
 
 ---
 
 ### 6. Sort posts
 
-* Sort all posts by `date`
-* Newest first
+* Sort all posts by `date`, newest first
 
 Note:
 
-* Level 1 uses date only (`YYYY-MM-DD`)
-* If multiple posts share the same date, order is undefined
+* Level 1 uses UTC ISO 8601 timestamps (`YYYY-MM-DDThh:mm:ssZ`)
+* Only the `Z` UTC form is accepted in Level 1
+* If multiple posts share the same timestamp, use a deterministic fallback order:
+
+  * feed name
+  * then post filename
 
 ---
 
@@ -127,6 +148,8 @@ For each post, print a summary block:
     <preview text>
 ```
 
+* Render the full stored UTC timestamp in Level 1
+
 ---
 
 ### Title handling
@@ -137,13 +160,18 @@ For each post, print a summary block:
 * If missing:
 
   * use first line of body as title
+* If body is empty, the title line may be left blank
+* Leading and trailing whitespace should be trimmed when deriving a title from the body
 
 ---
 
 ### Preview text
 
 * Use the first 1–2 lines of body
+* Preserve line structure rather than collapsing the body to one line
+* Trim leading and trailing blank lines
 * Truncate if necessary
+* In Level 1, a preview may be limited to at most 2 lines and at most 160 characters total
 * Do not include full post
 
 ---
@@ -151,15 +179,15 @@ For each post, print a summary block:
 ### Example Output
 
 ```text
-1973-10-05  Joe Ossanna
+1973-10-05T16:20:00Z  Joe Ossanna
     Troff and the phototypesetter
     We got access to a phototypesetter, which opens up some interesting...
 
-1971-07-21  Joe Ossanna
+1971-07-21T19:40:00Z  Joe Ossanna
     System becoming useful on PDP-11
     Learning the PDP-7 and now the PDP-11 has been a good exercise...
 
-1971-05-14  Dennis Ritchie
+1971-05-14T22:43:00Z  Dennis Ritchie
     PDP-11 and thoughts on languages
     We’ve moved the system onto a PDP-11, which gives us more room...
 ```
@@ -180,10 +208,21 @@ For each post, print a summary block:
 * If a feed is missing `profile`:
 
   * skip it
+* If `profile` is malformed or missing `display`:
+
+  * skip the feed
 * If a post file is malformed:
 
   * skip it
+* If a post is missing `date`:
+
+  * skip it
+* If `date` is not a valid UTC ISO 8601 timestamp:
+
+  * skip it
+* If a post has no body, it may still be shown with an empty preview
 * Errors should not stop the entire command
+* Skipped feeds and posts may produce short diagnostics on standard error
 
 ---
 
@@ -216,6 +255,8 @@ The output is optimized for:
 * ACME viewing
 * piping into other tools
 
+The Level 1 output format is the default timeline presentation, not the only possible one.
+
 ---
 
 ### 4. Minimal parsing
@@ -223,6 +264,7 @@ The output is optimized for:
 Only basic metadata is required.
 
 No complex parsing or indexing is needed in Level 1.
+The command reads all feeds and posts first, then sorts the combined post list globally.
 
 ---
 
@@ -243,6 +285,11 @@ No complex parsing or indexing is needed in Level 1.
 
   * clickable post entries
   * tag-based actions
+
+* Alternate presentations:
+
+  * compact one-line-per-post view
+  * expanded social-style view variants
 
 * Filtering:
 

@@ -1,0 +1,181 @@
+#!/bin/rc
+
+social=$home^/lib/9social
+feeds=$social^/feeds
+tmp=/tmp/9social.timeline.$pid
+sorted=$tmp^.sorted
+
+if(! ~ $#* 0){
+	echo 'usage: 9social/timeline' >[1=2]
+	exit usage
+}
+
+if(! test -d $feeds)
+	exit ''
+
+if(! echo -n >$tmp){
+	echo $0^': cannot create '^$tmp >[1=2]
+	exit 'cannot create temp file'
+}
+
+for(feed in $feeds/*){
+	if(test -d $feed){
+		if(! test -f $feed/profile){
+			echo $0^': skip feed (missing profile): '^$feed >[1=2]
+		}
+		if(test -f $feed/profile){
+			if(! test -d $feed/posts){
+				echo $0^': skip feed (missing posts): '^$feed >[1=2]
+			}
+			if(test -d $feed/posts){
+				if(! awk -F': ' '
+					$1=="name" && name=="" {
+						name=substr($0, index($0, ": ")+2)
+					}
+					$1=="display" && display=="" {
+						display=substr($0, index($0, ": ")+2)
+					}
+					END {
+						if(name == "" || display == "")
+							exit 1
+					}
+				' $feed/profile >/dev/null >[2]/dev/null){
+					echo $0^': skip feed (bad profile): '^$feed >[1=2]
+				}
+				if(awk -F': ' '
+					$1=="name" && name=="" {
+						name=substr($0, index($0, ": ")+2)
+					}
+					$1=="display" && display=="" {
+						display=substr($0, index($0, ": ")+2)
+					}
+					END {
+						if(name == "" || display == "")
+							exit 1
+					}
+				' $feed/profile >/dev/null >[2]/dev/null){
+					for(post in $feed/posts/*){
+						if(test -f $post){
+							if(! awk -F': ' '
+								function trim(s){
+									gsub(/^[ \t]+/, "", s)
+									gsub(/[ \t]+$/, "", s)
+									return s
+								}
+								FILENAME==ARGV[1] {
+									if($1=="name" && short=="")
+										short=substr($0, index($0, ": ")+2)
+									else if($1=="display" && display=="")
+										display=substr($0, index($0, ": ")+2)
+									next
+								}
+								{
+									gsub(/\t/, "    ")
+									if(!inbody){
+										if($0==""){
+											inbody=1
+											next
+										}
+										if(index($0, ": ")==0){
+											bad=1
+											next
+										}
+										key=substr($0, 1, index($0, ": ")-1)
+										val=substr($0, index($0, ": ")+2)
+										if(key=="date")
+											date=val
+										else if(key=="title")
+											title=val
+										next
+									}
+									body[++nbody]=$0
+								}
+								END {
+									if(short=="" || display=="")
+										exit 1
+									if(!inbody || bad || date=="")
+										exit 1
+									if(date !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z$/)
+										exit 1
+									start=1
+									while(start<=nbody && body[start] ~ /^[ \t]*$/)
+										start++
+									finish=nbody
+									while(finish>=start && body[finish] ~ /^[ \t]*$/)
+										finish--
+									title=trim(title)
+									if(title==""){
+										for(i=start; i<=finish; i++){
+											line=trim(body[i])
+											if(line!=""){
+												title=line
+												break
+											}
+										}
+									}
+									preview1=""
+									preview2=""
+									total=0
+									lines=0
+									for(i=start; i<=finish && lines<2; i++){
+										line=trim(body[i])
+										if(line=="")
+											continue
+										avail=160-total
+										if(avail<=0)
+											break
+										if(length(line)>avail){
+											if(avail>3)
+												line=substr(line, 1, avail-3) "..."
+											else
+												line=substr(line, 1, avail)
+										}
+										lines++
+										if(lines==1)
+											preview1=line
+										else
+											preview2=line
+										total+=length(line)
+										if(total<160)
+											total++
+										if(length(line)>=avail)
+											break
+									}
+									printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", date, short, ARGV[2], display, title, preview1, preview2
+								}
+							' $feed/profile $post >>$tmp){
+								echo $0^': skip post (bad format): '^$post >[1=2]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+if(! test -s $tmp){
+	rm -f $tmp $sorted
+	exit ''
+}
+
+sort -t '	' -k 1,1r -k 2,2 -k 3,3 $tmp >$sorted
+if(! ~ $status ''){
+	rm -f $tmp $sorted
+	echo $0^': cannot sort timeline' >[1=2]
+	exit 'cannot sort timeline'
+}
+
+awk -F '	' '
+	{
+		print $1 "  " $4
+		print "    " $5
+		if($6 != "")
+			print "    " $6
+		if($7 != "")
+			print "    " $7
+		print ""
+	}
+' $sorted
+
+rm -f $tmp $sorted

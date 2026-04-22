@@ -163,7 +163,7 @@ A blank line separates the header from the body:
 ```text
 id: dennis-1967-06-15-bell-labs
 author: dennis
-date: 1967-06-15
+date: 1967-06-15T14:30:00Z
 title: Just settled into Bell Labs
 
 It’s an extraordinary place—lots of very sharp people working on everything from communications theory to operating systems. I’ve been getting oriented and meeting folks in the computing research group. There’s a lot of discussion around time-sharing systems and how to make them more usable.
@@ -190,10 +190,10 @@ It’s an extraordinary place—lots of very sharp people working on everything 
 
 ### date
 
-* Date of publication
-* Format: `YYYY-MM-DD` (Level 1)
+* Date and time of publication
+* Format: UTC ISO 8601 timestamp, `YYYY-MM-DDThh:mm:ssZ` (Level 1)
 * Generated automatically by the client
-* Same-day posts may require a secondary sort rule in higher levels
+* Stored in UTC for consistent cross-feed ordering
 
 ---
 
@@ -238,7 +238,7 @@ Example:
 * No spaces
 * Keep reasonably short
 * Do not rely on filename for identity
-* Same-day filename collisions are not resolved by the filename alone in Level 1
+* Timestamp collisions are still possible, so filename must not be treated as identity
 
 ---
 
