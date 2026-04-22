@@ -124,6 +124,12 @@ This includes:
      * print a short error message
      * continue processing the remaining feeds
 
+   * If two URLs would map to the same local feed directory name:
+
+     * print a short error message for the collision
+     * skip the later feed
+     * continue processing the remaining feeds
+
 4. **Exit status**
 
    * If all feeds refresh successfully:
@@ -159,6 +165,7 @@ Suggested Level 1 error messages:
 * `9social/refresh: clone failed: <url>`
 * `9social/refresh: update failed: <name>`
 * `9social/refresh: not a git repository: <path>`
+* `9social/refresh: name collision: <name>`
 
 ---
 
@@ -221,7 +228,7 @@ This separation ensures:
 
 * No handling of name collisions
 
-  * if two repos share the same basename, the command should report an error for the collision
+  * if two repos share the same basename, the command should report an error and continue
   * collision resolution is not implemented in Level 1
 
 * No validation of feed contents
