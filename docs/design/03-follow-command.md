@@ -35,8 +35,8 @@ That is handled by `9social/refresh`.
 
 ## Files Used
 
-* `/usr/glenda/lib/9social/following`
-* `/usr/glenda/lib/9social/`
+* `$home/lib/9social/following`
+* `$home/lib/9social/`
 
 ---
 
@@ -61,14 +61,14 @@ That is handled by `9social/refresh`.
 
 3. **Ensure local state path exists**
 
-   * If `/usr/glenda/lib/9social/` does not exist:
+   * If `$home/lib/9social/` does not exist:
 
      * create it
      * if creation fails, print a short error message and exit with failure
 
 4. **Ensure following file exists**
 
-   * If `/usr/glenda/lib/9social/following` does not exist:
+   * If `$home/lib/9social/following` does not exist:
 
      * create it
      * if creation fails, print a short error message and exit with failure
@@ -103,9 +103,9 @@ Suggested Level 1 error messages:
 
 * `usage: 9social/follow <url>`
 * `9social/follow: empty url`
-* `9social/follow: cannot create /usr/glenda/lib/9social`
-* `9social/follow: cannot create /usr/glenda/lib/9social/following`
-* `9social/follow: cannot update /usr/glenda/lib/9social/following`
+* `9social/follow: cannot create $home/lib/9social`
+* `9social/follow: cannot create $home/lib/9social/following`
+* `9social/follow: cannot update $home/lib/9social/following`
 
 ---
 
@@ -120,7 +120,7 @@ After running:
 The file:
 
 ```text
-/usr/glenda/lib/9social/following
+$home/lib/9social/following
 ```
 
 may contain:

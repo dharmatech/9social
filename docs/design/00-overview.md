@@ -89,7 +89,7 @@ A feed’s identity is defined by its `profile` file, not:
 ### Local data
 
 ```
-/usr/glenda/lib/9social/
+$home/lib/9social/
     feeds/
     following
 ```
@@ -143,7 +143,7 @@ Each post is:
 The user maintains:
 
 ```
-/usr/glenda/lib/9social/following
+$home/lib/9social/following
 ```
 
 This file contains **remote repository URLs**, one per line:
