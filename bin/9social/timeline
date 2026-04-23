@@ -141,7 +141,7 @@ for(feed in $feeds/*){
 										if(length(line)>=avail)
 											break
 									}
-									printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", date, short, ARGV[2], display, title, preview1, preview2
+									printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", date, short, ARGV[2], display, title, preview1, preview2, FILENAME
 								}
 							' $feed/profile $post >>$tmp){
 								echo $0^': skip post (bad format): '^$post >[1=2]
@@ -169,6 +169,7 @@ if(! ~ $status ''){
 awk -F '	' '
 	{
 		print $1 "  " $4
+		print "    " $8
 		print "    " $5
 		if($6 != "")
 			print "    " $6

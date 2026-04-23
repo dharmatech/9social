@@ -175,9 +175,11 @@ It’s an extraordinary place—lots of very sharp people working on everything 
 
 ### id
 
-* Unique identifier for the post
-* Must be stable
+* Globally unique identifier for the post
+* Must be stable for the life of the post
 * Generated automatically by the client
+* Used for replies, references, and other cross-feed relationships
+* Must not depend on local filesystem path or filename alone
 
 ---
 
@@ -190,7 +192,7 @@ It’s an extraordinary place—lots of very sharp people working on everything 
 
 ### date
 
-* Date and time of publication
+* Date and time of original publication
 * Format: UTC ISO 8601 timestamp, `YYYY-MM-DDThh:mm:ssZ` (Level 1)
 * Generated automatically by the client
 * Stored in UTC for consistent cross-feed ordering
@@ -207,11 +209,29 @@ It’s an extraordinary place—lots of very sharp people working on everything 
 
 ## Post Rules
 
-* Posts are treated as **append-only**
-* Existing posts should not be modified after publication
+* Ordinary posts may be edited after publication by their author
+* A post keeps the same `id` when edited
 * Each post is self-contained
 * No references to external state required
 * If `author` does not match `profile:name`, the feed should be treated as suspicious or invalid by higher-level tools
+* Higher-level tools may later expose edit history or edit timestamps, but Level 1 does not require them
+
+---
+
+## Mutability Model
+
+Level 1 distinguishes between:
+
+* ordinary posts, which are editable documents
+* future event-like records, which may be defined as immutable append-only entries
+
+Examples of future immutable records may include:
+
+* upvotes
+* downvotes
+* other ledger-like interaction events
+
+Those record types are not defined in Level 1 feed format yet, but they should not be assumed to follow ordinary post mutability rules.
 
 ---
 
@@ -255,6 +275,20 @@ A feed has three distinct identifiers:
 Important:
 
 > The canonical identity of a feed is defined only by `profile:id`.
+
+A post also has multiple identifiers in practice:
+
+| Concept              | Source              |
+| -------------------- | ------------------- |
+| Canonical post ID    | `post:id`           |
+| Local file path      | local filesystem    |
+| Filename             | `posts/<filename>`  |
+
+Important:
+
+> The canonical identity of a post is defined only by `post:id`.
+
+The local file path is useful for tools and ACME interaction, but it is not the canonical identity used for replies or other cross-feed references.
 
 ---
 
