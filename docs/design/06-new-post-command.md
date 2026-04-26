@@ -41,7 +41,7 @@ This design prioritizes simplicity, human readability, and alignment with Plan 9
 Primary command:
 
 ```rc
-9social/newpost
+9social/new-post
 ```
 
 This command creates a new post interactively.
@@ -49,9 +49,9 @@ This command creates a new post interactively.
 ### Future Extensions (not required for initial implementation)
 
 ```rc
-9social/newpost -r <post_id>   # reply
-9social/newpost -t <type>      # post type (link, note, etc.)
-9social/newpost -e <post_id>   # edit existing post
+9social/new-post -r <post_id>   # reply
+9social/new-post -t <type>      # post type (link, note, etc.)
+9social/new-post -e <post_id>   # edit existing post
 ```
 
 ---
@@ -63,7 +63,7 @@ The lifecycle of a post:
 1. User runs:
 
    ```rc
-   9social/newpost
+   9social/new-post
    ```
 
 2. System creates a temporary draft file.
@@ -262,7 +262,7 @@ $home/lib/9social/self/posts/2026-04-25-first-post
 ### Design Notes
 
 * Level 1 uses a flat `posts/` directory
-* `9social/newpost` creates `posts/` if it does not already exist
+* `9social/new-post` creates `posts/` if it does not already exist
 * Filenames should be human-readable and sortable
 * The post `id:` field, not the filename, is the canonical identifier
 
@@ -276,8 +276,8 @@ Each post is committed to the user’s repository.
 
 * **One post = one commit**
 * Commits are local only
-* `9social/newpost` does not push to the remote repository
-* `9social/newpost` writes exactly one new post file
+* `9social/new-post` does not push to the remote repository
+* `9social/new-post` writes exactly one new post file
 * If the target post file already exists at write time, abort rather than overwrite it
 * Only the new post file is added to Git
 * Unrelated modified or untracked files in `$home/lib/9social/self` are left alone
@@ -301,11 +301,11 @@ post: 20260425T142700Z-glenda
 * Supports distributed replication
 * Allows the user to create multiple posts while offline and push later
 
-Remote repository creation is outside the scope of `9social/newpost`.
+Remote repository creation is outside the scope of `9social/new-post`.
 The initial setup of `$home/lib/9social/self` should be handled by a separate command, such as:
 
 ```rc
-9social/initself <git-url>
+9social/init-self <git-url>
 ```
 
 That setup command is responsible for cloning the user's remote repository into `$home/lib/9social/self`.
@@ -365,7 +365,7 @@ This design enables future features:
 * `type:` field for replies, reactions, links, or other post-like records
 * Reactions/upvotes
 * Search and indexing
-* A setup command such as `9social/initself <git-url>`
+* A setup command such as `9social/init-self <git-url>`
 * A push command for publishing local commits
 * A sync command that may combine refreshing followed feeds with pushing the user's self feed
 * Nested or archive post storage if flat directories become too large
@@ -374,7 +374,7 @@ This design enables future features:
 
 ## 14. Summary
 
-The `9social/newpost` command defines the write-path of the system:
+The `9social/new-post` command defines the write-path of the system:
 
 * Simple text authoring
 * Automatic metadata handling

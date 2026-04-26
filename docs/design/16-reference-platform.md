@@ -80,7 +80,7 @@ Core functionality is exposed through simple commands:
 9social/follow
 9social/refresh
 9social/timeline
-9social/newpost
+9social/new-post
 ```
 
 These commands operate directly on files and directories.

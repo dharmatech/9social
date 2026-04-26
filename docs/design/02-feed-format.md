@@ -35,7 +35,7 @@ Defines the identity of the feed owner.
 Plain text file with key-value pairs:
 
 ```text
-id: <unique-id>
+id: 9social:user:<uuid>
 name: <short-name>
 display: <display-name>
 ```
@@ -54,10 +54,11 @@ Parsing rules:
 
 * Globally unique identifier for the feed
 * Must be stable over time
+* Level 1 uses the form `9social:user:<uuid>`
 * Example:
 
 ```text
-id: dennis-ritchie-demo
+id: 9social:user:550e8400-e29b-41d4-a716-446655440000
 ```
 
 ---

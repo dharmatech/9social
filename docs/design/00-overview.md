@@ -121,7 +121,7 @@ posts/
 Contains identity information:
 
 ```
-id: <unique-id>
+id: 9social:user:<uuid>
 name: <short-name>
 display: <human name>
 ```
@@ -223,7 +223,7 @@ The system is designed for ACME.
 User creates posts via:
 
 ```
-9social/newpost
+9social/new-post
 ```
 
 ---
@@ -280,7 +280,7 @@ Commands are namespaced:
 9social/follow
 9social/refresh
 9social/timeline
-9social/newpost
+9social/new-post
 ```
 
 ---

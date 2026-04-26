@@ -55,7 +55,7 @@ $home/lib/9social/self/
 
 Stores the user's own publishing feed repository.
 
-This repository is where `9social/newpost` writes new posts.
+This repository is where `9social/new-post` writes new posts.
 
 ---
 
@@ -168,7 +168,7 @@ https://github.com/dharmatech/9social-user-joe.git
 
 ---
 
-### 9social/newpost
+### 9social/new-post
 
 * Writes new posts into `self/posts/`
 * Commits new posts locally in `self/`
