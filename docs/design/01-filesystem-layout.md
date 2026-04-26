@@ -38,9 +38,43 @@ $home/lib/9social
 
 ```text
 $home/lib/9social/
+    self/
     feeds/
     following
 ```
+
+---
+
+## self/
+
+```text
+$home/lib/9social/self/
+```
+
+### Purpose
+
+Stores the user's own publishing feed repository.
+
+This repository is where `9social/newpost` writes new posts.
+
+---
+
+### Structure
+
+```text
+self/
+    profile
+    posts/
+```
+
+---
+
+### Notes
+
+* `self/` is a Git repository controlled by the user
+* It has the same feed structure as followed feeds
+* Level 1 does not support placing the publishing feed at another path
+* Initial setup is handled separately from post creation
 
 ---
 
@@ -134,6 +168,14 @@ https://github.com/dharmatech/9social-user-joe.git
 
 ---
 
+### 9social/newpost
+
+* Writes new posts into `self/posts/`
+* Commits new posts locally in `self/`
+* Does not push commits
+
+---
+
 ### 9social/timeline (future)
 
 * Reads posts from all directories under `feeds/`
@@ -191,6 +233,7 @@ Commands operate on local data after `refresh`.
 
 The filesystem layout is simple and explicit:
 
+* `self/` stores the user's own feed
 * `following` defines what to fetch
 * `feeds/` stores fetched data
 * commands operate directly on these paths
