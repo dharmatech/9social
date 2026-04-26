@@ -90,6 +90,7 @@ A feed’s identity is defined by its `profile` file, not:
 
 ```
 $home/lib/9social/
+    self/
     feeds/
     following
 ```
@@ -98,6 +99,7 @@ $home/lib/9social/
 
 ### Meaning
 
+* `self/` → the user's own publishing feed repository
 * `feeds/` → local clones of followed feeds
 * `following` → list of remote feed URLs
 
@@ -132,9 +134,11 @@ Contains one file per post.
 
 Each post is:
 
-* immutable (treated as append-only)
+* an editable document with a stable `id`
 * plain text
 * self-contained
+
+Future event-like records, such as reactions, may be immutable append-only entries.
 
 ---
 
