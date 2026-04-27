@@ -75,6 +75,15 @@ The source code to acme is in:
 
     /sys/src/cmd/acme
 
+## Mail
+
+There is a mail client built for acme.
+The source code is here:
+
+/sys/src/cmd/upas/Mail
+
+That's a good application to review to understand one appraoch to integration with acme.
+
 # FQA
 
 The FQA is general documentation for 9front.
