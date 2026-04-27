@@ -162,7 +162,7 @@ A blank line separates the header from the body:
 ### Full Example
 
 ```text
-id: dennis-1967-06-15-bell-labs
+id: 9social:post:550e8400-e29b-41d4-a716-446655440000:9f01b1de-7ff4-4f77-8925-3b2bd44f30a1
 author: dennis
 date: 1967-06-15T14:30:00Z
 title: Just settled into Bell Labs
@@ -177,8 +177,10 @@ It’s an extraordinary place—lots of very sharp people working on everything 
 ### id
 
 * Globally unique identifier for the post
-* Must be stable for the life of the post
-* Generated automatically by the client
+* Level 1 uses the form `9social:post:<user-uuid>:<post-uuid>`
+* `<user-uuid>` comes from the feed profile `id:` field
+* `<post-uuid>` is generated automatically by the client
+* Must be stable for the life of the post, including edits
 * Used for replies, references, and other cross-feed relationships
 * Must not depend on local filesystem path or filename alone
 
