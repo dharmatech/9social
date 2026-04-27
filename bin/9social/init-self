@@ -1,0 +1,120 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn validprofile {
+	awk -F': ' '
+		function trim(s){
+			gsub(/^[ \t]+/, "", s)
+			gsub(/[ \t]+$/, "", s)
+			return s
+		}
+		index($0, ": ") == 0 { bad=1; next }
+		{
+			key=$1
+			val=trim(substr($0, index($0, ": ")+2))
+			if(key == "id") id=val
+			else if(key == "name") name=val
+			else if(key == "display") display=val
+		}
+		END {
+			if(bad || id == "" || name == "" || display == "")
+				exit 1
+			if(id !~ /^9social:user:[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/)
+				exit 1
+		}
+	' $1 >/dev/null >[2]/dev/null
+}
+
+social=$home^/lib/9social
+self=$social^/self
+created=()
+uuidcmd=9social/uuid
+if(~ $0 */init-self)
+	uuidcmd=`{echo $0 | sed 's;/init-self$;/uuid;'}
+
+if(! ~ $#* 1){
+	echo 'usage: 9social/init-self <git-url>' >[1=2]
+	exit usage
+}
+
+url=`{echo $1 | sed 's/^[ 	]*//; s/[ 	]*$//'}
+if(~ $#url 0 || ~ $url '')
+	fail 'empty url'
+
+name=`{echo $url | sed 's/^[ 	]*//; s/[ 	]*$//; s,/+$,,; s,.*/,,; s,.*:,,; s,\.git$,,; s,^9social-user-,,'}
+if(~ $#name 0 || ~ $name '')
+	fail 'cannot derive valid profile name from URL'
+if(! echo $name | awk '/^[a-z0-9][a-z0-9-]*$/ { ok=1 } END { exit !ok }')
+	fail 'cannot derive valid profile name from URL'
+
+display=$name
+
+if(! test -d $social){
+	if(! mkdir -p $social >[2]/dev/null)
+		fail 'cannot create '^$social
+}
+
+if(test -e $self >[2]/dev/null)
+	fail $self^' already exists'
+
+if(~ $url https://github.com/*)
+	echo $0^': warning: GitHub SSH clone URL is recommended for pushing from 9front' >[1=2]
+
+if(! git/clone $url $self >/dev/null){
+	if(test -e $self >[2]/dev/null){
+		if(! rm -rf $self >[2]/dev/null)
+			fail 'clone failed and cannot clean up '^$self
+	}
+	fail 'clone failed: '^$url
+}
+
+if(! test -d $self)
+	fail 'clone did not create '^$self
+
+profile=$self^/profile
+posts=$self^/posts
+
+if(test -e $profile >[2]/dev/null){
+	if(! test -f $profile)
+		fail 'bad profile: '^$profile
+	if(! validprofile $profile)
+		fail 'bad profile: '^$profile
+}
+if not {
+	uuid=`{$uuidcmd}
+	if(! ~ $#uuid 1)
+		fail 'cannot generate uuid'
+	if(! echo 'id: 9social:user:'^$uuid >$profile)
+		fail 'cannot create profile'
+	if(! echo 'name: '^$name >>$profile)
+		fail 'cannot create profile'
+	if(! echo 'display: '^$display >>$profile)
+		fail 'cannot create profile'
+	created=($created profile)
+}
+
+if(test -e $posts >[2]/dev/null){
+	if(! test -d $posts)
+		fail 'bad posts path: '^$posts
+}
+if not {
+	if(! mkdir $posts >[2]/dev/null)
+		fail 'cannot create posts'
+	if(! echo -n >$posts/.keep)
+		fail 'cannot create posts/.keep'
+	created=($created posts/.keep)
+}
+
+if(~ $#created 0)
+	exit ''
+
+if(! @{cd $self && git/add $created})
+	fail 'git add failed'
+if(! @{cd $self && git/commit -m 'init 9social self feed' $created})
+	fail 'git commit failed'
+
+exit ''
