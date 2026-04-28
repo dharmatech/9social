@@ -69,17 +69,75 @@ usage: 9social/NewPost
 
 and exit with `usage`.
 
+`NewPost` is an Acme-only command in Level 1. It requires the Acme window system control file:
+
+```text
+/mnt/wsys/new/ctl
+```
+
+If that file is missing or inaccessible, `NewPost` should fail before creating a draft. It should not silently fall back to `9social/new-post`, because the synchronous editor workflow is a separate command.
+
+Recommended error text:
+
+```text
+NewPost: acme window system not available
+NewPost: run from acme, or use 9social/new-post
+```
+
 ---
 
-## 5. Draft Creation
+### Naming Convention
 
-`NewPost` creates a draft file in `$home/tmp` if that directory exists. Otherwise it uses `/tmp`.
+9social uses command names to distinguish shell workflows from Acme tag workflows:
 
-Draft filenames should be unique for the command invocation, for example:
+* lowercase hyphenated names are shell/terminal commands, such as `9social/new-post` and `9social/init-self`
+* capitalized names are Acme tag commands, such as `9social/NewPost`, `9social/Publish`, and `9social/Cancel`
+
+Level 1 does not provide lowercase aliases for Acme commands or uppercase aliases for shell commands.
+
+---
+
+## 5. NewPost Preflight Validation
+
+Before creating a draft file or Acme window, `NewPost` should verify that the user's publishing feed is basically usable:
+
+* `$home/lib/9social/self` exists
+* `$home/lib/9social/self` is a Git repository
+* `$home/lib/9social/self/profile` exists
+* `profile` has valid `id:`, `name:`, and `display:` fields
+* `$home/lib/9social/self/posts` exists, creating it if missing
+
+`NewPost` should not validate draft content at this point because the user has not written the post yet. Content validation happens at publish time.
+
+`Publish` must repeat feed and profile validation before committing because the repository or profile may have changed while the draft window was open.
+
+---
+
+## 6. Draft Creation
+
+`NewPost` should prefer `$home/tmp` for draft files. If `$home/tmp` does not exist, `NewPost` should try to create it. It should fall back to `/tmp` only if `$home/tmp` cannot be created or used.
+
+Draft filenames should be unique for the command invocation. The preferred filename is:
 
 ```text
 9social-new-post.<pid>
 ```
+
+`NewPost` must not overwrite an existing draft file. If the preferred path already exists, it should choose the next available suffixed name:
+
+```text
+9social-new-post.<pid>.2
+9social-new-post.<pid>.3
+```
+
+The selected draft path must be checked immediately before writing.
+
+Draft paths created by `NewPost` are the only paths that `Publish` and `Cancel` should operate on in Level 1. A valid draft path is:
+
+* under `$home/tmp`, creating that directory if possible, or under `/tmp` if `$home/tmp` cannot be created or used
+* named `9social-new-post.<pid>` or `9social-new-post.<pid>.<n>` for collision suffixes
+
+This keeps pathless Acme tag commands ergonomic without letting them publish or delete an arbitrary current Acme file by accident.
 
 The draft starts with the same draft format used by `new-post`:
 
@@ -88,62 +146,130 @@ Title:
 
 ```
 
+`NewPost` writes this template to the backing draft file before creating the Acme window.
+
 The user edits this file in Acme.
 
 ---
 
-## 6. Opening The Draft In Acme
+## 7. Opening The Draft In Acme
 
-`NewPost` opens the draft using plumbing, targeting the edit port.
+Level 1 `NewPost` creates an Acme window directly through Acme's filesystem interface.
 
-Expected command shape:
+It should use `/mnt/wsys`, which is bound to `/mnt/acme` for commands running under Acme.
 
-```rc
-plumb -d edit -w <draft-directory> <draft-path>
+Expected mechanism:
+
+```text
+write draft template to backing file
+open /mnt/wsys/new/ctl
+read new window id from ctl
+write name <draft-path> to ctl
+write tag text to /mnt/wsys/<id>/tag
+write draft template to /mnt/wsys/<id>/body
+write clean to ctl
 ```
 
-The user's plumbing rules decide which editor receives the message. In a normal Acme session, the edit port should be handled by Acme.
+The Acme window body and backing file should match immediately after creation.
 
-If plumbing fails, `NewPost` should leave the draft file in place and print its path.
+After writing the initial template into the body, `NewPost` should mark the window clean by writing:
+
+```text
+clean
+```
+
+to the window `ctl` file. The window should become dirty only after the user edits it.
+
+This mirrors the basic window creation approach used by Acme applications such as `Mail`, without requiring a long-running event loop.
+
+If direct Acme window creation fails, `NewPost` should leave the draft file in place and print its path.
+
+Plumbing may remain a fallback or future option, but it is not the primary Level 1 mechanism.
 
 ---
 
-## 7. Draft Window Tag
+## 8. Draft Window Tag
 
-The desired Acme draft window tag should expose commands for post lifecycle actions.
+The Acme draft window tag should expose commands for post lifecycle actions.
 
-Level 1 target tag commands:
+Level 1 should let Acme manage the left side of the tag for the draft file window. This keeps normal file-window commands such as `Put` available.
+
+`NewPost` should add 9social commands after the tag bar. Since writing to the tag appends, the implementation should append:
 
 ```text
-Publish Cancel
+ | 9social/Publish 9social/Cancel
 ```
+
+The full tag may look like:
+
+```text
+<draft-path> Del Snarf Undo Put | 9social/Publish 9social/Cancel
+```
+
+The exact left side is managed by Acme and does not need to be controlled by 9social.
+
+Level 1 should not add decorative or status text to the right side of the tag. The appended text should contain only the two command words shown above: no `draft` marker, no `9social` label, no `NewPost` label, and no draft path argument. Extra tag words are executable text in Acme and can make the workflow noisier.
+
+Pathless commands are better Acme ergonomics than including the full draft path in the tag. The user can middle-click a single command word without first selecting a long command string.
 
 ### Publish
 
-`Publish` commits the draft as a new post locally.
+`9social/Publish` commits the current draft as a new post locally.
 
 It does not push to the remote repository.
 
+When run from Acme, `Publish` discovers the draft from Acme-provided environment:
+
+* `$%` is the current Acme window filename
+* `$winid` is the current Acme window id
+
+Level 1 `Publish` should use `$%` as the draft path.
+
+Before saving or publishing, `Publish` should validate that `$%` names a 9social draft path created by `NewPost`. If it does not, it should fail with a clear message and leave the file untouched.
+
+If `$winid` is available and `/mnt/acme/$winid/ctl` exists, `Publish` should first save the current Acme window by writing `put` to:
+
+```text
+/mnt/acme/$winid/ctl
+```
+
+If this save step fails, `Publish` must abort. Publishing after a failed save could publish stale file contents.
+
+If `$winid` is missing, `Publish` skips the save step and reads `$%` from disk. This keeps the command testable outside Acme by setting `$%` to a draft path.
+
+Then it reads the draft from `$%` on disk and publishes it. After a successful publish, `Publish` removes the backing draft file, leaves the Acme window open, and does not rewrite the tag. The user closes the draft window with Acme's `Del` command. If the user runs `Publish` again from the same window, the missing backing draft file should produce a clear failure rather than creating another post.
+
 ### Cancel
 
-`Cancel` discards the draft without committing.
+`9social/Cancel` discards the current draft without committing.
 
-It should remove the draft file. Closing the Acme window may require a separate Acme action if direct window control is not implemented in Level 1.
+When run from Acme, `Cancel` discovers the draft from `$%`.
+
+Before removing anything, `Cancel` should validate that `$%` names a 9social draft path created by `NewPost`. If it does not, it should fail with a clear message and leave the file untouched.
+
+Level 1 `Cancel` removes the backing draft file and prints a confirmation. It does not close the Acme window automatically. The user closes the draft window with Acme's `Del` command.
 
 ---
 
-## 8. Publishing Command
+## 9. Publishing Command
 
 Publishing should be implemented by a separate command that can be invoked from the Acme tag:
 
 ```rc
-9social/publish-draft <draft-path>
+9social/Publish
 ```
 
-`publish-draft` should apply the same rules as `new-post`:
+When run from Acme, `Publish` uses `$%` as the draft path. It should fail if `$%` is missing or empty.
+
+It should also fail if `$%` does not look like a 9social draft path created by `NewPost`.
+
+If `$winid` is set, `Publish` should try to save the Acme window before reading `$%`. If that save fails, abort.
+
+`Publish` should apply the same rules as `new-post`:
 
 * Validate `$home/lib/9social/self`
 * Validate `$home/lib/9social/self/profile`
+* Repeat feed and profile validation even though `NewPost` already ran preflight checks
 * Parse the draft
 * Generate post ID
 * Generate UTC timestamp
@@ -151,26 +277,43 @@ Publishing should be implemented by a separate command that can be invoked from 
 * Write exactly one final post file without overwriting
 * Commit only the new post file
 * Do not push
-* Remove the draft after successful publish
+* Remove the backing draft file after successful publish
+* Leave the Acme window open after successful publish; the user closes it with `Del`
 * Preserve the draft on validation, write, or Git failure
+* Do not rewrite the Acme tag after successful publish
+* If `$%` no longer exists because the draft was already published, fail clearly
+* Accept both `9social-new-post.<pid>` and suffixed `9social-new-post.<pid>.<n>` draft filenames
 
-`9social/new-post -` may later call into the same implementation path.
+The shared publish path should live in an internal helper script:
+
+```text
+bin/9social/lib/publish-draft
+```
+
+The helper publishes one draft file passed by path. It owns the common behavior: profile validation, draft parsing, post ID generation, timestamp generation, filename selection, final post writing, Git add/commit, success output, draft cleanup on success, and draft preservation on failure.
+
+`9social/new-post` and `9social/Publish` should both call this helper instead of duplicating publish logic. `new-post` is responsible for creating/editing or reading the draft before calling the helper. `Publish` is responsible for discovering `$%` from Acme, validating that it is a `NewPost` draft path, and saving the Acme window before calling the helper.
+
+The helper is internal implementation detail, not a Level 1 user command.
 
 ---
 
-## 9. Cancel Command
+## 10. Cancel Command
 
 Cancel should be implemented by a separate command:
 
 ```rc
-9social/cancel-draft <draft-path>
+9social/Cancel
 ```
+
+When run from Acme, `Cancel` uses `$%` as the draft path. It should fail if `$%` is missing or empty.
 
 Level 1 behavior:
 
-* Validate that the path looks like a 9social draft path
+* Validate that the path looks like a 9social draft path, including optional collision suffixes
 * Remove the draft file
 * Print a confirmation
+* Leave the Acme window open; the user closes it with `Del`
 
 Possible output:
 
@@ -178,11 +321,11 @@ Possible output:
 cancelled: /usr/glenda/tmp/9social-new-post.<pid>
 ```
 
-Future versions may also ask Acme to close the draft window.
+A future version may also ask Acme to close the draft window using `$winid`, after the exact `ctl` behavior has been tested.
 
 ---
 
-## 10. Output
+## 11. Output
 
 On successful draft creation/opening, `NewPost` should print the draft path:
 
@@ -190,25 +333,53 @@ On successful draft creation/opening, `NewPost` should print the draft path:
 draft: /usr/glenda/tmp/9social-new-post.<pid>
 ```
 
-It should also print the commands that can publish or cancel the draft if tag customization is not yet implemented:
+It should also print the commands that can publish or cancel the draft, matching the commands placed in the Acme tag:
 
 ```text
-publish: 9social/publish-draft /usr/glenda/tmp/9social-new-post.<pid>
-cancel: 9social/cancel-draft /usr/glenda/tmp/9social-new-post.<pid>
+publish: 9social/Publish
+cancel: 9social/Cancel
 ```
 
-This gives the user a recovery path even if Acme tag injection is deferred.
+This gives the user a recovery path if the tag is edited, lost, or not created correctly.
+
+On successful publish, `Publish` should print the stable `posted:` line from the shared publish helper, followed by a short Acme-specific reminder:
+
+```text
+posted: posts/2026-04-27-my-post
+draft removed; close the Acme window with Del
+```
+
+If `Publish` is run again from a window whose backing draft was already removed, it should fail clearly:
+
+```text
+Publish: draft file not found: /usr/glenda/tmp/9social-new-post.<pid>
+```
 
 ---
 
-## 11. Failure Handling
+## 12. Failure Handling
+
+If the Acme window system is unavailable:
+
+* abort before creating a draft
+* print a clear message suggesting `9social/new-post` for the synchronous workflow
+
+If preflight validation fails:
+
+* abort before creating a draft
+* print the reason to stderr
+
+If `$home/tmp` cannot be created or used:
+
+* fall back to `/tmp`
+* if `/tmp` also cannot be used, abort before creating a draft
 
 If draft creation fails:
 
 * abort
 * print the reason to stderr
 
-If plumbing fails:
+If Acme window creation fails:
 
 * leave the draft file in place
 * print the reason to stderr
@@ -227,55 +398,65 @@ If cancelling fails:
 
 ---
 
-## 12. Non-Goals (Level 1)
+## 13. Non-Goals (Level 1)
 
 Level 1 does not require:
 
 * Direct Acme event-loop integration
-* Direct Acme window closing from `Cancel`
-* Automatic tag rewriting if plumbing alone is sufficient for initial use
+* Automatic Acme window closing from `Publish` or `Cancel`
+* Bare non-namespaced `Publish` / `Cancel` commands handled by an event loop
+* Rewriting the Acme tag after successful publish
+* Decorative tag labels or status markers such as `draft`
+* Fallback to `9social/new-post` when Acme is unavailable
 * Remote push after publishing
 * Editing existing posts
 * Replies or reactions
 
 ---
 
-## 13. Open Questions
+## 14. Open Questions
 
 The main open design question is how much Acme window/tag control Level 1 should implement.
 
 Options:
 
-* Minimal: plumb the draft and print `publish-draft` / `cancel-draft` commands
-* Better Acme integration: programmatically set the draft window tag to include `Publish` and `Cancel`
-* Full integration: implement an Acme event-driven helper for draft windows
+* Minimal: create the Acme window directly and put `9social/Publish` / `9social/Cancel` in the tag
+* Better Acme integration: have `Publish` save the window automatically through `$winid` before reading `$%`
+* Full integration: implement an Acme event-driven helper for draft windows that handles bare non-namespaced `Publish` and `Cancel`
 
 Recommendation for first implementation:
 
-Start with the minimal version, then add tag control after the publishing path is reliable.
+Start with direct window creation plus `9social/Publish` and `9social/Cancel` in the tag. Consider an event-loop helper only if the workflow needs bare non-namespaced `Publish` and `Cancel` commands.
 
 ---
 
-## 14. Test Strategy
+## 15. Test Strategy
 
-Automated tests should focus on the non-interactive pieces:
+Automated tests should focus on the filesystem and publishing pieces that do not require a live Acme session:
 
-* `publish-draft <draft-path>` publishes a valid draft
-* `publish-draft` preserves draft on failure
-* `cancel-draft <draft-path>` removes a draft
+* `9social/Publish` publishes the draft named by `$%` when `$winid` is unset
+* `9social/Publish` rejects invalid `$%` paths
+* `9social/Publish` fails clearly when `$%` names a missing draft file
+* `9social/Publish` preserves the draft on validation, write, or Git failure
+* `9social/Cancel` removes the draft named by `$%`
+* `9social/Cancel` rejects invalid `$%` paths
+* `bin/9social/lib/publish-draft` is exercised through both `9social/new-post -` and `9social/Publish`
 * invalid arguments print usage
 
-Manual Acme tests should verify:
+Automated tests may also cover `$winid` save behavior when a real Acme window control file is available, but Level 1 should not depend on a mock of `/mnt/wsys`. The Acme filesystem behavior is specific enough that a mock can give false confidence.
 
-* `9social/NewPost` opens a draft in Acme
+Manual Acme smoke tests should verify:
+
+* `9social/NewPost` creates a draft window in Acme
 * the draft template is correct
-* the printed publish command works
-* the printed cancel command works
-* publishing commits locally but does not push
+* the tag contains exactly `9social/Publish 9social/Cancel` on the right side
+* `9social/Publish` in the tag saves through `$winid` before publishing
+* successful publish commits locally, does not push, removes the backing draft file, and leaves the Acme window open
+* `9social/Cancel` removes the backing draft file and leaves the Acme window open
 
 ---
 
-## 15. Summary
+## 16. Summary
 
 `9social/NewPost` is the Acme-native new post workflow.
 

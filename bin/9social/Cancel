@@ -1,0 +1,39 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/Cancel' >[1=2]
+	exit usage
+}
+
+fn validdraft {
+	awk -v 'home='$home '
+		BEGIN {
+			homepat = home "/tmp/9social-new-post\\.[0-9]+(\\.[0-9]+)?$"
+			tmppat = "^/tmp/9social-new-post\\.[0-9]+(\\.[0-9]+)?$"
+		}
+		$0 ~ "^" homepat { ok=1 }
+		$0 ~ tmppat { ok=1 }
+		END { if(!ok) exit 1 }
+	'
+}
+
+if(! ~ $#* 0)
+	usage
+
+draft=$%
+if(~ $#draft 0 || ~ $draft '')
+	fail 'missing draft path'
+if(! echo $draft | validdraft)
+	fail 'invalid draft path: '^$draft
+if(! test -f $draft)
+	fail 'draft file not found: '^$draft
+if(! rm -f $draft)
+	fail 'cannot remove draft: '^$draft
+
+echo 'cancelled: '^$draft
+exit ''

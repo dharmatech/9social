@@ -12,43 +12,11 @@ fn usage {
 	exit usage
 }
 
-fn validprofile {
-	awk -F': ' '
-		function trim(s){
-			gsub(/^[ \t]+/, "", s)
-			gsub(/[ \t]+$/, "", s)
-			return s
-		}
-		index($0, ": ") == 0 { bad=1; next }
-		{
-			key=$1
-			val=trim(substr($0, index($0, ": ")+2))
-			if(key == "id") id=val
-			else if(key == "name") name=val
-			else if(key == "display") display=val
-		}
-		END {
-			if(bad || id == "" || name == "" || display == "")
-				exit 1
-			if(id !~ /^9social:user:[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/)
-				exit 1
-			uuid=id
-			sub(/^9social:user:/, "", uuid)
-			print uuid
-			print name
-		}
-	' $1 >[2]/dev/null
-}
-
-social=$home^/lib/9social
-self=$social^/self
-profile=$self^/profile
-posts=$self^/posts
 draft=()
 mode=editor
-uuidcmd=9social/uuid
+publish=9social/lib/publish-draft
 if(~ $0 */new-post)
-	uuidcmd=`{echo $0 | sed 's;/new-post$;/uuid;'}
+	publish=`{echo $0 | sed 's;/new-post$;/lib/publish-draft;'}
 
 if(~ $#* 0)
 	mode=editor
@@ -56,26 +24,6 @@ if not if(~ $#* 1 && ~ $1 -)
 	mode=stdin
 if not
 	usage
-
-if(! test -d $self)
-	fail $self^' does not exist'
-if(! test -e $self/.git)
-	fail $self^' is not a Git repository'
-if(! test -f $profile)
-	fail 'bad profile: '^$profile
-
-profiledata=`{validprofile $profile}
-if(! ~ $status '')
-	fail 'bad profile: '^$profile
-if(! ~ $#profiledata 2)
-	fail 'bad profile: '^$profile
-useruuid=$profiledata(1)
-author=$profiledata(2)
-
-if(! test -d $posts){
-	if(! mkdir $posts >[2]/dev/null)
-		fail 'cannot create posts'
-}
 
 if(test -d $home^/tmp)
 	tmpdir=$home^/tmp
@@ -85,11 +33,6 @@ if not
 draft=$tmpdir^/9social-new-post.^$pid
 if(test -e $draft)
 	draft=$tmpdir^/9social-new-post.^$pid^.^`{date -n}
-
-titlefile=$draft^.title
-rawbody=$draft^.body
-bodyfile=$draft^.body.trim
-slugsource=$draft^.slugsource
 
 if(~ $mode stdin){
 	if(! cat >$draft)
@@ -104,130 +47,13 @@ if not {
 		fail 'editor failed'
 }
 
-if(! awk -v 'titlefile='$titlefile -v 'bodyfile='$rawbody '
-	function trim(s){
-		gsub(/^[ \t]+/, "", s)
-		gsub(/[ \t]+$/, "", s)
-		return s
+$publish $draft
+st=$status
+if(! ~ $st ''){
+	if(echo $st | grep 'empty$' >/dev/null){
+		rm -f $draft >[2]/dev/null
+		echo 'new-post: cancelled'
+		exit ''
 	}
-	NR == 1 && /^Title:/ {
-		hastitle=1
-		print trim(substr($0, 7)) > titlefile
-		next
-	}
-	NR == 1 {
-		print > bodyfile
-		next
-	}
-	hastitle && NR == 2 {
-		sawsecond=1
-		if($0 !~ /^[ \t]*$/)
-			exit 2
-		next
-	}
-	{
-		print > bodyfile
-	}
-	END {
-		if(hastitle && !sawsecond)
-			exit 2
-	}
-' $draft)
-	fail 'bad draft: Title line must be followed by a blank line'
-
-awk '
-	{
-		line[++n]=$0
-		if($0 !~ /^[ \t]*$/)
-			last=n
-	}
-	END {
-		first=1
-		while(first <= last && line[first] ~ /^[ \t]*$/)
-			first++
-		if(last < first)
-			exit 1
-		for(i=first; i<=last; i++)
-			print line[i]
-	}
-' $rawbody >$bodyfile
-if(! ~ $status ''){
-	rm -f $draft $titlefile $rawbody $bodyfile $slugsource >[2]/dev/null
-	echo 'new-post: cancelled'
-	exit ''
 }
-
-if(test -s $titlefile)
-	cp $titlefile $slugsource
-if not
-	awk '$0 !~ /^[ \t]*$/ { print; exit }' $bodyfile >$slugsource
-
-slug=`{awk '
-	{
-		s=tolower($0)
-		gsub(/[ \t]+/, "-", s)
-		gsub(/[^a-z0-9-]/, "", s)
-		gsub(/-+/, "-", s)
-		gsub(/^-+/, "", s)
-		gsub(/-+$/, "", s)
-		s=substr(s, 1, 48)
-		gsub(/-+$/, "", s)
-		if(s == "")
-			s="post"
-		print s
-		exit
-	}
-' $slugsource}
-if(! ~ $#slug 1)
-	slug=post
-if(~ $slug '')
-	slug=post
-
-date=`{date -u -f 'YYYY-MM-DDThh:mm:ss[Z]'}
-if(! ~ $#date 1)
-	fail 'cannot generate date'
-day=`{echo $date | sed 's/T.*//'}
-if(! ~ $#day 1)
-	fail 'cannot generate filename'
-
-postuuid=`{$uuidcmd}
-if(! ~ $#postuuid 1)
-	fail 'cannot generate uuid'
-postid=9social:post:^$useruuid^:^$postuuid
-
-base=$day^'-'^$slug
-relpost=posts^/$base
-post=$posts^/$base
-n=2
-while(test -e $post){
-	relpost=posts^/$base^'-'^$n
-	post=$posts^/$base^'-'^$n
-	n=`{echo $n | awk '{print $1+1}'}
-}
-
-if(test -e $post)
-	fail 'post already exists: '^$relpost
-
-{
-	echo 'id: '^$postid
-	echo 'author: '^$author
-	echo 'date: '^$date
-	if(test -s $titlefile){
-		title=`{cat $titlefile}
-		echo 'title:' $title
-	}
-	echo
-	cat $bodyfile
-} >$post
-if(! ~ $status '')
-	fail 'cannot write post: '^$relpost
-
-if(! @{cd $self && git/add $relpost})
-	fail 'git add failed'
-if(! @{cd $self && git/commit -m 'post: '^$postid $relpost})
-	fail 'git commit failed'
-
-rm -f $draft $titlefile $rawbody $bodyfile $slugsource >[2]/dev/null
-
-echo 'posted: '^$relpost
-exit ''
+exit $st

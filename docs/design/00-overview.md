@@ -201,6 +201,25 @@ The system is designed for ACME.
 
 > The cursor selects the post; the tag supplies the action.
 
+### Command naming
+
+Lowercase hyphenated command names are used for shell/terminal workflows, for example:
+
+```text
+9social/new-post
+9social/init-self
+```
+
+Capitalized command names are used for Acme tag workflows, for example:
+
+```text
+9social/NewPost
+9social/Publish
+9social/Cancel
+```
+
+Level 1 keeps these command families distinct and does not define case aliases.
+
 ---
 
 ### Timeline window
