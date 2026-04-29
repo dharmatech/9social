@@ -1,0 +1,118 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/new-post
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-new-post-suite.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	home=$testhome
+}
+
+fn runpost {
+	$cmd - >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+fn onepost {
+	posts=`{walk $home/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$'}
+	if(! ~ $#posts 1)
+		fail $1 expected-one-post got $#posts
+	post=$posts(1)
+}
+
+setup titled
+{
+	echo 'Title: My First Post'
+	echo
+	echo 'Hello from 9social.'
+} | runpost
+if(! ~ $st '') fail titled-status $st
+onepost titled
+if(! ~ $post */posts/????-??-??-my-first-post) fail titled-filename $post
+grep '^id: 9social:post:'^$useruuid^':[0-9a-f].*' $post >/dev/null || fail titled-id
+grep '^author: dharmatech$' $post >/dev/null || fail titled-author
+grep '^date: [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z$' $post >/dev/null || fail titled-date
+grep '^title: My First Post$' $post >/dev/null || fail titled-title
+grep '^Hello from 9social\.$' $post >/dev/null || fail titled-body
+grep '^posted: posts/' $testhome/out >/dev/null || fail titled-output
+
+setup untitled
+{
+	echo 'Untitled body starts here'
+	echo 'second line'
+} | runpost
+if(! ~ $st '') fail untitled-status $st
+onepost untitled
+if(! ~ $post */posts/????-??-??-untitled-body-starts-here) fail untitled-filename $post
+if(grep '^title:' $post >/dev/null) fail untitled-title-present
+
+setup empty
+{
+	echo
+	echo '   '
+} | runpost
+if(! ~ $st '') fail empty-status $st
+grep '^new-post: cancelled$' $testhome/out >/dev/null || fail empty-cancel-output
+posts=`{walk $home/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$'}
+if(! ~ $#posts 0) fail empty-created-post
+
+setup badprofile
+{
+	echo 'name: dharmatech'
+	echo 'display: dharmatech'
+} >$home/lib/9social/self/profile
+{
+	echo 'hello'
+} | runpost
+if(~ $st '') fail badprofile-status
+grep 'bad profile' $testhome/err >/dev/null || fail badprofile-error
+
+setup collision
+day=`{date -u -f 'YYYY-MM-DD'}
+mkdir -p $home/lib/9social/self/posts
+echo old >$home/lib/9social/self/posts/$day^-same-title
+{
+	echo 'Title: Same Title'
+	echo
+	echo 'new body'
+} | runpost
+if(! ~ $st '') fail collision-status $st
+if(! test -f $home/lib/9social/self/posts/$day^-same-title-2) fail collision-file
+
+gitlog=$testhome/gitlog
+@{cd $home/lib/9social/self && git/log -n 1} >$gitlog >[2]/dev/null
+grep 'post: 9social:post:' $gitlog >/dev/null || fail collision-commit-message
+
+setup dirty
+echo dirty >$home/lib/9social/self/README
+{
+	echo 'Dirty repo post'
+} | runpost
+if(! ~ $st '') fail dirty-status $st
+onepost dirty
+if(! test -f $home/lib/9social/self/README) fail dirty-readme-missing
+grep '^posted: posts/' $testhome/out >/dev/null || fail dirty-output
+
+setup invalid
+$cmd bad >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail invalid-status
+grep 'usage: 9social/new-post \[-\]' $testhome/err >/dev/null || fail invalid-usage
+
+echo ok
+exit ''

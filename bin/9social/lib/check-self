@@ -1,0 +1,57 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/lib/check-self' >[1=2]
+	exit usage
+}
+
+fn validprofile {
+	awk -F': ' '
+		function trim(s){
+			gsub(/^[ \t]+/, "", s)
+			gsub(/[ \t]+$/, "", s)
+			return s
+		}
+		index($0, ": ") == 0 { bad=1; next }
+		{
+			key=$1
+			val=trim(substr($0, index($0, ": ")+2))
+			if(key == "id") id=val
+			else if(key == "name") name=val
+			else if(key == "display") display=val
+		}
+		END {
+			if(bad || id == "" || name == "" || display == "")
+				exit 1
+			if(id !~ /^9social:user:[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/)
+				exit 1
+		}
+	' $1 >[2]/dev/null
+}
+
+if(! ~ $#* 0)
+	usage
+
+self=$home/lib/9social/self
+profile=$self/profile
+posts=$self/posts
+
+if(! test -d $self)
+	fail $self^' does not exist'
+if(! test -e $self/.git)
+	fail $self^' is not a Git repository'
+if(! test -f $profile)
+	fail 'bad profile: '^$profile
+if(! validprofile $profile)
+	fail 'bad profile: '^$profile
+if(! test -d $posts){
+	if(! mkdir $posts >[2]/dev/null)
+		fail 'cannot create posts'
+}
+
+exit ''

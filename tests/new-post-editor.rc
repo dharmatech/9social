@@ -1,0 +1,32 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/new-post
+testhome=/tmp/9social-new-post-editor.$pid
+rm -rf $testhome
+mkdir -p $testhome/lib/9social/self
+cd $testhome/lib/9social/self || exit cd
+git/init . >/dev/null >[2]/dev/null
+{
+	echo 'id: 9social:user:550e8400-e29b-41d4-a716-446655440000'
+	echo 'name: dharmatech'
+	echo 'display: dharmatech'
+} >profile
+home=$testhome
+editor=$repo/tests/lib/new-post-fake-editor.rc
+$cmd >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st ''){
+	echo FAIL status:$st
+	cat $testhome/err
+	exit fail
+}
+post=`{walk $home/lib/9social/self/posts | grep editor-smoke}
+if(! ~ $#post 1){
+	echo FAIL post-count:$#post
+	exit fail
+}
+grep '^title: Editor Smoke$' $post >/dev/null || { echo FAIL title; exit fail }
+grep '^Written by fake editor\.$' $post >/dev/null || { echo FAIL body; exit fail }
+grep '^posted: posts/' $testhome/out >/dev/null || { echo FAIL output; exit fail }
+echo ok

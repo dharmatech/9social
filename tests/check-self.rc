@@ -1,0 +1,58 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/check-self
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-check-self-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	home=$testhome
+}
+
+fn runcheck {
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup ok
+runcheck
+if(! ~ $st '') fail ok-status $st
+if(! test -d $home/lib/9social/self/posts) fail ok-posts-missing
+
+setup badprofile
+{
+	echo 'name: dharmatech'
+	echo 'display: dharmatech'
+} >$home/lib/9social/self/profile
+runcheck
+if(~ $st '') fail badprofile-status
+grep 'bad profile' $testhome/err >/dev/null || fail badprofile-error
+
+setup nogit
+rm -rf $home/lib/9social/self/.git
+runcheck
+if(~ $st '') fail nogit-status
+grep 'is not a Git repository' $testhome/err >/dev/null || fail nogit-error
+
+setup usage
+$cmd extra >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/check-self' $testhome/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

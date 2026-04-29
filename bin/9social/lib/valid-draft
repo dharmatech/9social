@@ -1,0 +1,19 @@
+#!/bin/awk -f
+BEGIN {
+	if(ARGC != 2)
+		exit 1
+
+	path = ARGV[1]
+	home = ENVIRON["home"]
+
+	if(home != ""){
+		homepat = "^" home "/tmp/9social-new-post\\.[0-9]+(\\.[0-9]+)?$"
+		if(path ~ homepat)
+			exit 0
+	}
+
+	if(path ~ "^/tmp/9social-new-post\\.[0-9]+(\\.[0-9]+)?$")
+		exit 0
+
+	exit 1
+}

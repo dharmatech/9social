@@ -1,0 +1,38 @@
+#!/bin/awk -f
+BEGIN {
+	if(ARGC != 2){
+		print "usage: post-title <post-file>" > "/fd/2"
+		failed = 1
+		exit 1
+	}
+}
+
+/^[ \t]*$/ {
+	done = 1
+	next
+}
+
+done {
+	next
+}
+
+/^title:[ \t]*/ {
+	if(seen){
+		print "post-title: duplicate title" > "/fd/2"
+		failed = 1
+		exit 1
+	}
+	value = $0
+	sub(/^title:[ \t]*/, "", value)
+	sub(/[ \t]*$/, "", value)
+	title = value
+	seen = 1
+	next
+}
+
+END {
+	if(failed)
+		exit 1
+	if(seen)
+		print title
+}

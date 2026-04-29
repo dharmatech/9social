@@ -1,0 +1,6 @@
+#!/bin/rc
+{
+	echo 'Title: Editor Smoke'
+	echo
+	echo 'Written by fake editor.'
+} >$1

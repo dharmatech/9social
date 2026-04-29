@@ -46,6 +46,61 @@ fn validprofile {
 	' $1 >[2]/dev/null
 }
 
+fn validmeta {
+	awk -F': ' '
+		function trim(s){
+			gsub(/^[ \t]+/, "", s)
+			gsub(/[ \t]+$/, "", s)
+			return s
+		}
+		function ishex(s){
+			return s ~ /^[0-9a-fA-F]+$/
+		}
+		function isuuid(s, p){
+			if(split(s, p, "-") != 5)
+				return 0
+			return length(p[1]) == 8 && ishex(p[1]) && \
+				length(p[2]) == 4 && ishex(p[2]) && \
+				length(p[3]) == 4 && ishex(p[3]) && \
+				length(p[4]) == 4 && ishex(p[4]) && \
+				length(p[5]) == 12 && ishex(p[5])
+		}
+		function ispostid(s, p){
+			if(split(s, p, ":") != 4)
+				return 0
+			return p[1] == "9social" && p[2] == "post" && isuuid(p[3]) && isuuid(p[4])
+		}
+		function failmeta(msg){
+			print "publish-draft: bad metadata: " msg > "/fd/2"
+			failed = 1
+			exit 1
+		}
+		index($0, ": ") == 0 { failmeta("malformed field") }
+		{
+			key=$1
+			val=trim(substr($0, index($0, ": ")+2))
+			if(key == "type"){
+				if(type != "") failmeta("duplicate type")
+				type=val
+			} else if(key == "target"){
+				if(target != "") failmeta("duplicate target")
+				target=val
+			} else
+				failmeta("unknown field " key)
+		}
+		END {
+			if(failed)
+				exit 1
+			if(type == "") failmeta("missing type")
+			if(target == "") failmeta("missing target")
+			if(type != "reply") failmeta("unsupported type")
+			if(!ispostid(target)) failmeta("malformed target")
+			print type
+			print target
+		}
+	' $1
+}
+
 if(! ~ $#* 1)
 	usage
 
@@ -65,6 +120,7 @@ titlefile=$draft^.title
 rawbody=$draft^.body
 bodyfile=$draft^.body.trim
 slugsource=$draft^.slugsource
+sidecar=$draft^.meta
 
 if(! test -d $self)
 	fail $self^' does not exist'
@@ -80,6 +136,18 @@ if(! ~ $#profiledata 2)
 	fail 'bad profile: '^$profile
 useruuid=$profiledata(1)
 author=$profiledata(2)
+
+metatype=()
+metatarget=()
+if(test -f $sidecar){
+	metadata=`{validmeta $sidecar}
+	if(! ~ $status '')
+		fail 'bad draft metadata: '^$sidecar
+	if(! ~ $#metadata 2)
+		fail 'bad draft metadata: '^$sidecar
+	metatype=$metadata(1)
+	metatarget=$metadata(2)
+}
 
 if(! test -d $posts){
 	if(! mkdir $posts >[2]/dev/null)
@@ -193,6 +261,10 @@ if(test -e $post)
 	echo 'id: '^$postid
 	echo 'author: '^$author
 	echo 'date: '^$date
+	if(! ~ $#metatype 0){
+		echo 'type: '^$metatype
+		echo 'target: '^$metatarget
+	}
 	if(test -s $titlefile){
 		title=`{cat $titlefile}
 		echo 'title:' $title
@@ -208,7 +280,7 @@ if(! @{cd $self && git/add $relpost})
 if(! @{cd $self && git/commit -m 'post: '^$postid $relpost})
 	fail 'git commit failed'
 
-rm -f $draft >[2]/dev/null
+rm -f $draft $sidecar >[2]/dev/null
 cleanup
 
 echo 'posted: '^$relpost

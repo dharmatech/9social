@@ -1,0 +1,71 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Cancel
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-cancel-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/tmp || fail mkdir
+	home=$testhome
+}
+
+fn runcancel {
+	%=$draft
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup ok
+draft=$home/tmp/9social-new-post.123
+echo draft >$draft
+runcancel
+if(! ~ $st '') fail ok-status $st
+if(test -e $draft) fail ok-draft-still-exists
+grep '^cancelled: ' $testhome/out >/dev/null || fail ok-output
+
+setup suffix
+draft=$home/tmp/9social-new-post.123.2
+echo draft >$draft
+runcancel
+if(! ~ $st '') fail suffix-status $st
+if(test -e $draft) fail suffix-draft-still-exists
+
+
+setup sidecar
+draft=$home/tmp/9social-new-post.999
+{
+	echo 'Title: Cancel Sidecar'
+	echo
+	echo body
+} >$draft
+{
+	echo 'type: reply'
+	echo 'target: 9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222'
+} >$draft^.meta
+runcancel
+if(! ~ $st '') fail sidecar-status $st
+if(test -e $draft) fail sidecar-draft-still-exists
+if(test -e $draft^.meta) fail sidecar-meta-still-exists
+
+setup invalid
+draft=$home/tmp/not-a-9social-draft
+echo draft >$draft
+runcancel
+if(~ $st '') fail invalid-status
+if(! test -f $draft) fail invalid-draft-removed
+grep 'invalid draft path' $testhome/err >/dev/null || fail invalid-error
+
+setup missing
+draft=$home/tmp/9social-new-post.456
+runcancel
+if(~ $st '') fail missing-status
+grep 'draft file not found' $testhome/err >/dev/null || fail missing-error
+
+echo ok
+exit ''

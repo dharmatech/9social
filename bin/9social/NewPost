@@ -12,58 +12,24 @@ fn usage {
 	exit usage
 }
 
-fn validprofile {
-	awk -F': ' '
-		function trim(s){
-			gsub(/^[ \t]+/, "", s)
-			gsub(/[ \t]+$/, "", s)
-			return s
-		}
-		index($0, ": ") == 0 { bad=1; next }
-		{
-			key=$1
-			val=trim(substr($0, index($0, ": ")+2))
-			if(key == "id") id=val
-			else if(key == "name") name=val
-			else if(key == "display") display=val
-		}
-		END {
-			if(bad || id == "" || name == "" || display == "")
-				exit 1
-			if(id !~ /^9social:user:[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/)
-				exit 1
-		}
-	' $1 >[2]/dev/null
-}
-
 if(! ~ $#* 0)
 	usage
 
 draft=()
-newctl=/mnt/wsys/new/ctl
-if(! test -e $newctl){
+if(! test -f /mnt/wsys/index){
 	echo 'NewPost: acme window system not available' >[1=2]
 	echo 'NewPost: run from acme, or use 9social/new-post' >[1=2]
 	exit 'no acme'
 }
-
-social=$home^/lib/9social
-self=$social^/self
-profile=$self^/profile
-posts=$self^/posts
-
-if(! test -d $self)
-	fail $self^' does not exist'
-if(! test -e $self/.git)
-	fail $self^' is not a Git repository'
-if(! test -f $profile)
-	fail 'bad profile: '^$profile
-if(! validprofile $profile)
-	fail 'bad profile: '^$profile
-if(! test -d $posts){
-	if(! mkdir $posts >[2]/dev/null)
-		fail 'cannot create posts'
+check_self=9social/lib/check-self
+open_draft_window=9social/lib/open-draft-window
+if(~ $0 */NewPost){
+	check_self=`{echo $0 | sed 's;/NewPost$;/lib/check-self;'}
+	open_draft_window=`{echo $0 | sed 's;/NewPost$;/lib/open-draft-window;'}
 }
+
+if(! $check_self)
+	exit $status
 
 tmpdir=$home^/tmp
 if(! test -d $tmpdir)
@@ -83,31 +49,16 @@ while(test -e $draft){
 if(test -e $draft)
 	fail 'draft already exists: '^$draft
 
-if(! echo 'Title: ' >$draft)
+{
+	echo 'Title: '
+	echo
+} >$draft
+if(! ~ $status '')
 	fail 'cannot create draft'
 if(test -e $draft && ! test -f $draft)
 	fail 'cannot create draft'
 
-winid=`{cat $newctl >[2]/dev/null | awk '{print $1; exit}'}
-if(! ~ $status '')
-	fail 'cannot create acme window'
-if(! ~ $#winid 1)
-	fail 'cannot create acme window'
+if(! $open_draft_window $draft)
+	exit $status
 
-winctl=/mnt/wsys/$winid/ctl
-wintag=/mnt/wsys/$winid/tag
-winbody=/mnt/wsys/$winid/body
-
-if(! echo name $draft >$winctl)
-	fail 'cannot name acme window'
-if(! echo ' | 9social/Publish 9social/Cancel' >$wintag)
-	fail 'cannot write acme tag'
-if(! cat $draft >$winbody)
-	fail 'cannot write acme body'
-if(! echo clean >$winctl)
-	fail 'cannot mark acme window clean'
-
-echo 'draft: '^$draft
-echo 'publish: 9social/Publish'
-echo 'cancel: 9social/Cancel'
 exit ''

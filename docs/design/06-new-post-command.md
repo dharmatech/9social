@@ -472,6 +472,18 @@ If validation fails:
 
 ## 12. Test Strategy
 
+The durable regression tests live in:
+
+```rc
+tests/run.rc
+```
+
+Run them from 9front with:
+
+```rc
+/usr/glenda/src/9social/tests/run.rc
+```
+
 Level 1 tests should cover stdin mode first, because it exercises the publish path without automating an interactive editor.
 
 Test setup:

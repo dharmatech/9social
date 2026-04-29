@@ -1,0 +1,74 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/post-title
+base=/tmp/9social-post-title-test.$pid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn runtitle {
+	$cmd $file >$base.out >[2]$base.err
+	st=$status
+}
+
+rm -f $base.*
+
+file=$base.titled
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo 'title: Troff and the phototypesetter'
+	echo
+	echo body
+}
+runtitle
+if(! ~ $st '') fail titled-status $st
+if(! ~ `{cat $base.out} 'Troff and the phototypesetter') fail titled-output `{cat $base.out}
+
+file=$base.notitle
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo
+	echo body
+}
+runtitle
+if(! ~ $st '') fail notitle-status $st
+if(test -s $base.out) fail notitle-output
+
+file=$base.body-title
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo
+	echo 'title: Body title is not metadata'
+}
+runtitle
+if(! ~ $st '') fail body-title-status $st
+if(test -s $base.out) fail body-title-output
+
+file=$base.duplicate
+>$file {
+	echo 'title: First'
+	echo 'title: Second'
+	echo
+	echo body
+}
+runtitle
+if(~ $st '') fail duplicate-status
+grep 'duplicate title' $base.err >/dev/null || fail duplicate-error
+if(test -s $base.out) fail duplicate-output
+
+file=$base.trim
+>$file {
+	echo 'title:   Trim Me   '
+	echo
+	echo body
+}
+runtitle
+if(! ~ $st '') fail trim-status $st
+if(! ~ `{cat $base.out} 'Trim Me') fail trim-output `{cat $base.out}
+
+rm -f $base.*
+echo ok
+exit ''

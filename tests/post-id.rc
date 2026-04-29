@@ -1,0 +1,76 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/post-id
+base=/tmp/9social-post-id-test.$pid
+id=9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+badid=9social:post:not-a-uuid:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn runpostid {
+	$cmd $file >$base.out >[2]$base.err
+	st=$status
+}
+
+rm -f $base.*
+
+file=$base.valid
+>$file {
+	echo 'id: '^$id
+	echo 'author: dharmatech'
+	echo
+	echo 'Body text'
+}
+runpostid
+if(! ~ $st '') fail valid-status $st
+if(! ~ `{cat $base.out} $id) fail valid-output `{cat $base.out}
+
+file=$base.missing
+>$file {
+	echo 'author: dharmatech'
+	echo
+	echo 'Body text'
+}
+runpostid
+if(~ $st '') fail missing-status
+grep 'missing id' $base.err >/dev/null || fail missing-error
+
+file=$base.duplicate
+>$file {
+	echo 'id: '^$id
+	echo 'id: '^$id
+	echo
+	echo 'Body text'
+}
+runpostid
+if(~ $st '') fail duplicate-status
+grep 'duplicate id' $base.err >/dev/null || fail duplicate-error
+if(test -s $base.out) fail duplicate-output
+
+file=$base.malformed
+>$file {
+	echo 'id: '^$badid
+	echo
+	echo 'Body text'
+}
+runpostid
+if(~ $st '') fail malformed-status
+grep 'malformed id' $base.err >/dev/null || fail malformed-error
+
+file=$base.body-id
+>$file {
+	echo 'author: dharmatech'
+	echo
+	echo 'id: '^$id
+}
+runpostid
+if(~ $st '') fail body-id-status
+grep 'missing id' $base.err >/dev/null || fail body-id-error
+
+rm -f $base.*
+echo ok
+exit ''

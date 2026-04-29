@@ -1,0 +1,126 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Publish
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-publish-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self $testhome/tmp || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	home=$testhome
+}
+
+fn runpublish {
+	%=$draft
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+fn onepost {
+	posts=`{walk $home/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$'}
+	if(! ~ $#posts 1)
+		fail $1 expected-one-post got $#posts
+	post=$posts(1)
+}
+
+setup ok
+draft=$home/tmp/9social-new-post.123
+{
+	echo 'Title: Publish Test'
+	echo
+	echo 'Published from Acme command.'
+} >$draft
+runpublish
+if(! ~ $st '') fail ok-status $st
+onepost ok
+if(! ~ $post */posts/????-??-??-publish-test) fail ok-filename $post
+if(test -e $draft) fail ok-draft-still-exists
+grep '^posted: posts/' $testhome/out >/dev/null || fail ok-posted-output
+grep '^draft removed; close the Acme window with Del$' $testhome/out >/dev/null || fail ok-reminder-output
+
+setup invalid
+draft=$home/tmp/not-a-9social-draft
+{
+	echo hello
+} >$draft
+runpublish
+if(~ $st '') fail invalid-status
+grep 'invalid draft path' $testhome/err >/dev/null || fail invalid-error
+if(! test -f $draft) fail invalid-draft-removed
+
+setup missing
+draft=$home/tmp/9social-new-post.456
+runpublish
+if(~ $st '') fail missing-status
+grep 'draft file not found' $testhome/err >/dev/null || fail missing-error
+
+setup suffix
+draft=$home/tmp/9social-new-post.789.2
+{
+	echo 'Suffix draft body'
+} >$draft
+runpublish
+if(! ~ $st '') fail suffix-status $st
+onepost suffix
+if(test -e $draft) fail suffix-draft-still-exists
+
+
+setup reply
+replytarget=9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222
+draft=$home/tmp/9social-new-post.900
+{
+	echo 'Title: Re: Reply Target'
+	echo
+	echo 'Reply body.'
+} >$draft
+{
+	echo 'type: reply'
+	echo 'target: '^$replytarget
+} >$draft^.meta
+runpublish
+if(! ~ $st '') fail reply-status $st
+onepost reply
+if(test -e $draft) fail reply-draft-still-exists
+if(test -e $draft^.meta) fail reply-meta-still-exists
+grep '^type: reply$' $post >/dev/null || fail reply-type-missing
+grep '^target: '^$replytarget^'$' $post >/dev/null || fail reply-target-missing
+awk '
+	/^date: / { date=NR }
+	/^type: reply$/ { type=NR }
+	/^target: / { target=NR }
+	/^title: / { title=NR }
+	END { if(!(date < type && type < target && target < title)) exit 1 }
+' $post || fail reply-field-order
+
+setup badmeta
+badtarget=9social:post:not-a-uuid:22222222-2222-4222-8222-222222222222
+draft=$home/tmp/9social-new-post.901
+{
+	echo 'Title: Bad Metadata'
+	echo
+	echo 'Should not publish.'
+} >$draft
+{
+	echo 'type: reply'
+	echo 'target: '^$badtarget
+} >$draft^.meta
+runpublish
+if(~ $st '') fail badmeta-status
+if(! test -f $draft) fail badmeta-draft-removed
+if(! test -f $draft^.meta) fail badmeta-meta-removed
+grep 'bad draft metadata' $testhome/err >/dev/null || fail badmeta-error
+echo ok
+exit ''
