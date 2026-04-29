@@ -1,0 +1,34 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/push' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 0)
+	usage
+
+check_self=9social/lib/check-self
+if(~ $0 */push)
+	check_self=`{echo $0 | sed 's;/push$;/lib/check-self;'}
+
+$check_self
+st=$status
+if(! ~ $st '')
+	exit $st
+
+self=$home/lib/9social/self
+if(~ $#gitcmd 0)
+	gitcmd=git/push
+
+@{cd $self && $gitcmd}
+st=$status
+if(! ~ $st '')
+	fail 'git push failed'
+
+exit ''

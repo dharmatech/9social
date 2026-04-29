@@ -1,0 +1,72 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/push
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-push-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	home=$testhome
+	gitcmd=$testhome/fake-push
+	>$gitcmd {
+		echo '#!/bin/rc'
+		echo 'pwd >'^$testhome^'/pwd'
+		echo 'echo pushed'
+	}
+	chmod +x $gitcmd
+}
+
+fn runpush {
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup ok
+runpush
+if(! ~ $st '') fail ok-status $st
+if(! ~ `{cat $testhome/pwd} $home/lib/9social/self) fail ok-pwd `{cat $testhome/pwd}
+grep '^pushed$' $testhome/out >/dev/null || fail ok-output
+if(! test -d $home/lib/9social/self/posts) fail ok-posts-missing
+
+setup badprofile
+{
+	echo 'name: dharmatech'
+	echo 'display: dharmatech'
+} >$home/lib/9social/self/profile
+runpush
+if(~ $st '') fail badprofile-status
+grep 'bad profile' $testhome/err >/dev/null || fail badprofile-error
+if(test -f $testhome/pwd) fail badprofile-ran-push
+
+setup pushfail
+>$gitcmd {
+	echo '#!/bin/rc'
+	echo 'exit fail'
+}
+chmod +x $gitcmd
+runpush
+if(~ $st '') fail pushfail-status
+grep 'git push failed' $testhome/err >/dev/null || fail pushfail-error
+
+setup usage
+$cmd extra >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/push' $testhome/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

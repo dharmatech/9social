@@ -2,7 +2,7 @@
 rfork e
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 
-for(t in new-post.rc new-post-editor.rc check-self.rc valid-draft.rc post-id.rc post-title.rc publish.rc cancel.rc){
+for(t in new-post.rc new-post-editor.rc check-self.rc valid-draft.rc post-id.rc post-title.rc publish.rc cancel.rc push.rc){
 	echo tests/$t
 	$repo/tests/$t || exit $status
 }
