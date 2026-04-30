@@ -25,7 +25,7 @@ fn linepath {
 	awk '
 		{
 			for(i=1; i<=NF; i++){
-				if(index($i, "/lib/9social/feeds/") > 0 && index($i, "/posts/") > 0){
+				if((index($i, "/lib/9social/feeds/") > 0 || index($i, "/lib/9social/self/posts/") > 0) && index($i, "/posts/") > 0){
 					print $i
 					exit
 				}
@@ -87,7 +87,11 @@ if(~ $mode acme){
 	open_file_window=9social/lib/open-file-window
 	if(~ $0 */open-post)
 		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
-	$open_file_window $post ' | 9social/Reply'
+	tag=' | 9social/Reply'
+	selfpost=$home/lib/9social/self/posts/
+	if(awk -v 'post='^$post -v 'prefix='^$selfpost 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
+		tag=' | 9social/Reply 9social/Delete'
+	$open_file_window $post $tag
 	st=$status
 	if(! ~ $st '')
 		fail 'cannot open post'

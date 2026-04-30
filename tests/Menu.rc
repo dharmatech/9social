@@ -1,0 +1,60 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Menu
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+# Non-Acme command should fail before creating a menu file.
+home=/tmp/9social-Menu-test.$pid.noacme
+rm -rf $home
+mkdir -p $home/tmp || fail mkdir-noacme
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail noacme-status
+grep 'acme window system not available' $home/err >/dev/null || fail noacme-error
+
+# Use a copied command so its script-local helper path resolves to a fake helper.
+home=/tmp/9social-Menu-test.$pid.ok
+rm -rf $home
+mkdir -p $home/tmp $home/bin/9social/lib $home/wsys || fail mkdir-ok
+testcmd=$home/bin/9social/Menu
+cp $cmd $testcmd || fail cp-menu
+chmod +x $testcmd || fail chmod-menu
+>$home/bin/9social/lib/open-file-window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$home^'/opened'
+	echo 'echo $2 >'^$home^'/tag'
+}
+chmod +x $home/bin/9social/lib/open-file-window || fail chmod-helper
+>$home/wsys/index echo ok
+wsysdir=$home/wsys $testcmd >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail ok-status $st `{cat $home/err}
+menufile=`{cat $home/opened}
+if(! test -f $menufile) fail menu-file-missing $menufile
+if(! ~ `{cat $home/tag} '') fail menu-tag-not-empty `{cat $home/tag}
+expected=$home/expected
+>$expected {
+	echo '9social/Timeline'
+	echo '9social/NewPost'
+	echo '9social/follow'
+	echo '9social/refresh'
+	echo '9social/push'
+}
+cmp $expected $menufile >/dev/null || fail menu-content `{cat $menufile}
+
+# Usage.
+home=/tmp/9social-Menu-test.$pid.usage
+rm -rf $home
+mkdir -p $home || fail mkdir-usage
+$cmd extra >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/Menu' $home/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

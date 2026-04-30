@@ -1,0 +1,61 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	if(! ~ $#menufile 0)
+		echo 'menu: '^$menufile >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/Menu' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 0)
+	usage
+
+wsys=/mnt/wsys
+if(! ~ $#wsysdir 0)
+	wsys=$wsysdir
+
+if(! test -f $wsys/index){
+	echo 'Menu: acme window system not available' >[1=2]
+	echo 'Menu: run from acme' >[1=2]
+	exit 'no acme'
+}
+
+open_file_window=9social/lib/open-file-window
+if(~ $0 */Menu)
+	open_file_window=`{echo $0 | sed 's;/Menu$;/lib/open-file-window;'}
+
+tmpdir=$home^/tmp
+if(! test -d $tmpdir)
+	mkdir $tmpdir >[2]/dev/null
+if(! test -d $tmpdir)
+	tmpdir=/tmp
+if(! test -d $tmpdir)
+	fail 'cannot use menu directory'
+
+base=$tmpdir^/9social-menu.^$pid
+menufile=$base
+n=2
+while(test -e $menufile){
+	menufile=$base^.^$n
+	n=`{echo $n | awk '{print $1+1}'}
+}
+if(test -e $menufile)
+	fail 'menu already exists: '^$menufile
+
+>$menufile {
+	echo '9social/Timeline'
+	echo '9social/NewPost'
+	echo '9social/follow'
+	echo '9social/refresh'
+	echo '9social/push'
+}
+
+if(! $open_file_window $menufile '')
+	exit $status
+
+exit ''

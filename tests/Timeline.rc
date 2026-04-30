@@ -1,0 +1,23 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Timeline
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+# Non-Acme command should fail before creating a timeline file.
+home=/tmp/9social-Timeline-test.$pid.noacme
+rm -rf $home
+mkdir -p $home/tmp || fail mkdir-noacme
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail noacme-status
+grep 'acme window system not available' $home/err >/dev/null || fail noacme-error
+
+echo ok
+exit ''

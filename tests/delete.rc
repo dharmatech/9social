@@ -1,0 +1,90 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Delete
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+postid=9social:post:$useruuid^:$postuuid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-delete-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self/posts || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	post=posts/2026-04-29-delete-me
+	{
+		echo 'id: '^$postid
+		echo 'author: dharmatech'
+		echo 'date: 2026-04-29T18:10:35Z'
+		echo 'title: Delete Me'
+		echo
+		echo body
+	} >$post
+	git/add profile $post >/dev/null >[2]/dev/null || fail git-add
+	git/commit -m initial profile $post >/dev/null >[2]/dev/null || fail git-commit-initial
+	home=$testhome
+}
+
+fn rundelete {
+	%=$postpath
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup ok
+postpath=$home/lib/9social/self/$post
+rundelete
+if(! ~ $st '') fail ok-status $st `{cat $testhome/err}
+if(test -f $postpath) fail ok-post-still-exists
+grep '^deleted: posts/2026-04-29-delete-me$' $testhome/out >/dev/null || fail ok-deleted-output `{cat $testhome/out}
+grep '^close the Acme window with Del$' $testhome/out >/dev/null || fail ok-reminder-output
+if(! git/log -n 1 -s | grep 'delete post: '^$postid >/dev/null) fail ok-commit-message
+
+setup feed
+mkdir -p $home/lib/9social/feeds/9social-user-dennis/posts || fail feed-mkdir
+feedpost=$home/lib/9social/feeds/9social-user-dennis/posts/2026-04-29-feed
+cp $post $feedpost || fail feed-copy
+postpath=$feedpost
+rundelete
+if(~ $st '') fail feed-status
+if(! test -f $feedpost) fail feed-removed
+grep 'not a self post' $testhome/err >/dev/null || fail feed-error `{cat $testhome/err}
+
+setup missing-current
+%=''
+$cmd >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail missing-current-status
+grep 'no current Acme file' $testhome/err >/dev/null || fail missing-current-error
+
+setup badpost
+postpath=$home/lib/9social/self/$post
+{
+	echo 'title: no id'
+	echo
+	echo body
+} >$postpath
+rundelete
+if(~ $st '') fail badpost-status
+if(! test -f $postpath) fail badpost-removed
+grep 'bad post id' $testhome/err >/dev/null || fail badpost-error `{cat $testhome/err}
+
+setup usage
+$cmd extra >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/Delete' $testhome/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

@@ -1,0 +1,88 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/Delete' >[1=2]
+	exit usage
+}
+
+fn relselfpost {
+	awk -v 'self='^$self -v 'post='^$1 '
+		BEGIN {
+			prefix = self "/posts/"
+			if(index(post, prefix) == 1 && length(post) > length(prefix)){
+				print substr(post, length(self) + 2)
+				exit 0
+			}
+			exit 1
+		}
+	'
+}
+
+fn validrelpath {
+	awk -F/ '
+		{
+			for(i=1; i<=NF; i++)
+				if($i == "" || $i == "..")
+					exit 1
+		}
+	'
+}
+
+if(! ~ $#* 0)
+	usage
+
+if(~ $#% 0 || ~ $% '')
+	fail 'no current Acme file'
+
+post=$%
+self=$home/lib/9social/self
+
+check_self=9social/lib/check-self
+post_id=9social/lib/post-id
+if(~ $0 */Delete){
+	base=`{echo $0 | sed 's;/Delete$;;'}
+	check_self=$base/lib/check-self
+	post_id=$base/lib/post-id
+}
+
+$check_self
+st=$status
+if(! ~ $st '')
+	fail 'self repository is not ready'
+
+relpost=`{relselfpost $post}
+st=$status
+if(! ~ $st '' || ! ~ $#relpost 1)
+	fail 'not a self post: '^$post
+
+if(echo $relpost | validrelpath){}
+if not
+	fail 'bad post path: '^$relpost
+
+if(! test -f $post)
+	fail 'post file not found: '^$post
+
+postid=`{$post_id $post}
+st=$status
+if(! ~ $st '' || ! ~ $#postid 1)
+	fail 'bad post id: '^$post
+
+if(! cd $self)
+	fail 'cannot enter self repository'
+
+if(! git/rm $relpost)
+	fail 'git rm failed: '^$relpost
+if(! rm $relpost)
+	fail 'remove failed: '^$relpost
+if(! git/commit -m 'delete post: '^$postid $relpost)
+	fail 'git commit failed: '^$relpost
+
+echo 'deleted: '^$relpost
+echo 'close the Acme window with Del'
+
+exit ''

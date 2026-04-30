@@ -43,10 +43,59 @@ setup keep
 runtimeline
 if(! ~ $st '') fail keep-status $st
 grep 'skip post .*\.keep' $testhome/err >/dev/null && fail keep-warning
+grep '^------------------------------------------------------------------------$' $testhome/out >/dev/null || fail keep-separator-missing
 if(! grep '^2026-04-29T18:10:35Z  Dennis Ritchie$' $testhome/out >/dev/null) fail keep-post-missing
-expected='    9social/open-post '^$feed^'/posts/2026-04-29-test'
+expected=$feed^'/posts/2026-04-29-test'
 grep -s $expected $testhome/out || fail keep-open-post-missing
-if(! grep 'Timeline Test' $testhome/out >/dev/null) fail keep-title-missing
+grep '^title: Timeline Test$' $testhome/out >/dev/null || fail keep-title-missing
+
+
+
+setup emptytitle
+>$feed/posts/2026-04-29-empty-title {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'title:'
+	echo
+	echo 'Body-derived title.'
+}
+runtimeline
+if(! ~ $st '') fail emptytitle-status $st
+grep 'skip post .*empty-title' $testhome/err >/dev/null && fail emptytitle-warning
+grep '^title: Body-derived title\.$' $testhome/out >/dev/null || fail emptytitle-derived-title
+
+setup self
+self=$home/lib/9social/self
+mkdir -p $self/posts || fail self-mkdir
+{
+	echo 'id: 9social:user:'^$useruuid
+	echo 'name: dharmatech'
+	echo 'display: dharmatech'
+} >$self/profile
+>$self/posts/2026-04-30-self-post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dharmatech'
+	echo 'date: 2026-04-30T12:00:00Z'
+	echo 'title: Self Timeline Test'
+	echo
+	echo 'Self visible body.'
+}
+>$feed/posts/2026-04-29-feed-post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'title: Feed Timeline Test'
+	echo
+	echo 'Feed visible body.'
+}
+runtimeline
+if(! ~ $st '') fail self-status $st
+grep '^2026-04-30T12:00:00Z  dharmatech$' $testhome/out >/dev/null || fail self-post-missing
+grep '^title: Self Timeline Test$' $testhome/out >/dev/null || fail self-title-missing
+expected=$self^'/posts/2026-04-30-self-post'
+grep -s $expected $testhome/out || fail self-path-missing
+grep '^2026-04-29T18:10:35Z  Dennis Ritchie$' $testhome/out >/dev/null || fail feed-post-missing
 
 setup dotonly
 >$feed/posts/.keep {
