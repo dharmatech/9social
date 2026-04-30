@@ -1,0 +1,104 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/open-post [post-file | 9social:post:<feed-relative-post-path>]' >[1=2]
+	exit usage
+}
+
+fn tokenpath {
+	rel=`{echo $1 | sed -n 's;^9social:post:;;p'}
+	if(~ $#rel 0 || ~ $rel '')
+		fail 'bad post token: '^$1
+	if(~ $rel /*)
+		fail 'bad post path: '^$rel
+	if(! echo $rel | awk -F/ '{ for(i=1; i<=NF; i++) if($i == ".." || $i == "") exit 1 }')
+		fail 'bad post path: '^$rel
+	echo $home/lib/9social/feeds/$rel
+}
+
+fn linepath {
+	awk '
+		{
+			for(i=1; i<=NF; i++){
+				if(index($i, "/lib/9social/feeds/") > 0 && index($i, "/posts/") > 0){
+					print $i
+					exit
+				}
+			}
+			exit 1
+		}
+	'
+}
+
+if(~ $#* 0){
+	current_line=9social/lib/current-line
+	open_file_window=9social/lib/open-file-window
+	if(~ $0 */open-post){
+		current_line=`{echo $0 | sed 's;/open-post$;/lib/current-line;'}
+		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
+	}
+	line=`{$current_line}
+	st=$status
+	if(! ~ $st '')
+		fail 'cannot read current line'
+	post=`{echo $line | linepath}
+	if(! ~ $status '' || ! ~ $#post 1)
+		fail 'no post path on current line'
+	mode=acme
+}
+if not if(~ $#* 1){
+	arg=$1
+	if(~ $arg 9social:post:*){
+		post=`{tokenpath $arg}
+		mode=plumb
+	}
+	if not {
+		post=$arg
+		mode=acme
+	}
+}
+if not
+	usage
+
+if(~ $post /*){}
+if not
+	fail 'bad post path: '^$post
+if(echo $post | awk -F/ '{ for(i=2; i<=NF; i++) if($i == ".." || $i == "") exit 1 }'){}
+if not
+	fail 'bad post path: '^$post
+if(! test -f $post)
+	fail 'post file not found: '^$post
+
+post_id=9social/lib/post-id
+if(~ $0 */open-post)
+	post_id=`{echo $0 | sed 's;/open-post$;/lib/post-id;'}
+
+$post_id $post >/dev/null
+st=$status
+if(! ~ $st '')
+	fail 'bad post id: '^$post
+
+if(~ $mode acme){
+	open_file_window=9social/lib/open-file-window
+	if(~ $0 */open-post)
+		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
+	$open_file_window $post ' | 9social/Reply'
+	st=$status
+	if(! ~ $st '')
+		fail 'cannot open post'
+}
+if not {
+	if(~ $#plumbcmd 0)
+		plumbcmd=plumb
+	cat $post | $plumbcmd -i -d edit -a 'action=showdata filename='$post
+	st=$status
+	if(! ~ $st '')
+		fail 'cannot open post'
+}
+
+exit ''

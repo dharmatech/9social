@@ -1,0 +1,113 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/open-post
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-open-post-test.$pid.$1
+	rm -rf $testhome
+	postdir=$testhome/lib/9social/feeds/9social-user-dennis/posts
+	mkdir -p $postdir || fail mkdir
+	post=$postdir/2026-04-29-test
+	>$post {
+		echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+		echo 'author: dennis'
+		echo 'date: 2026-04-29T18:10:35Z'
+		echo 'title: Test Post'
+		echo
+		echo body
+	}
+	home=$testhome
+	plumbcmd=$testhome/fake-plumb
+	>$plumbcmd {
+		echo '#!/bin/rc'
+		echo 'echo $* >'^$testhome^'/args'
+		echo 'cat >'^$testhome^'/body'
+	}
+	chmod +x $plumbcmd
+}
+
+fn runopen {
+	$cmd $token >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup token
+token=9social:post:9social-user-dennis/posts/2026-04-29-test
+runopen
+if(! ~ $st '') fail token-status $st
+grep '^-i -d edit -a action=showdata filename='^$post^'$' $testhome/args >/dev/null || fail token-args `{cat $testhome/args}
+grep '^title: Test Post$' $testhome/body >/dev/null || fail token-body
+
+setup explicit
+open_file_window=$testhome/fake-open
+>$open_file_window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$testhome^'/opened'
+	echo 'echo $2 >'^$testhome^'/tag'
+}
+chmod +x $open_file_window
+token=$post
+# Force the script-local helper path by running through a copy named like open-post.
+testcmd=$testhome/open-post
+cp $cmd $testcmd
+chmod +x $testcmd
+mkdir -p $testhome/lib
+cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
+cp $open_file_window $testhome/lib/open-file-window
+$testcmd $token >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st '') fail explicit-status $st
+if(! ~ `{cat $testhome/opened} $post) fail explicit-opened `{cat $testhome/opened}
+grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail explicit-tag `{cat $testhome/tag}
+
+setup badprefix
+token=bad:post:9social-user-dennis/posts/2026-04-29-test
+runopen
+if(~ $st '') fail badprefix-status
+grep 'bad post path' $testhome/err >/dev/null || fail badprefix-error
+
+setup absolute-token
+token=9social:post:/usr/glenda/foo
+runopen
+if(~ $st '') fail absolute-token-status
+grep 'bad post path' $testhome/err >/dev/null || fail absolute-token-error
+
+setup dotdot
+token=9social:post:9social-user-dennis/posts/../profile
+runopen
+if(~ $st '') fail dotdot-status
+grep 'bad post path' $testhome/err >/dev/null || fail dotdot-error
+
+setup missing
+token=9social:post:9social-user-dennis/posts/missing
+runopen
+if(~ $st '') fail missing-status
+grep 'post file not found' $testhome/err >/dev/null || fail missing-error
+
+setup badpost
+>$post {
+	echo 'title: no id'
+	echo
+	echo body
+}
+token=9social:post:9social-user-dennis/posts/2026-04-29-test
+runopen
+if(~ $st '') fail badpost-status
+grep 'bad post id' $testhome/err >/dev/null || fail badpost-error
+
+setup usage
+$cmd a b >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/open-post' $testhome/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

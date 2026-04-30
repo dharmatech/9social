@@ -1,0 +1,46 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	if(! ~ $#file 0)
+		echo 'file: '^$file >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/lib/open-file-window <file> <tag-text>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 2)
+	usage
+
+file=$1
+tagtext=$2
+
+if(! test -f $file)
+	fail 'file not found: '^$file
+if(! test -f /mnt/wsys/index)
+	fail 'acme window system not available'
+
+newctl=/mnt/wsys/new/ctl
+
+winid=`{cat $newctl >[2]/dev/null | awk '{print $1; exit}'}
+if(! ~ $status '')
+	fail 'cannot create acme window'
+if(! ~ $#winid 1)
+	fail 'cannot create acme window'
+
+winctl=/mnt/wsys/$winid/ctl
+wintag=/mnt/wsys/$winid/tag
+
+if(! echo name $file >$winctl)
+	fail 'cannot name acme window'
+if(! echo get >$winctl)
+	fail 'cannot load acme body'
+if(! echo $tagtext >$wintag)
+	fail 'cannot write acme tag'
+if(! echo clean >$winctl)
+	fail 'cannot mark acme window clean'
+
+exit ''

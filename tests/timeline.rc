@@ -1,0 +1,61 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/timeline
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-timeline-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/feeds/9social-user-dennis/posts || fail mkdir
+	feed=$testhome/lib/9social/feeds/9social-user-dennis
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dennis'
+		echo 'display: Dennis Ritchie'
+	} >$feed/profile
+	home=$testhome
+}
+
+fn runtimeline {
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup keep
+>$feed/posts/.keep {
+	echo keep
+}
+>$feed/posts/2026-04-29-test-post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'title: Timeline Test'
+	echo
+	echo 'Visible body.'
+}
+runtimeline
+if(! ~ $st '') fail keep-status $st
+grep 'skip post .*\.keep' $testhome/err >/dev/null && fail keep-warning
+if(! grep '^2026-04-29T18:10:35Z  Dennis Ritchie$' $testhome/out >/dev/null) fail keep-post-missing
+expected='    9social/open-post '^$feed^'/posts/2026-04-29-test'
+grep -s $expected $testhome/out || fail keep-open-post-missing
+if(! grep 'Timeline Test' $testhome/out >/dev/null) fail keep-title-missing
+
+setup dotonly
+>$feed/posts/.keep {
+	echo keep
+}
+runtimeline
+if(! ~ $st '') fail dotonly-status $st
+if(test -s $testhome/out) fail dotonly-output
+if(test -s $testhome/err) fail dotonly-error
+
+echo ok
+exit ''

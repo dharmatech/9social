@@ -55,8 +55,10 @@ for(feed in $feeds/*){
 					}
 				' $feed/profile >/dev/null >[2]/dev/null){
 					for(post in $feed/posts/*){
-						if(test -f $post){
-							if(! awk -F': ' '
+						postbase=`{basename $post}
+						if(! ~ $postbase .*){
+							if(test -f $post){
+								if(! awk -F': ' '
 								function trim(s){
 									gsub(/^[ \t]+/, "", s)
 									gsub(/[ \t]+$/, "", s)
@@ -143,8 +145,9 @@ for(feed in $feeds/*){
 									}
 									printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", date, short, ARGV[2], display, title, preview1, preview2, FILENAME
 								}
-							' $feed/profile $post >>$tmp){
-								echo $0^': skip post (bad format): '^$post >[1=2]
+								' $feed/profile $post >>$tmp){
+									echo $0^': skip post (bad format): '^$post >[1=2]
+								}
 							}
 						}
 					}
@@ -169,7 +172,7 @@ if(! ~ $status ''){
 awk -F '	' '
 	{
 		print $1 "  " $4
-		print "    " $8
+		print "    9social/open-post " $8
 		print "    " $5
 		if($6 != "")
 			print "    " $6

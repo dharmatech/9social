@@ -1,0 +1,32 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/lib/cursor-position' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 0)
+	usage
+if(~ $#winid 0 || ~ $winid '')
+	fail 'missing winid'
+if(! test -d /mnt/acme/$winid)
+	fail 'acme window not found: '^$winid
+
+result=`{@{
+	cd /mnt/acme/$winid || exit 'no window'
+	{
+		echo 'addr=dot' >ctl || exit 'addr dot failed'
+		cat addr
+	} <addr
+}}
+st=$status
+if(! ~ $st '' || ! ~ $#result 2)
+	fail 'cannot read cursor position'
+
+echo $result | awk '{print $1}'
+exit ''
