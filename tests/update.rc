@@ -1,0 +1,91 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Update
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+postid=9social:post:$useruuid^:$postuuid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-update-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self/posts || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	post=posts/2026-04-29-update-me
+	{
+		echo 'id: '^$postid
+		echo 'author: dharmatech'
+		echo 'date: 2026-04-29T18:10:35Z'
+		echo 'title: Update Me'
+		echo
+		echo body
+	} >$post
+	git/add profile $post >/dev/null >[2]/dev/null || fail git-add
+	git/commit -m initial profile $post >/dev/null >[2]/dev/null || fail git-commit-initial
+	home=$testhome
+}
+
+fn runupdate {
+	%=$postpath
+	$cmd >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup changed
+postpath=$home/lib/9social/self/$post
+echo changed >>$postpath
+runupdate
+if(! ~ $st '') fail changed-status $st `{cat $testhome/err}
+grep '^updated: posts/2026-04-29-update-me$' $testhome/out >/dev/null || fail changed-output `{cat $testhome/out}
+if(! git/log -n 1 -s | grep 'update post: '^$postid >/dev/null) fail changed-commit-message
+
+setup noop
+postpath=$home/lib/9social/self/$post
+runupdate
+if(! ~ $st '') fail noop-status $st `{cat $testhome/err}
+grep '^no changes: posts/2026-04-29-update-me$' $testhome/out >/dev/null || fail noop-output `{cat $testhome/out}
+if(git/log -n 1 -s | grep 'update post:' >/dev/null) fail noop-committed
+
+setup feed
+mkdir -p $home/lib/9social/feeds/9social-user-dennis/posts || fail feed-mkdir
+feedpost=$home/lib/9social/feeds/9social-user-dennis/posts/2026-04-29-feed
+cp $postpath $feedpost || fail feed-copy
+postpath=$feedpost
+runupdate
+if(~ $st '') fail feed-status
+grep 'not a self post' $testhome/err >/dev/null || fail feed-error `{cat $testhome/err}
+
+setup badpost
+postpath=$home/lib/9social/self/$post
+sed 's/^date: .*/date: no/' $postpath >$testhome/bad
+mv $testhome/bad $postpath
+runupdate
+if(~ $st '') fail badpost-status
+grep 'bad post' $testhome/err >/dev/null || fail badpost-error `{cat $testhome/err}
+
+setup missing-current
+%=''
+$cmd >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail missing-current-status
+grep 'no current Acme file' $testhome/err >/dev/null || fail missing-current-error
+
+setup usage
+$cmd extra >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/Update' $testhome/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

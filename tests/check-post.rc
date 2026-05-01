@@ -1,0 +1,100 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/check-post
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+targetuuid=22222222-2222-4222-8222-222222222222
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-check-post-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome || fail mkdir
+	post=$testhome/post
+}
+
+fn writepost {
+	>$post {
+		echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+		echo 'author: dharmatech'
+		echo 'date: 2026-04-29T18:10:35Z'
+		echo 'title:'
+		echo
+		echo body
+	}
+}
+
+setup ok
+writepost
+$cmd $post || fail ok-status
+
+setup reply
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dharmatech'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: reply'
+	echo 'target: 9social:post:'^$useruuid^':'^$targetuuid
+	echo
+	echo body
+}
+$cmd $post || fail reply-status
+
+setup like
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dharmatech'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: like'
+	echo 'target: 9social:post:'^$useruuid^':'^$targetuuid
+	echo
+}
+$cmd $post || fail like-status
+
+setup missingblank
+{
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dharmatech'
+	echo 'date: 2026-04-29T18:10:35Z'
+} >$post
+$cmd $post >$testhome/out >[2]$testhome/err
+if(~ $status '') fail missingblank-status
+
+setup baddate
+writepost
+sed 's/2026-04-29T18:10:35Z/not-a-date/' $post >$testhome/bad
+mv $testhome/bad $post
+$cmd $post >$testhome/out >[2]$testhome/err
+if(~ $status '') fail baddate-status
+
+setup duplicate
+writepost
+sed '1a\
+id: 9social:post:'^$useruuid^':'^$targetuuid $post >$testhome/bad
+mv $testhome/bad $post
+$cmd $post >$testhome/out >[2]$testhome/err
+if(~ $status '') fail duplicate-status
+
+setup badtarget
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dharmatech'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: reply'
+	echo 'target: nope'
+	echo
+}
+$cmd $post >$testhome/out >[2]$testhome/err
+if(~ $status '') fail badtarget-status
+
+setup usage
+$cmd >$testhome/out >[2]$testhome/err
+if(~ $status '') fail usage-status
+
+echo ok
+exit ''

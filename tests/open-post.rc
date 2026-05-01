@@ -98,7 +98,7 @@ $testcmd $post >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail selfpath-status $st
 if(! ~ `{cat $testhome/opened} $post) fail selfpath-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
+grep '^ | 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
 
 setup badprefix
 token=bad:post:9social-user-dennis/posts/2026-04-29-test
