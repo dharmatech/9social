@@ -1,0 +1,74 @@
+#!/bin/awk -f
+
+function fail(){ exit 1 }
+function trim(s){
+	gsub(/^[ \t]+/, "", s)
+	gsub(/[ \t]+$/, "", s)
+	return s
+}
+function validuuid(s, a){
+	split(s, a, "-")
+	return length(a[1]) == 8 && length(a[2]) == 4 && length(a[3]) == 4 && length(a[4]) == 4 && length(a[5]) == 12 && s ~ /^[0-9a-f-]+$/
+}
+function validpostid(s, a){
+	split(s, a, ":")
+	return length(a) == 4 && a[1] == "9social" && a[2] == "post" && validuuid(a[3]) && validuuid(a[4])
+}
+
+BEGIN {
+	if(ARGC != 2)
+		fail()
+	datepat = "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z$"
+}
+
+!body {
+	if($0 == ""){
+		body = 1
+		next
+	}
+	if(index($0, ":") == 0)
+		bad = 1
+	key = substr($0, 1, index($0, ":") - 1)
+	val = trim(substr($0, index($0, ":") + 1))
+	if(key == "id"){
+		id_count++
+		id = val
+	} else if(key == "author"){
+		author_count++
+		author = val
+	} else if(key == "date"){
+		date_count++
+		date = val
+	} else if(key == "title"){
+		title_count++
+	} else if(key == "type"){
+		type_count++
+		type = val
+	} else if(key == "target"){
+		target_count++
+		target = val
+	}
+}
+
+END {
+	if(bad || !body)
+		fail()
+	if(id_count != 1 || author_count != 1 || date_count != 1)
+		fail()
+	if(!validpostid(id))
+		fail()
+	if(author == "")
+		fail()
+	if(date !~ datepat)
+		fail()
+	if(type_count > 1 || target_count > 1)
+		fail()
+	if(type_count == 1 && type != "reply" && type != "like")
+		fail()
+	if(target_count == 1 && !validpostid(target))
+		fail()
+	if(type == "reply" && target_count != 1)
+		fail()
+	if(type == "like" && target_count != 1)
+		fail()
+}

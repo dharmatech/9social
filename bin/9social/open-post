@@ -90,7 +90,7 @@ if(~ $mode acme){
 	tag=' | 9social/Reply'
 	selfpost=$home/lib/9social/self/posts/
 	if(awk -v 'post='^$post -v 'prefix='^$selfpost 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
-		tag=' | 9social/Reply 9social/Delete'
+		tag=' | 9social/Reply 9social/Update 9social/Delete'
 	$open_file_window $post $tag
 	st=$status
 	if(! ~ $st '')

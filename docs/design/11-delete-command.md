@@ -54,7 +54,7 @@ A typical workflow is:
 2. The post window tag includes:
 
 ```text
-9social/Reply 9social/Delete
+9social/Reply 9social/Update 9social/Delete
 ```
 
 3. User middle-clicks `9social/Delete`.
@@ -115,7 +115,7 @@ posts/2026-04-29-test-post
 For self posts:
 
 ```text
- | 9social/Reply 9social/Delete
+ | 9social/Reply 9social/Update 9social/Delete
 ```
 
 For followed-feed posts:

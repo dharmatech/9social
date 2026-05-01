@@ -127,7 +127,7 @@ For followed-feed posts:
 For self posts:
 
 ```text
- | 9social/Reply 9social/Delete
+ | 9social/Reply 9social/Update 9social/Delete
 ```
 
 Level 1 does not show `Like` on the user's own posts.
