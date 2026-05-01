@@ -27,7 +27,7 @@ This includes:
 
 ## Files Used
 
-* `$home/lib/9social/following`
+* `$home/lib/9social/self/following`
 * `$home/lib/9social/feeds/`
 
 ---
@@ -43,11 +43,11 @@ This includes:
 
 2. **Read following list**
 
-   * If `$home/lib/9social/following` does not exist:
+   * If `$home/lib/9social/self/following` does not exist:
 
      * exit successfully
 
-   * Open `$home/lib/9social/following`
+   * Open `$home/lib/9social/self/following`
    * If the file cannot be read:
 
      * print a short error message
@@ -161,7 +161,7 @@ Suggested Level 1 progress messages:
 Suggested Level 1 error messages:
 
 * `9social/refresh: cannot create $home/lib/9social/feeds`
-* `9social/refresh: cannot read $home/lib/9social/following`
+* `9social/refresh: cannot read $home/lib/9social/self/following`
 * `9social/refresh: clone failed: <url>`
 * `9social/refresh: update failed: <name>`
 * `9social/refresh: not a git repository: <path>`

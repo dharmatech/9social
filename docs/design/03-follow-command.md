@@ -35,7 +35,8 @@ That is handled by `9social/refresh`.
 
 ## Files Used
 
-* `$home/lib/9social/following`
+* `$home/lib/9social/self/following`
+* `$home/lib/9social/self/`
 * `$home/lib/9social/`
 
 ---
@@ -66,31 +67,44 @@ That is handled by `9social/refresh`.
      * create it
      * if creation fails, print a short error message and exit with failure
 
-4. **Ensure following file exists**
+4. **Ensure self path exists**
 
-   * If `$home/lib/9social/following` does not exist:
+   * If `$home/lib/9social/self/` does not exist:
 
      * create it
      * if creation fails, print a short error message and exit with failure
 
-5. **Check for duplicates**
+   This may create a minimal pre-init `self/` directory containing only `following`.
 
-   * If the URL already exists as a full line in `following`:
+5. **Update following file**
 
-      * do nothing
-      * exit successfully
+   * Add the URL to `$home/lib/9social/self/following`
+   * Remove blank lines
+   * Remove duplicate lines
+   * Sort the file lexically
+   * If the update fails, print a short error message and exit with failure
 
-   * Duplicate matching is performed after trimming the input URL
-   * Different URL spellings remain distinct in Level 1
+   Duplicate matching is performed after trimming the input URL. Different URL spellings remain distinct in Level 1.
 
-6. **Append URL**
+   If the normalized file contents are unchanged, exit successfully without committing.
 
-   * If `following` exists and does not end with a newline:
+6. **Commit if self is initialized**
 
-     * write one newline first
+   * If `$home/lib/9social/self/.git` exists and the `following` file changed, commit only `following`:
 
-   * Add the URL as a new line at the end of the file
-   * If the append fails, print a short error message and exit with failure
+   ```rc
+   git/add following
+   git/commit -m 'follow: <url>' following
+   ```
+
+   The commit message should use the normalized URL directly. Example:
+
+   ```text
+   follow: git@github.com:dharmatech/9social-user-dennis.git
+   ```
+
+   * If `self/` is not a Git repository, do not commit. This is the reader/pre-init mode.
+   * `follow` does not push.
 
 ---
 
@@ -104,8 +118,8 @@ Suggested Level 1 error messages:
 * `usage: 9social/follow <url>`
 * `9social/follow: empty url`
 * `9social/follow: cannot create $home/lib/9social`
-* `9social/follow: cannot create $home/lib/9social/following`
-* `9social/follow: cannot update $home/lib/9social/following`
+* `9social/follow: cannot create $home/lib/9social/self/following`
+* `9social/follow: cannot update $home/lib/9social/self/following`
 
 ---
 
@@ -120,7 +134,7 @@ After running:
 The file:
 
 ```text
-$home/lib/9social/following
+$home/lib/9social/self/following
 ```
 
 may contain:
@@ -133,10 +147,11 @@ https://github.com/dharmatech/9social-user-dennis.git
 
 ## Notes
 
-* This command only modifies local configuration
+* This command modifies the public follow list in `self/following`
 * It does not access the network
 * It does not validate repository contents
 * It is safe to run multiple times with the same URL
+* If the URL is already present, the command should make no commit
 * The `following` file is a strict list of repository URLs, one per line
 * Blank lines and comment lines are not part of the Level 1 format
 * In Level 1, `follow` records transport locations, not canonical feed identity

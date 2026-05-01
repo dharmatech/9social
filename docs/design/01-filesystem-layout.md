@@ -39,8 +39,10 @@ $home/lib/9social
 ```text
 $home/lib/9social/
     self/
+        profile
+        following
+        posts/
     feeds/
-    following
 ```
 
 ---
@@ -55,7 +57,7 @@ $home/lib/9social/self/
 
 Stores the user's own publishing feed repository.
 
-This repository is where `9social/new-post` writes new posts.
+This repository is where `9social/new-post` writes new posts and where `9social/follow` records the public follow list.
 
 ---
 
@@ -64,6 +66,7 @@ This repository is where `9social/new-post` writes new posts.
 ```text
 self/
     profile
+    following
     posts/
 ```
 
@@ -121,12 +124,14 @@ feeds/
 ## following
 
 ```text
-$home/lib/9social/following
+$home/lib/9social/self/following
 ```
 
 ### Purpose
 
-Stores the list of followed feeds.
+Stores the public list of followed feeds.
+
+`following` is part of `self/` so other users can see who this user follows after the self repository is pushed.
 
 ---
 
@@ -150,6 +155,7 @@ https://github.com/dharmatech/9social-user-joe.git
 * This file is the source of truth for followed feeds
 * It is safe to edit manually
 * Duplicate entries should be avoided
+* If `self/` is not initialized yet, `follow` may create a minimal `self/` containing only `following`
 
 ---
 
@@ -157,13 +163,13 @@ https://github.com/dharmatech/9social-user-joe.git
 
 ### 9social/follow
 
-* Appends URLs to `following`
+* Adds URLs to `self/following`, deduplicates, and sorts it
 
 ---
 
 ### 9social/refresh
 
-* Reads `following`
+* Reads `self/following`; missing `following` means no feeds are configured
 * Clones or updates repositories into `feeds/`
 
 ---
@@ -234,7 +240,7 @@ Commands operate on local data after `refresh`.
 The filesystem layout is simple and explicit:
 
 * `self/` stores the user's own feed
-* `following` defines what to fetch
+* `self/following` defines what to fetch and is part of the public self repository
 * `feeds/` stores fetched data
 * commands operate directly on these paths
 

@@ -49,6 +49,7 @@ After initialization:
 ```text
 $home/lib/9social/self/
     profile
+    following
     posts/
 ```
 
@@ -83,17 +84,31 @@ If it cannot be created, fail.
 
 ---
 
-### 3. Refuse to overwrite an existing self feed
+### 3. Handle an existing self directory
 
-If this path already exists:
+If `$home/lib/9social/self` does not exist, continue with a normal clone.
+
+If `$home/lib/9social/self` exists and is already a Git repository, fail with a clear diagnostic. Level 1 does not support replacing or reconfiguring an existing initialized self feed.
+
+If `$home/lib/9social/self` exists and is not a Git repository, `init-self` may auto-migrate it only when it contains the pre-init follow list:
 
 ```text
-$home/lib/9social/self
+$home/lib/9social/self/following
 ```
 
-fail with a clear diagnostic.
+and no other regular files. Empty directories may be ignored.
 
-Level 1 does not support replacing or reconfiguring an existing self feed.
+If unknown regular files exist under pre-init `self/`, fail and tell the user to move or remove them manually. This check is intentionally limited to regular files; empty directories may be ignored.
+
+When auto-migrating, save `following` aside, replace the pre-init `self/` with the cloned repository, then restore or merge `following` into the clone.
+
+The saved file should live outside `self/`, for example:
+
+```text
+$home/lib/9social/following.<pid>.tmp
+```
+
+Remove the temporary file after a successful restore or merge. If migration fails, leave diagnostics clear enough that the user can recover the saved follow list manually.
 
 ---
 
@@ -109,7 +124,7 @@ $home/lib/9social/self
 
 If cloning fails, remove the partially created `$home/lib/9social/self`, report the failure, and exit.
 
-This cleanup is safe because `init-self` verifies that `self/` does not exist before starting the clone.
+This cleanup is safe when `self/` did not exist before cloning. If `init-self` is migrating a pre-init `self/following`, it must keep the saved follow list outside the clone path until cloning succeeds.
 
 ---
 
@@ -119,6 +134,7 @@ Inside `$home/lib/9social/self`, ensure:
 
 ```text
 profile
+following
 posts/
 ```
 
@@ -132,7 +148,10 @@ Rules:
 * If `posts/` is missing, create it
 * When creating `posts/`, also create `posts/.keep` so Git can track the directory
 * If `posts/` already exists, leave it alone
-* If both `profile` and `posts/` already exist and are valid, make no changes
+* If `following` is missing, create it as an empty file
+* If `following` was saved from a pre-init self directory, merge it with any cloned `following`, remove blank lines, deduplicate, and sort
+* Commit the migrated `following` only if the final merged file differs from the cloned repository's original `following`
+* If `profile`, `following`, and `posts/` already exist and are valid, make no changes
 
 ---
 
@@ -268,9 +287,11 @@ Rules:
 * Commit locally only
 * Do not push
 * Track created paths explicitly during setup
-* Add only files created by `init-self`
+* Add only files created or migrated by `init-self`
 * If `posts/` was created, add `posts/.keep`
-* Pass the created path list to both `git/add` and `git/commit`
+* If `following` was created or changed by migration, add `following`
+* Do not commit `following` if merge/dedupe/sort leaves it unchanged
+* Pass the created or migrated path list to both `git/add` and `git/commit`
 * Leave unrelated repository state alone
 * If nothing was created, exit successfully without committing
 
@@ -281,10 +302,16 @@ git/add <created-path> ...
 git/commit -m 'init 9social self feed' <created-path> ...
 ```
 
-Suggested commit message:
+Suggested commit message for initial structure:
 
 ```text
 init 9social self feed
+```
+
+Suggested commit message when importing a pre-init follow list into an otherwise existing feed:
+
+```text
+follow: import following
 ```
 
 If `git/add` or `git/commit` fails, leave created files in place and report the failure.
@@ -297,11 +324,12 @@ Abort with a diagnostic if:
 
 * the URL argument is missing or empty
 * `$home/lib/9social` cannot be created
-* `$home/lib/9social/self` already exists
+* `$home/lib/9social/self` already exists as an initialized Git repository
 * the repository cannot be cloned
 * partial clone cleanup fails
 * `posts/` cannot be created
 * `profile` cannot be created
+* `following` cannot be created or migrated
 * an existing `profile` is malformed
 * Git add or commit fails
 
@@ -317,15 +345,15 @@ Level 1 does not include:
 * pushing after initialization
 * reconfiguring an existing self feed
 * supporting a self feed outside `$home/lib/9social/self`
-* adding the user's own feed URL to `$home/lib/9social/following`
+* adding the user's own feed URL to `$home/lib/9social/self/following`
 
 ---
 
 ## Future Considerations
 
-A future client may offer an explicit follow-self action that adds the user's own feed URL to `$home/lib/9social/following`.
+A future client may offer an explicit follow-self action that adds the user's own feed URL to `$home/lib/9social/self/following`.
 
-This should be opt-in because `following` is local reader state, while `init-self` is publishing setup.
+This should be opt-in because following oneself is a social graph choice, while `init-self` is publishing setup.
 
 ---
 

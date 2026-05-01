@@ -1,0 +1,73 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/follow
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-follow-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome || fail setup-mkdir
+	home=$testhome
+}
+
+setup preinit
+$cmd '  git@github.com:dharmatech/9social-user-dennis.git  ' >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail preinit-status $st `{cat $home/err}
+if(! test -f $home/lib/9social/self/following) fail preinit-following-missing
+if(! ~ `{cat $home/lib/9social/self/following} git@github.com:dharmatech/9social-user-dennis.git) fail preinit-content `{cat $home/lib/9social/self/following}
+if(test -d $home/lib/9social/self/.git) fail preinit-git-created
+
+$cmd git@github.com:dharmatech/9social-user-joe.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail sorted-status $st `{cat $home/err}
+expected=$home/expected
+>$expected {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+	echo git@github.com:dharmatech/9social-user-joe.git
+}
+cmp $expected $home/lib/9social/self/following >/dev/null || fail sorted-content `{cat $home/lib/9social/self/following}
+
+setup gitrepo
+mkdir -p $home/lib/9social/self || fail gitrepo-mkdir
+cd $home/lib/9social/self || fail gitrepo-cd
+git/init . >/dev/null >[2]/dev/null || fail gitrepo-init
+{
+	echo 'id: 9social:user:'^$useruuid
+	echo 'name: dharmatech'
+	echo 'display: dharmatech'
+} >profile
+git/add profile >/dev/null >[2]/dev/null || fail gitrepo-add
+git/commit -m initial profile >/dev/null >[2]/dev/null || fail gitrepo-commit
+$cmd git@github.com:dharmatech/9social-user-dennis.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail gitrepo-status $st `{cat $home/err}
+grep '^git@github.com:dharmatech/9social-user-dennis.git$' $home/lib/9social/self/following >/dev/null || fail gitrepo-following
+if(! git/log -n 1 -s | grep 'follow: git@github.com:dharmatech/9social-user-dennis.git' >/dev/null) fail gitrepo-commit-message
+head=`{git/query HEAD}
+$cmd git@github.com:dharmatech/9social-user-dennis.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail duplicate-status $st `{cat $home/err}
+head2=`{git/query HEAD}
+if(! ~ $head $head2) fail duplicate-committed $head $head2
+
+setup usage
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/follow <url>' $home/err >/dev/null || fail usage-error
+
+setup empty
+$cmd '   ' >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail empty-status
+grep 'empty url' $home/err >/dev/null || fail empty-error
+
+echo ok
+exit ''

@@ -1,7 +1,13 @@
 #!/bin/rc
 
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
 social=$home^/lib/9social
-following=$social^/following
+self=$social^/self
+following=$self^/following
 
 if(! ~ $#* 1){
 	echo 'usage: 9social/follow <url>' >[1=2]
@@ -9,41 +15,56 @@ if(! ~ $#* 1){
 }
 
 url=`{echo $1 | sed 's/^[ 	]*//; s/[ 	]*$//'}
-if(~ $#url 0 || ~ $url ''){
-	echo $0^': empty url' >[1=2]
-	exit 'empty url'
-}
+if(~ $#url 0 || ~ $url '')
+	fail 'empty url'
 
 if(! test -d $social){
-	if(! mkdir -p $social >[2]/dev/null){
-		echo $0^': cannot create '^$social >[1=2]
-		exit 'cannot create local state path'
-	}
+	if(! mkdir -p $social >[2]/dev/null)
+		fail 'cannot create '^$social
+}
+if(! test -d $self){
+	if(! mkdir -p $self >[2]/dev/null)
+		fail 'cannot create '^$self
+}
+if(test -e $following >[2]/dev/null){
+	if(! test -f $following)
+		fail 'cannot update '^$following
+}
+if not {
+	if(! echo -n >$following)
+		fail 'cannot create '^$following
 }
 
-if(! test -e $following){
-	if(! echo -n >$following){
-		echo $0^': cannot create '^$following >[1=2]
-		exit 'cannot create following'
-	}
+tmp=$social^/following.^$pid^.tmp
+{
+	cat $following
+	echo $url
+} | awk '{
+	gsub(/^[ \t]+/, "")
+	gsub(/[ \t]+$/, "")
+	if($0 != "") print
+}' | sort | uniq >$tmp
+if(! ~ $status ''){
+	rm -f $tmp >[2]/dev/null
+	fail 'cannot update '^$following
 }
 
-for(line in `{cat $following}){
-	if(~ $line $url)
-		exit ''
+if(cmp $following $tmp >/dev/null >[2]/dev/null){
+	rm -f $tmp >[2]/dev/null
+	exit ''
 }
 
-if(test -s $following){
-	last=`{tail -c 1 $following}
-	if(! ~ $#last 0){
-		if(! echo >>$following){
-			echo $0^': cannot update '^$following >[1=2]
-			exit 'cannot update following'
-		}
-	}
+if(! cp $tmp $following){
+	rm -f $tmp >[2]/dev/null
+	fail 'cannot update '^$following
+}
+rm -f $tmp >[2]/dev/null
+
+if(test -d $self/.git){
+	if(! @{cd $self && git/add following})
+		fail 'git add failed: following'
+	if(! @{cd $self && git/commit -m 'follow: '^$url following})
+		fail 'git commit failed: following'
 }
 
-if(! echo $url >>$following){
-	echo $0^': cannot update '^$following >[1=2]
-	exit 'cannot update following'
-}
+exit ''

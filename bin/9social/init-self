@@ -29,9 +29,31 @@ fn validprofile {
 	' $1 >/dev/null >[2]/dev/null
 }
 
+fn normalizefollowing {
+	awk '{
+		gsub(/^[ \t]+/, "")
+		gsub(/[ \t]+$/, "")
+		if($0 != "") print
+	}' | sort | uniq
+}
+
+
+fn restorepreinit {
+	if(! ~ $#savedfollowing 0 && test -f $savedfollowing){
+		mkdir -p $self >[2]/dev/null
+		cp $savedfollowing $self/following >[2]/dev/null
+	}
+}
+
 social=$home^/lib/9social
 self=$social^/self
 created=()
+if(~ $#git_clone 0)
+	git_clone=git/clone
+if(~ $#git_add 0)
+	git_add=git/add
+if(~ $#git_commit 0)
+	git_commit=git/commit
 uuidcmd=9social/uuid
 if(~ $0 */init-self)
 	uuidcmd=`{echo $0 | sed 's;/init-self$;/uuid;'}
@@ -58,17 +80,43 @@ if(! test -d $social){
 		fail 'cannot create '^$social
 }
 
-if(test -e $self >[2]/dev/null)
-	fail $self^' already exists'
+savedfollowing=()
+if(test -f $self)
+	fail $self^' already exists and is not a directory'
+if(test -d $self){
+	if(test -d $self/.git)
+		fail $self^' already exists as a Git repository'
+	unknown=()
+	for(path in `{walk $self}){
+		if(! ~ $path $self){
+			if(! ~ $path $self/following){
+				if(! test -d $path)
+					unknown=($unknown $path)
+			}
+		}
+	}
+	if(! ~ $#unknown 0)
+		fail $self^' contains files other than following'
+	if(test -f $self/following){
+		savedfollowing=$social^/following.^$pid^.tmp
+		if(! cp $self/following $savedfollowing)
+			fail 'cannot save following'
+	}
+	if(! rm -rf $self)
+		fail 'cannot replace pre-init self'
+}
 
 if(~ $url https://github.com/*)
 	echo $0^': warning: GitHub SSH clone URL is recommended for pushing from 9front' >[1=2]
 
-if(! git/clone $url $self >/dev/null){
+if(! $git_clone $url $self >/dev/null){
 	if(test -e $self >[2]/dev/null){
-		if(! rm -rf $self >[2]/dev/null)
+		if(! rm -rf $self >[2]/dev/null){
+			restorepreinit
 			fail 'clone failed and cannot clean up '^$self
+		}
 	}
+	restorepreinit
 	fail 'clone failed: '^$url
 }
 
@@ -77,6 +125,7 @@ if(! test -d $self)
 
 profile=$self^/profile
 posts=$self^/posts
+following=$self^/following
 
 if(test -e $profile >[2]/dev/null){
 	if(! test -f $profile)
@@ -109,12 +158,49 @@ if not {
 	created=($created posts/.keep)
 }
 
+followingchanged=()
+followingorig=$social^/following.clone.^$pid^.tmp
+if(test -e $following >[2]/dev/null){
+	if(! test -f $following)
+		fail 'bad following path: '^$following
+	cp $following $followingorig >[2]/dev/null
+}
+if not {
+	if(! echo -n >$following)
+		fail 'cannot create following'
+	followingchanged=1
+}
+
+if(! ~ $#savedfollowing 0){
+	merge=$social^/following.merge.^$pid^.tmp
+	{
+		cat $following
+		cat $savedfollowing
+	} | normalizefollowing >$merge
+	if(! ~ $status '')
+		fail 'cannot merge following'
+	if(! cmp $following $merge >/dev/null >[2]/dev/null){
+		if(! cp $merge $following)
+			fail 'cannot migrate following'
+		followingchanged=1
+	}
+	rm -f $merge $savedfollowing >[2]/dev/null
+}
+
+if(! ~ $#followingchanged 0)
+	created=($created following)
+rm -f $followingorig >[2]/dev/null
+
 if(~ $#created 0)
 	exit ''
 
-if(! @{cd $self && git/add $created})
+commitmsg='init 9social self feed'
+if(! ~ $#savedfollowing 0 && ~ $#created 1 && ~ $created following)
+	commitmsg='follow: import following'
+
+if(! @{cd $self && $git_add $created})
 	fail 'git add failed'
-if(! @{cd $self && git/commit -m 'init 9social self feed' $created})
+if(! @{cd $self && $git_commit -m $commitmsg $created})
 	fail 'git commit failed'
 
 exit ''

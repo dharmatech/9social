@@ -91,8 +91,8 @@ A feed’s identity is defined by its `profile` file, not:
 ```
 $home/lib/9social/
     self/
+        following
     feeds/
-    following
 ```
 
 ---
@@ -101,7 +101,7 @@ $home/lib/9social/
 
 * `self/` → the user's own publishing feed repository
 * `feeds/` → local clones of followed feeds
-* `following` → list of remote feed URLs
+* `self/following` → public list of remote feed URLs the user follows
 
 ---
 
@@ -147,7 +147,7 @@ Future event-like records, such as reactions, may be immutable append-only entri
 The user maintains:
 
 ```
-$home/lib/9social/following
+$home/lib/9social/self/following
 ```
 
 This file contains **remote repository URLs**, one per line:
@@ -165,7 +165,7 @@ https://github.com/.../9social-user-joe.git
 9social/follow <url>
 ```
 
-Adds the URL to `following`.
+Adds the URL to `self/following`.
 
 ---
 

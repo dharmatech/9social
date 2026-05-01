@@ -1,0 +1,156 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/init-self
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-init-self-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/bin/git || fail mkdir-bin
+	home=$testhome
+	path=($testhome/bin $path)
+	echo -n $testhome/bin/git/clone >/env/git_clone
+	echo -n $testhome/bin/git/add >/env/git_add
+	echo -n $testhome/bin/git/commit >/env/git_commit
+	>$testhome/bin/git/clone {
+		echo '#!/bin/rc'
+		echo 'dest=$2'
+		echo 'mkdir -p $dest/.git || exit fail'
+		echo 'if(~ $#clone_profile 1){'
+		echo '	cp $clone_profile $dest/profile || exit fail'
+		echo '}'
+		echo 'if(~ $#clone_following 1){'
+		echo '	cp $clone_following $dest/following || exit fail'
+		echo '}'
+		echo 'if(~ $#clone_posts 1){'
+		echo '	mkdir -p $dest/posts || exit fail'
+		echo '}'
+		echo 'exit 0'
+	}
+	chmod +x $testhome/bin/git/clone || fail chmod-clone
+	>$testhome/bin/git/add {
+		echo '#!/bin/rc'
+		echo 'echo $* >'^$testhome^'/git-add'
+	}
+	chmod +x $testhome/bin/git/add || fail chmod-add
+	>$testhome/bin/git/commit {
+		echo '#!/bin/rc'
+		echo 'echo $* >'^$testhome^'/git-commit'
+	}
+	chmod +x $testhome/bin/git/commit || fail chmod-commit
+}
+
+fn validprofilefile {
+	grep '^id: 9social:user:' $home/lib/9social/self/profile >/dev/null || fail $1-profile-id
+	grep '^name: repo$' $home/lib/9social/self/profile >/dev/null || fail $1-profile-name
+	grep '^display: repo$' $home/lib/9social/self/profile >/dev/null || fail $1-profile-display
+}
+
+setup normal
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail normal-status $st `{cat $home/err}
+validprofilefile normal
+if(! test -f $home/lib/9social/self/following) fail normal-following-missing
+if(! test -f $home/lib/9social/self/posts/.keep) fail normal-keep-missing
+grep '^profile posts/.keep following$' $home/git-add >/dev/null || fail normal-add `{cat $home/git-add}
+grep -- '-m init 9social self feed profile posts/.keep following' $home/git-commit >/dev/null || fail normal-commit `{cat $home/git-commit}
+
+setup preinit
+mkdir -p $home/lib/9social/self || fail preinit-mkdir
+>$home/lib/9social/self/following {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+	echo git@github.com:dharmatech/9social-user-dennis.git
+	echo git@github.com:dharmatech/9social-user-joe.git
+}
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail preinit-status $st `{cat $home/err}
+expected=$home/expected
+>$expected {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+	echo git@github.com:dharmatech/9social-user-joe.git
+}
+cmp $expected $home/lib/9social/self/following >/dev/null || fail preinit-following `{cat $home/lib/9social/self/following}
+if(ls $home/lib/9social/following.*.tmp >/dev/null >[2]/dev/null) fail preinit-temp-left
+
+setup merge
+mkdir -p $home/lib/9social/self || fail merge-mkdir
+>$home/lib/9social/self/following {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+}
+clone_following=$home/clone-following
+>$clone_following {
+	echo git@github.com:dharmatech/9social-user-joe.git
+}
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail merge-status $st `{cat $home/err}
+>$expected {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+	echo git@github.com:dharmatech/9social-user-joe.git
+}
+cmp $expected $home/lib/9social/self/following >/dev/null || fail merge-following `{cat $home/lib/9social/self/following}
+
+authprofile=$home/profile
+>$authprofile {
+	echo 'id: 9social:user:'^$useruuid
+	echo 'name: repo'
+	echo 'display: repo'
+}
+setup existingvalid
+clone_profile=$authprofile
+clone_posts=1
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail existingvalid-status $st `{cat $home/err}
+if(test -f $home/git-commit) fail existingvalid-committed `{cat $home/git-commit}
+
+
+setup importonly
+mkdir -p $home/lib/9social/self || fail importonly-mkdir
+>$home/lib/9social/self/following {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+}
+clone_profile=$authprofile
+clone_posts=1
+clone_following=$home/clone-following
+>$clone_following {
+	echo git@github.com:dharmatech/9social-user-joe.git
+}
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail importonly-status $st `{cat $home/err}
+grep '^following$' $home/git-add >/dev/null || fail importonly-add `{cat $home/git-add}
+grep -- '-m follow: import following following' $home/git-commit >/dev/null || fail importonly-commit `{cat $home/git-commit}
+
+setup unknown
+mkdir -p $home/lib/9social/self || fail unknown-mkdir
+echo nope >$home/lib/9social/self/notes
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail unknown-status
+grep 'contains files other than following' $home/err >/dev/null || fail unknown-error `{cat $home/err}
+if(! test -f $home/lib/9social/self/notes) fail unknown-removed
+
+setup existinggit
+mkdir -p $home/lib/9social/self/.git || fail existinggit-mkdir
+$cmd git@github.com:dharmatech/9social-user-repo.git >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail existinggit-status
+grep 'already exists as a Git repository' $home/err >/dev/null || fail existinggit-error `{cat $home/err}
+
+setup usage
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/init-self <git-url>' $home/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

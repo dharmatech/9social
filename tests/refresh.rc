@@ -1,0 +1,66 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/refresh
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=/tmp/9social-refresh-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/bin/git || fail mkdir-bin
+	home=$testhome
+	path=($testhome/bin $path)
+}
+
+setup missing
+$cmd >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail missing-status $st `{cat $home/err}
+if(! test -d $home/lib/9social/feeds) fail missing-feeds
+if(test -s $home/out) fail missing-output `{cat $home/out}
+
+setup clone
+mkdir -p $home/lib/9social/self || fail clone-self
+>$home/lib/9social/self/following {
+	echo git@github.com:dharmatech/9social-user-dennis.git
+}
+>$home/bin/git/clone {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$home^'/clone-url'
+	echo 'echo $2 >'^$home^'/clone-path'
+	echo 'mkdir -p $2/.git'
+}
+chmod +x $home/bin/git/clone || fail clone-chmod
+$cmd >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail clone-status $st `{cat $home/err}
+if(! ~ `{cat $home/clone-url} git@github.com:dharmatech/9social-user-dennis.git) fail clone-url `{cat $home/clone-url}
+if(! ~ `{cat $home/clone-path} $home/lib/9social/feeds/9social-user-dennis) fail clone-path `{cat $home/clone-path}
+grep '^clone git@github.com:dharmatech/9social-user-dennis.git$' $home/out >/dev/null || fail clone-output `{cat $home/out}
+
+setup update
+mkdir -p $home/lib/9social/self $home/lib/9social/feeds/9social-user-dennis/.git || fail update-mkdir
+>$home/lib/9social/self/following echo git@github.com:dharmatech/9social-user-dennis.git
+>$home/bin/git/pull {
+	echo '#!/bin/rc'
+	echo 'pwd >'^$home^'/pull-pwd'
+}
+chmod +x $home/bin/git/pull || fail update-chmod
+$cmd >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail update-status $st `{cat $home/err}
+if(! ~ `{cat $home/pull-pwd} $home/lib/9social/feeds/9social-user-dennis) fail update-pwd `{cat $home/pull-pwd}
+grep '^update 9social-user-dennis$' $home/out >/dev/null || fail update-output `{cat $home/out}
+
+setup usage
+$cmd extra >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/refresh' $home/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

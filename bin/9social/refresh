@@ -1,7 +1,7 @@
 #!/bin/rc
 
 social=$home^/lib/9social
-following=$social^/following
+following=$social^/self/following
 feeds=$social^/feeds
 failed=()
 seen=()
