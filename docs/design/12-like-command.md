@@ -169,34 +169,48 @@ like: 9social:post:<target-user-uuid>:<target-post-uuid>
 
 ## Duplicate Likes
 
-Level 1 may allow duplicate like records from the same author to the same target.
+Once the local index exists, `Like` should be idempotent.
 
-That keeps the initial command simple and avoids needing an index before the record format is proven.
+Before creating a like record, `Like` should check the index for existing likes targeting the current post. It should read those like record files and check whether any valid like was authored by the current user.
 
-When calculating counts, clients should treat likes as a current-state signal by author and target:
+If the current user has already liked the target post, `Like` should print a short message such as:
+
+```text
+already liked
+```
+
+and exit successfully without creating a new like record or Git commit.
+
+If no current-user like exists, `Like` creates one `type: like` record and commits it locally.
+
+If the index is missing or stale, `Like` may run `9social/reindex` first and then check again.
+
+Historical duplicate like records may still exist. `reindex` should tolerate them. When calculating counts, clients should treat likes as a current-state signal by author and target:
 
 * for each `(author, target)` pair, count at most one current like
 * if future unlike records are introduced, the latest event for that pair determines state
-
-A future version may make `Like` idempotent by detecting an existing like before creating a new one.
 
 ---
 
 ## Counts And Indexing
 
-Like counts are not required for the first `Like` implementation.
+Like counts are not required for the first `Like` implementation or the first index implementation.
 
 The core primitive is the like record itself.
 
 Counts should be derived locally from followed feeds and the user's own feed. Counts are viewer-relative: a user only sees likes from feeds they have locally refreshed.
 
-A future index may map:
+The Level 1 local index is defined in `14-index.md`.
+
+Likes are indexed under:
 
 ```text
-<target-post-id> → like records targeting that post
+$home/lib/9social/index/targets/<encoded-target>/likes/<encoded-like-id>
 ```
 
-This would make post view enrichment efficient.
+Each leaf file contains the local path to the like record file.
+
+This makes post view enrichment efficient without changing the stored post format. Count/display helpers should be implemented after the core index primitives are working.
 
 ---
 
@@ -233,9 +247,7 @@ The timeline may use them later to enrich post summaries, but Level 1 should ski
 Level 1 does not support:
 
 * displaying like counts
-* indexing likes
 * unliking a post
-* preventing duplicate likes
 * pushing after liking
 * liking by post ID from the shell
 * global like counts

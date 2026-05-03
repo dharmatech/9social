@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/open-post [post-file | 9social:post:<feed-relative-post-path>]' >[1=2]
+	echo 'usage: 9social/open-post [post-file | post-id | 9social:post:<feed-relative-post-path>]' >[1=2]
 	exit usage
 }
 
@@ -35,27 +35,58 @@ fn linepath {
 	'
 }
 
+fn lineid {
+	awk '
+		{
+			for(i=1; i<=NF; i++){
+				if($i ~ /^9social:post:[0-9a-fA-F-]+:[0-9a-fA-F-]+$/){
+					print $i
+					exit
+				}
+			}
+			exit 1
+		}
+	'
+}
+
 if(~ $#* 0){
 	current_line=9social/lib/current-line
 	open_file_window=9social/lib/open-file-window
+	post_path=9social/lib/post-path
 	if(~ $0 */open-post){
 		current_line=`{echo $0 | sed 's;/open-post$;/lib/current-line;'}
 		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
+		post_path=`{echo $0 | sed 's;/open-post$;/lib/post-path;'}
 	}
 	line=`{$current_line}
 	st=$status
 	if(! ~ $st '')
 		fail 'cannot read current line'
 	post=`{echo $line | linepath}
-	if(! ~ $status '' || ! ~ $#post 1)
-		fail 'no post path on current line'
+	if(! ~ $status '' || ! ~ $#post 1){
+		postid=`{echo $line | lineid}
+		if(! ~ $status '' || ! ~ $#postid 1)
+			fail 'no post path on current line'
+		post=`{$post_path $postid}
+		if(! ~ $status '')
+			fail 'post file not found: '^$postid
+	}
 	mode=acme
 }
 if not if(~ $#* 1){
 	arg=$1
+	post_path=9social/lib/post-path
+	if(~ $0 */open-post)
+		post_path=`{echo $0 | sed 's;/open-post$;/lib/post-path;'}
 	if(~ $arg 9social:post:*){
-		post=`{tokenpath $arg}
-		mode=plumb
+		post=`{$post_path $arg >[2]/dev/null}
+		if(~ $status ''){
+			mode=acme
+		}
+		if not {
+			post=`{tokenpath $arg}
+			mode=plumb
+		}
 	}
 	if not {
 		post=$arg

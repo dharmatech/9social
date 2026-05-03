@@ -1,0 +1,37 @@
+#!/bin/awk -f
+BEGIN {
+	if(ARGC != 2){
+		print "usage: encode-id <post-id>" > "/fd/2"
+		exit 1
+	}
+	id = ARGV[1]
+	if(!ispostid(id)){
+		print "encode-id: malformed post id" > "/fd/2"
+		exit 1
+	}
+	gsub(/:/, "_", id)
+	print id
+}
+
+function ishex(s)
+{
+	return s ~ /^[0-9a-fA-F]+$/
+}
+
+function isuuid(s, p)
+{
+	if(split(s, p, "-") != 5)
+		return 0
+	return length(p[1]) == 8 && ishex(p[1]) && \
+		length(p[2]) == 4 && ishex(p[2]) && \
+		length(p[3]) == 4 && ishex(p[3]) && \
+		length(p[4]) == 4 && ishex(p[4]) && \
+		length(p[5]) == 12 && ishex(p[5])
+}
+
+function ispostid(s, p)
+{
+	if(split(s, p, ":") != 4)
+		return 0
+	return p[1] == "9social" && p[2] == "post" && isuuid(p[3]) && isuuid(p[4])
+}

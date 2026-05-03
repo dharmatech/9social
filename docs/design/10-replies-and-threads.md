@@ -390,15 +390,15 @@ If publishing succeeds, the draft and sidecar should both be removed. If publish
 
 At small scale, a client could theoretically scan all posts to find replies.
 
-At larger scale, replies should be indexed locally.
+The Level 1 local index is defined in `14-index.md`.
 
-A future indexing system may maintain derived files such as:
+Replies are indexed under:
 
 ```text
-$home/lib/9social/index/replies/<post-id>
+$home/lib/9social/index/targets/<encoded-target>/replies/<encoded-reply-id>
 ```
 
-containing the IDs of replies targeting that post.
+Each leaf file contains the local path to the reply post file.
 
 This keeps thread lookup fast and avoids repeated full scans during display.
 

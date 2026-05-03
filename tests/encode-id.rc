@@ -1,0 +1,45 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/encode-id
+base=/tmp/9social-encode-id-test.$pid
+id=9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+encoded=9social_post_550e8400-e29b-41d4-a716-446655440000_4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn runencode {
+	$cmd $* >$base.out >[2]$base.err
+	st=$status
+}
+
+rm -f $base.*
+
+runencode $id
+if(! ~ $st '') fail valid-status $st
+if(! ~ `{cat $base.out} $encoded) fail valid-output `{cat $base.out}
+
+runencode 9social:post:not-a-uuid:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+if(~ $st '') fail bad-user-uuid-status
+grep 'malformed post id' $base.err >/dev/null || fail bad-user-uuid-error
+if(test -s $base.out) fail bad-user-uuid-output
+
+runencode 9social:post:550e8400-e29b-41d4-a716-446655440000:not-a-uuid
+if(~ $st '') fail bad-post-uuid-status
+grep 'malformed post id' $base.err >/dev/null || fail bad-post-uuid-error
+
+runencode 9social:user:550e8400-e29b-41d4-a716-446655440000
+if(~ $st '') fail user-id-status
+grep 'malformed post id' $base.err >/dev/null || fail user-id-error
+
+$cmd >$base.out >[2]$base.err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: encode-id' $base.err >/dev/null || fail usage-error
+
+rm -f $base.*
+echo ok
+exit ''

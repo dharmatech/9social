@@ -29,6 +29,7 @@ This includes:
 
 * `$home/lib/9social/self/following`
 * `$home/lib/9social/feeds/`
+* `$home/lib/9social/index/`
 
 ---
 
@@ -45,7 +46,8 @@ This includes:
 
    * If `$home/lib/9social/self/following` does not exist:
 
-     * exit successfully
+     * skip feed updates
+     * continue to index rebuild
 
    * Open `$home/lib/9social/self/following`
    * If the file cannot be read:
@@ -59,7 +61,8 @@ This includes:
 
    * If the file exists but contains no URLs:
 
-     * exit successfully
+     * skip feed updates
+     * continue to index rebuild
 
 3. **Process each URL**
 
@@ -130,15 +133,29 @@ This includes:
      * skip the later feed
      * continue processing the remaining feeds
 
-4. **Exit status**
+4. **Rebuild local index**
 
-   * If all feeds refresh successfully:
+   After feed processing, run:
+
+   ```sh
+   9social/reindex
+   ```
+
+   `refresh` should run `reindex` even if there is no `following` file or the following list is empty. This keeps the user's own `self/posts` indexed.
+
+   Warnings from `reindex`, such as malformed skipped posts, may be printed directly.
+
+   If `reindex` fails structurally, print a short error and remember the failure.
+
+5. **Exit status**
+
+   * If all feeds refresh successfully and indexing succeeds:
 
      * exit successfully
 
-   * If one or more feeds fail:
+   * If one or more feeds fail, or indexing fails structurally:
 
-     * exit with failure after processing all URLs
+     * exit with failure after processing all URLs and attempting index rebuild
 
 ---
 
@@ -203,6 +220,7 @@ $home/lib/9social/feeds/
   * running it repeatedly should not create duplicates
 * Progress messages are optional, but success should remain easy to scan
 * A missing or empty `following` file is not an error in Level 1
+* `refresh` still rebuilds the local index when there are no followed feeds
 
 ---
 

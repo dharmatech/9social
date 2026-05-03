@@ -233,20 +233,17 @@ These actions create new reaction posts.
 
 Without indexing, reactions would require scanning all posts.
 
-Future clients should build local indexes such as:
+The concrete Level 1 local index is defined in `14-index.md`.
+
+Like reactions are indexed under:
 
 ```text
-$home/lib/9social/index/reactions/<post-id>
+$home/lib/9social/index/targets/<encoded-target>/likes/<encoded-like-id>
 ```
 
-Containing:
+Each leaf file contains the local path to the like record file.
 
-```text
-dennis upvote
-alan upvote
-```
-
-This enables fast lookup.
+Other reaction types should follow the same target-oriented shape if they are added later.
 
 ---
 

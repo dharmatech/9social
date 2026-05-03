@@ -1,0 +1,149 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/reindex
+base=/tmp/9social-reindex-test.$pid
+u1=550e8400-e29b-41d4-a716-446655440000
+u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
+p1=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+p2=d74aacda-68ee-4d1c-9f83-35e89a956676
+p3=ae1dc6c1-b26c-4a27-b343-8f8e62796623
+p4=f25e4e1d-9333-45ad-a704-d904721ccd74
+selfid=9social:post:$u1:$p1
+feedid=9social:post:$u2:$p2
+replyid=9social:post:$u1:$p3
+likeid=9social:post:$u1:$p4
+missingtarget=9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222
+eself=9social_post_$u1^_$p1
+efeed=9social_post_$u2^_$p2
+ereply=9social_post_$u1^_$p3
+elike=9social_post_$u1^_$p4
+emissing=9social_post_11111111-1111-4111-8111-111111111111_22222222-2222-4222-8222-222222222222
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=$base.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self/posts $testhome/lib/9social/feeds/9social-user-dennis/posts || fail mkdir
+	home=$testhome
+}
+
+fn runreindex {
+	$cmd >$home/out >[2]$home/err
+	st=$status
+}
+
+fn assertfile {
+	if(! test -f $1) fail missing-file $1
+}
+
+fn assertcontent {
+	if(! ~ `{cat $1} $2) fail bad-content $1 `{cat $1} expected $2
+}
+
+setup basic
+selfpost=$home/lib/9social/self/posts/2026-05-02-self
+feedpost=$home/lib/9social/feeds/9social-user-dennis/posts/2026-05-02-feed
+replypost=$home/lib/9social/self/posts/2026-05-02-reply
+likepost=$home/lib/9social/self/posts/2026-05-02-like
+>$selfpost {
+	echo 'id: '^$selfid
+	echo 'author: glenda'
+	echo 'date: 2026-05-02T01:00:00Z'
+	echo 'title: Self'
+	echo
+	echo body
+}
+>$feedpost {
+	echo 'id: '^$feedid
+	echo 'author: dennis'
+	echo 'date: 2026-05-02T02:00:00Z'
+	echo 'title: Feed'
+	echo
+	echo body
+}
+>$replypost {
+	echo 'id: '^$replyid
+	echo 'author: glenda'
+	echo 'date: 2026-05-02T03:00:00Z'
+	echo 'type: reply'
+	echo 'target: '^$feedid
+	echo 'title: Reply'
+	echo
+	echo body
+}
+>$likepost {
+	echo 'id: '^$likeid
+	echo 'author: glenda'
+	echo 'date: 2026-05-02T04:00:00Z'
+	echo 'type: like'
+	echo 'target: '^$missingtarget
+	echo
+}
+>$home/lib/9social/self/posts/.keep echo keep
+runreindex
+if(! ~ $st '') fail basic-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eself
+assertcontent $home/lib/9social/index/posts/$eself $selfpost
+assertfile $home/lib/9social/index/posts/$efeed
+assertcontent $home/lib/9social/index/posts/$efeed $feedpost
+assertfile $home/lib/9social/index/targets/$efeed/replies/$ereply
+assertcontent $home/lib/9social/index/targets/$efeed/replies/$ereply $replypost
+assertfile $home/lib/9social/index/targets/$emissing/likes/$elike
+assertcontent $home/lib/9social/index/targets/$emissing/likes/$elike $likepost
+if(test -f $home/lib/9social/index/posts/.keep) fail keep-indexed
+if(grep '.keep' $home/err >/dev/null) fail keep-warning
+
+setup malformed
+badpost=$home/lib/9social/self/posts/2026-05-02-bad
+goodpost=$home/lib/9social/self/posts/2026-05-02-good
+>$badpost {
+	echo 'id: '^$selfid
+	echo 'bad header line'
+	echo
+}
+>$goodpost {
+	echo 'id: '^$feedid
+	echo
+	echo body
+}
+runreindex
+if(! ~ $st '') fail malformed-status $st `{cat $home/err}
+grep 'skip post .*bad format.*2026-05-02-bad' $home/err >/dev/null || fail malformed-warning `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$efeed
+if(test -f $home/lib/9social/index/posts/$eself) fail malformed-indexed
+
+setup duplicate
+selfpost=$home/lib/9social/self/posts/2026-05-02-self-first
+duppost=$home/lib/9social/feeds/9social-user-dennis/posts/2026-05-02-duplicate
+>$selfpost {
+	echo 'id: '^$selfid
+	echo
+	echo self
+}
+>$duppost {
+	echo 'id: '^$selfid
+	echo 'type: reply'
+	echo 'target: '^$feedid
+	echo
+	echo duplicate
+}
+runreindex
+if(! ~ $st '') fail duplicate-status $st `{cat $home/err}
+grep 'duplicate id' $home/err >/dev/null || fail duplicate-warning `{cat $home/err}
+assertcontent $home/lib/9social/index/posts/$eself $selfpost
+if(test -f $home/lib/9social/index/targets/$efeed/replies/$eself) fail duplicate-relation-indexed
+
+setup usage
+$cmd extra >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/reindex' $home/err >/dev/null || fail usage-error
+
+rm -rf $base.*
+echo ok
+exit ''

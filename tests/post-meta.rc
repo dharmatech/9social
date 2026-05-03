@@ -1,0 +1,87 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/post-meta
+base=/tmp/9social-post-meta-test.$pid
+id=9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+target=9social:post:9acf94aa-8504-4585-b7e5-2ff0b9847fe3:d74aacda-68ee-4d1c-9f83-35e89a956676
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn runmeta {
+	$cmd $file >$base.out >[2]$base.err
+	st=$status
+}
+
+rm -f $base.*
+
+file=$base.normal
+>$file {
+	echo 'id: '^$id
+	echo 'author: dharmatech'
+	echo 'date: 2026-05-02T03:15:37Z'
+	echo 'type: reply'
+	echo 'target: '^$target
+	echo 'title: Re: A smaller system on the PDP-7'
+	echo
+	echo 'body text'
+}
+runmeta
+if(! ~ $st '') fail normal-status $st
+grep '^id	'^$id^'$' $base.out >/dev/null || fail normal-id
+grep '^author	dharmatech$' $base.out >/dev/null || fail normal-author
+grep '^type	reply$' $base.out >/dev/null || fail normal-type
+grep '^target	'^$target^'$' $base.out >/dev/null || fail normal-target
+grep '^title	Re: A smaller system on the PDP-7$' $base.out >/dev/null || fail normal-title
+
+file=$base.empty-title
+>$file {
+	echo 'id: '^$id
+	echo 'title:'
+	echo
+	echo body
+}
+runmeta
+if(! ~ $st '') fail empty-title-status $st
+grep '^title	$' $base.out >/dev/null || fail empty-title-output
+
+file=$base.body-ignored
+>$file {
+	echo 'id: '^$id
+	echo
+	echo 'bad body line without colon'
+	echo 'title: Body title is not metadata'
+}
+runmeta
+if(! ~ $st '') fail body-ignored-status $st
+grep '^id	'^$id^'$' $base.out >/dev/null || fail body-ignored-id
+if(grep 'Body title' $base.out >/dev/null) fail body-ignored-title
+
+file=$base.malformed
+>$file {
+	echo 'id: '^$id
+	echo 'bad header line'
+	echo
+	echo body
+}
+runmeta
+if(~ $st '') fail malformed-status
+grep 'malformed header line' $base.err >/dev/null || fail malformed-error
+if(test -s $base.out) fail malformed-output
+
+file=$base.missing
+runmeta
+if(~ $st '') fail missing-status
+if(test -s $base.out) fail missing-output
+
+$cmd >$base.out >[2]$base.err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: post-meta' $base.err >/dev/null || fail usage-error
+
+rm -f $base.*
+echo ok
+exit ''

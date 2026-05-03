@@ -1,0 +1,36 @@
+#!/bin/rc
+
+if(! ~ $#* 1){
+	echo 'usage: post-path <post-id>' >[1=2]
+	exit usage
+}
+
+postid=$1
+encodeid=9social/lib/encode-id
+if(~ $0 */lib/post-path)
+	encodeid=`{echo $0 | sed 's;/lib/post-path$;/lib/encode-id;'}
+
+encoded=`{$encodeid $postid >[2]/dev/null}
+if(! ~ $status ''){
+	echo 'post-path: malformed post id' >[1=2]
+	exit 'malformed post id'
+}
+
+entry=$home^/lib/9social/index/posts/^$encoded
+if(! test -f $entry){
+	echo 'post not found locally: '^$postid >[1=2]
+	exit 'post not found'
+}
+
+postpath=`{sed -n '1p' $entry}
+if(~ $#postpath 0){
+	echo 'post-path: empty index entry: '^$entry >[1=2]
+	exit 'empty index entry'
+}
+if(! test -f $postpath){
+	echo 'post-path: indexed path missing: '^$postpath >[1=2]
+	exit 'indexed path missing'
+}
+
+echo $postpath
+exit ''

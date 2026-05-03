@@ -1,0 +1,66 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/post-path
+base=/tmp/9social-post-path-test.$pid
+u=550e8400-e29b-41d4-a716-446655440000
+p=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+id=9social:post:$u:$p
+encoded=9social_post_$u^_$p
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=$base.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/index/posts $testhome/lib/9social/self/posts || fail mkdir
+	home=$testhome
+}
+
+fn runpath {
+	$cmd $* >$home/out >[2]$home/err
+	st=$status
+}
+
+setup valid
+post=$home/lib/9social/self/posts/2026-05-02-test
+>$post {
+	echo 'id: '^$id
+	echo
+	echo body
+}
+echo $post >$home/lib/9social/index/posts/$encoded
+runpath $id
+if(! ~ $st '') fail valid-status $st `{cat $home/err}
+if(! ~ `{cat $home/out} $post) fail valid-output `{cat $home/out}
+
+setup missing-entry
+runpath $id
+if(~ $st '') fail missing-entry-status
+grep 'post not found locally' $home/err >/dev/null || fail missing-entry-error `{cat $home/err}
+if(test -s $home/out) fail missing-entry-output
+
+setup stale-path
+echo $home/lib/9social/self/posts/missing >$home/lib/9social/index/posts/$encoded
+runpath $id
+if(~ $st '') fail stale-path-status
+grep 'indexed path missing' $home/err >/dev/null || fail stale-path-error `{cat $home/err}
+if(test -s $home/out) fail stale-path-output
+
+setup bad-id
+runpath 9social:post:not-a-uuid:$p
+if(~ $st '') fail bad-id-status
+grep 'malformed post id' $home/err >/dev/null || fail bad-id-error `{cat $home/err}
+
+setup usage
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: post-path' $home/err >/dev/null || fail usage-error
+
+rm -rf $base.*
+echo ok
+exit ''

@@ -69,6 +69,63 @@ if(! ~ `{cat $testhome/opened} $post) fail explicit-opened `{cat $testhome/opene
 grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail explicit-tag `{cat $testhome/tag}
 
 
+
+setup explicitid
+open_file_window=$testhome/fake-open
+>$open_file_window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$testhome^'/opened'
+	echo 'echo $2 >'^$testhome^'/tag'
+}
+chmod +x $open_file_window
+testcmd=$testhome/open-post
+cp $cmd $testcmd
+chmod +x $testcmd
+mkdir -p $testhome/lib $home/lib/9social/index/posts
+cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
+cp $repo/bin/9social/lib/post-path $testhome/lib/post-path
+cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
+cp $open_file_window $testhome/lib/open-file-window
+encoded=9social_post_$useruuid^_$postuuid
+echo $post >$home/lib/9social/index/posts/$encoded
+id=9social:post:$useruuid:$postuuid
+$testcmd $id >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st '') fail explicitid-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/opened} $post) fail explicitid-opened `{cat $testhome/opened}
+grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail explicitid-tag `{cat $testhome/tag}
+
+setup currentlineid
+open_file_window=$testhome/fake-open
+>$open_file_window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$testhome^'/opened'
+	echo 'echo $2 >'^$testhome^'/tag'
+}
+chmod +x $open_file_window
+current_line=$testhome/fake-current-line
+>$current_line {
+	echo '#!/bin/rc'
+	echo 'echo open this 9social:post:'^$useruuid^':'^$postuuid
+}
+chmod +x $current_line
+testcmd=$testhome/open-post
+cp $cmd $testcmd
+chmod +x $testcmd
+mkdir -p $testhome/lib $home/lib/9social/index/posts
+cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
+cp $repo/bin/9social/lib/post-path $testhome/lib/post-path
+cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
+cp $open_file_window $testhome/lib/open-file-window
+cp $current_line $testhome/lib/current-line
+encoded=9social_post_$useruuid^_$postuuid
+echo $post >$home/lib/9social/index/posts/$encoded
+$testcmd >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st '') fail currentlineid-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/opened} $post) fail currentlineid-opened `{cat $testhome/opened}
+grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail currentlineid-tag `{cat $testhome/tag}
+
 setup selfpath
 selfdir=$testhome/lib/9social/self/posts
 mkdir -p $selfdir || fail selfpath-mkdir
