@@ -40,6 +40,7 @@ if(! ~ `{cat $home/tag} '') fail menu-tag-not-empty `{cat $home/tag}
 expected=$home/expected
 >$expected {
 	echo '9social/Timeline'
+	echo '9social/ShowThreads'
 	echo '9social/NewPost'
 	echo '9social/follow'
 	echo '9social/refresh'

@@ -1,0 +1,109 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+render=$repo/bin/9social/lib/render-threads
+reindex=$repo/bin/9social/reindex
+base=/tmp/9social-render-threads-test.$pid
+u1=550e8400-e29b-41d4-a716-446655440000
+u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
+root1=11111111-1111-4111-8111-111111111111
+root2=22222222-2222-4222-8222-222222222222
+reply1=33333333-3333-4333-8333-333333333333
+reply2=44444444-4444-4444-8444-444444444444
+like1=55555555-5555-4555-8555-555555555555
+orphan=66666666-6666-4666-8666-666666666666
+cyclea=77777777-7777-4777-8777-777777777777
+cycleb=88888888-8888-4888-8888-888888888888
+root1id=9social:post:$u1:$root1
+root2id=9social:post:$u2:$root2
+reply1id=9social:post:$u2:$reply1
+reply2id=9social:post:$u1:$reply2
+like1id=9social:post:$u1:$like1
+orphanid=9social:post:$u2:$orphan
+cycleaid=9social:post:$u1:$cyclea
+cyclebid=9social:post:$u1:$cycleb
+missingid=9social:post:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn post {
+	file=$1
+	id=$2
+	author=$3
+	date=$4
+	type=$5
+	target=$6
+	title=$7
+	>$file {
+		echo 'id: '^$id
+		echo 'author: '^$author
+		echo 'date: '^$date
+		if(! ~ $type -)
+			echo 'type: '^$type
+		if(! ~ $target -)
+			echo 'target: '^$target
+		echo 'title: '^$title
+		echo
+		echo body
+	}
+}
+
+fn setup {
+	home=$base.$1
+	rm -rf $home
+	mkdir -p $home/lib/9social/self/posts $home/lib/9social/feeds/9social-user-bob/posts || fail mkdir
+}
+
+setup basic
+post $home/lib/9social/self/posts/root1 $root1id alice 2026-05-01T00:00:00Z - - Root1
+post $home/lib/9social/feeds/9social-user-bob/posts/root2 $root2id bob 2026-05-02T00:00:00Z - - Root2
+post $home/lib/9social/feeds/9social-user-bob/posts/reply1 $reply1id bob 2026-05-01T02:00:00Z reply $root1id Reply1
+post $home/lib/9social/self/posts/reply2 $reply2id alice 2026-05-01T03:00:00Z reply $root1id Reply2
+post $home/lib/9social/self/posts/like1 $like1id alice 2026-05-03T00:00:00Z like $root1id Like1
+post $home/lib/9social/feeds/9social-user-bob/posts/orphan $orphanid bob 2026-05-04T00:00:00Z reply $missingid Orphan
+$reindex >$home/reindex.out >[2]$home/reindex.err || fail reindex `{cat $home/reindex.err}
+$render >$home/out >[2]$home/err || fail render `{cat $home/err}
+cat >$home/expected <<EOF2
+2026-05-04T00:00:00Z  bob
+$orphanid
+title: Orphan
+
+2026-05-02T00:00:00Z  bob
+$root2id
+title: Root2
+
+2026-05-01T00:00:00Z  alice
+$root1id
+title: Root1
+    2026-05-01T02:00:00Z  bob
+    $reply1id
+    title: Reply1
+    2026-05-01T03:00:00Z  alice
+    $reply2id
+    title: Reply2
+EOF2
+cmp $home/out $home/expected >/dev/null || fail basic-output `{cat $home/out}
+if(grep Like1 $home/out >/dev/null) fail like-visible
+if(! ~ `{cat $home/err} '') fail basic-stderr `{cat $home/err}
+
+setup cycle
+post $home/lib/9social/self/posts/cyclea $cycleaid alice 2026-05-01T01:00:00Z reply $cyclebid CycleA
+post $home/lib/9social/self/posts/cycleb $cyclebid alice 2026-05-01T02:00:00Z reply $cycleaid CycleB
+$reindex >$home/reindex.out >[2]$home/reindex.err || fail cycle-reindex `{cat $home/reindex.err}
+$render >$home/out >[2]$home/err || fail cycle-render `{cat $home/err}
+grep 'title: CycleA' $home/out >/dev/null || fail cycle-a-output `{cat $home/out}
+grep 'title: CycleB' $home/out >/dev/null || fail cycle-b-output `{cat $home/out}
+grep 'cycle' $home/err >/dev/null || fail cycle-warning `{cat $home/err}
+
+setup usage
+$render extra >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/render-threads' $home/err >/dev/null || fail usage-error `{cat $home/err}
+
+rm -rf $base.*
+echo ok
+exit ''

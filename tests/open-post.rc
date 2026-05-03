@@ -4,6 +4,7 @@ repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/open-post
 useruuid=550e8400-e29b-41d4-a716-446655440000
 postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
 
 fn fail {
 	echo FAIL: $* >[1=2]
@@ -69,6 +70,70 @@ if(! ~ `{cat $testhome/opened} $post) fail explicit-opened `{cat $testhome/opene
 grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail explicit-tag `{cat $testhome/tag}
 
 
+
+
+setup feedreply
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: reply'
+	echo 'target: 9social:post:'^$useruuid^':'^$targetuuid
+	echo 'title: Feed Reply'
+	echo
+	echo body
+}
+open_file_window=$testhome/fake-open
+>$open_file_window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$testhome^'/opened'
+	echo 'echo $2 >'^$testhome^'/tag'
+}
+chmod +x $open_file_window
+testcmd=$testhome/open-post
+cp $cmd $testcmd
+chmod +x $testcmd
+mkdir -p $testhome/lib
+cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
+cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
+cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
+cp $open_file_window $testhome/lib/open-file-window
+$testcmd $post >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st '') fail feedreply-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/opened} $post) fail feedreply-opened `{cat $testhome/opened}
+grep '^ | 9social/open-post 9social/Reply$' $testhome/tag >/dev/null || fail feedreply-tag `{cat $testhome/tag}
+
+setup badtargettag
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: reply'
+	echo 'target: bad-target'
+	echo 'title: Bad Target Reply'
+	echo
+	echo body
+}
+open_file_window=$testhome/fake-open
+>$open_file_window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$testhome^'/opened'
+	echo 'echo $2 >'^$testhome^'/tag'
+}
+chmod +x $open_file_window
+testcmd=$testhome/open-post
+cp $cmd $testcmd
+chmod +x $testcmd
+mkdir -p $testhome/lib
+cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
+cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
+cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
+cp $open_file_window $testhome/lib/open-file-window
+$testcmd $post >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st '') fail badtargettag-status $st `{cat $testhome/err}
+grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail badtargettag-tag `{cat $testhome/tag}
 
 setup explicitid
 open_file_window=$testhome/fake-open
@@ -156,6 +221,42 @@ st=$status
 if(! ~ $st '') fail selfpath-status $st
 if(! ~ `{cat $testhome/opened} $post) fail selfpath-opened `{cat $testhome/opened}
 grep '^ | 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
+
+
+setup selfreply
+selfdir=$testhome/lib/9social/self/posts
+mkdir -p $selfdir || fail selfreply-mkdir
+post=$selfdir/2026-04-29-self-reply
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dharmatech'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: reply'
+	echo 'target: 9social:post:'^$useruuid^':'^$targetuuid
+	echo 'title: Self Reply'
+	echo
+	echo body
+}
+open_file_window=$testhome/fake-open
+>$open_file_window {
+	echo '#!/bin/rc'
+	echo 'echo $1 >'^$testhome^'/opened'
+	echo 'echo $2 >'^$testhome^'/tag'
+}
+chmod +x $open_file_window
+testcmd=$testhome/open-post
+cp $cmd $testcmd
+chmod +x $testcmd
+mkdir -p $testhome/lib
+cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
+cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
+cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
+cp $open_file_window $testhome/lib/open-file-window
+$testcmd $post >$testhome/out >[2]$testhome/err
+st=$status
+if(! ~ $st '') fail selfreply-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/opened} $post) fail selfreply-opened `{cat $testhome/opened}
+grep '^ | 9social/open-post 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfreply-tag `{cat $testhome/tag}
 
 setup badprefix
 token=bad:post:9social-user-dennis/posts/2026-04-29-test

@@ -295,6 +295,21 @@ Level 1 `Reply` works only when the current Acme window is a real post file with
 
 The target post file does not need to live in a specific local feed directory. The important value is the canonical post ID in the opened file.
 
+### Opening Reply Targets
+
+When `9social/open-post` opens a post that has a syntactically valid `target:` field, it should include `9social/open-post` in the Acme window tag.
+
+This supports reply traversal:
+
+1. user opens a reply post
+2. user places the cursor on the `target:` value
+3. user middle-clicks `9social/open-post` in the tag
+4. `open-post` resolves the target post ID through the local index and opens the target post
+
+This is intentionally Acme-native. The stored reply file remains plain text; the extra command appears only in the window tag.
+
+---
+
 ### Target ID Extraction
 
 `Reply` should require Acme's `$%` environment variable to name the current window file.

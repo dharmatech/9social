@@ -49,6 +49,7 @@ if(test -e $menufile)
 
 >$menufile {
 	echo '9social/Timeline'
+	echo '9social/ShowThreads'
 	echo '9social/NewPost'
 	echo '9social/follow'
 	echo '9social/refresh'

@@ -240,6 +240,20 @@ Behavior:
 * if the current line contains a post ID, resolve it through `post-path` and open it
 * do not scan `self/` or `feeds/` directly as a fallback
 
+When `open-post` opens a post in Acme, it should populate the tag with actions appropriate to the post.
+
+Base tags:
+
+* feed post: `| 9social/Reply`
+* self post: `| 9social/Reply 9social/Update 9social/Delete`
+
+If the opened post has a syntactically valid `target:` field, `open-post` should also add `9social/open-post` to the tag. This lets the user place the cursor on the `target:` value and middle-click `9social/open-post` to open the target post through the local index.
+
+Examples:
+
+* feed reply: `| 9social/open-post 9social/Reply`
+* self reply: `| 9social/open-post 9social/Reply 9social/Update 9social/Delete`
+
 This lets timeline, thread, and relationship views use either full paths or canonical post IDs while keeping the user-facing `open-post` workflow stable.
 
 ---
