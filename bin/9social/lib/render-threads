@@ -121,6 +121,8 @@ awk '
 		printentry(node, depth)
 		sortchildren(node)
 		for(i = 1; i <= childn[node]; i++){
+			if(i > 1)
+				print ""
 			nxt = child[node, i]
 			render(nxt, depth + 1)
 		}

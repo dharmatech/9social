@@ -105,7 +105,9 @@ Use one tab, or four spaces, per reply depth. Implementation should choose one a
 
 Recommendation: use four spaces per depth. It displays predictably in Acme and normal terminals.
 
-Separate root threads with a blank line. Do not insert extra blank lines between every reply in a thread.
+Separate root threads with a blank line.
+
+Also separate sibling replies with a blank line when they share the same parent. Do not insert a blank line between a parent and its first reply, because that weakens the visual parent-child relationship.
 
 ---
 
