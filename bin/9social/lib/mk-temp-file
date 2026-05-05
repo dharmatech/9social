@@ -1,0 +1,40 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit fail
+}
+
+fn usage {
+	echo 'usage: 9social/lib/mk-temp-file <prefix>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 1)
+	usage
+
+prefix=$1
+if(! echo $prefix | awk '/^[A-Za-z0-9._-]+$/ { ok=1 } END { exit !ok }')
+	fail 'bad prefix: '^$prefix
+
+tmpdir=/tmp/9social
+if(! test -d $tmpdir)
+	mkdir -p $tmpdir >[2]/dev/null
+if(! test -d $tmpdir)
+	fail 'cannot use temp directory'
+
+base=$tmpdir^/^$prefix^.^$pid
+temp_file=$base
+n=2
+while(test -e $temp_file >[2]/dev/null){
+	temp_file=$base^.^$n
+	n=`{echo $n | awk '{print $1+1}'}
+}
+if(test -e $temp_file >[2]/dev/null)
+	fail 'temp file already exists: '^$temp_file
+
+if(! {echo -n '' >$temp_file})
+	fail 'cannot create temp file: '^$temp_file
+
+echo $temp_file
+exit ''

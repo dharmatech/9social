@@ -12,34 +12,37 @@ fn fail {
 home=$base.home
 bindir=$base/bin
 rm -rf $base.* $bindir
-mkdir -p $home/tmp $bindir/lib || fail mkdir
+mkdir -p $home/tmp $bindir/9social/lib || fail mkdir
 
-testcmd=$bindir/ShowThreads
+testcmd=$bindir/9social/ShowThreads
 cp $cmd $testcmd || fail copy-command
 chmod +x $testcmd
+cp $repo/bin/9social/lib/mk-temp-file $bindir/9social/lib/mk-temp-file || fail copy-mk-temp-file
+chmod +x $bindir/9social/lib/mk-temp-file
 
->$bindir/reindex {
+>$bindir/9social/reindex {
 	echo '#!/bin/rc'
 	echo 'mkdir -p $home/lib/9social/index/posts'
 	echo 'echo reindexed >$home/reindexed'
 }
-chmod +x $bindir/reindex
+chmod +x $bindir/9social/reindex
 
->$bindir/lib/render-threads {
+>$bindir/9social/lib/render-threads {
 	echo '#!/bin/rc'
 	echo 'echo thread body'
 }
-chmod +x $bindir/lib/render-threads
+chmod +x $bindir/9social/lib/render-threads
 
->$bindir/lib/open-file-window {
+>$bindir/9social/lib/open-file-window {
 	echo '#!/bin/rc'
 	echo 'echo $1 >$home/opened'
 	echo 'echo $2 >$home/tag'
 	echo 'cat $1 >$home/body'
 }
-chmod +x $bindir/lib/open-file-window
+chmod +x $bindir/9social/lib/open-file-window
 
-$testcmd >$home/out >[2]$home/err
+bind -b $bindir /bin || fail bind
+9social/ShowThreads >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail status $st `{cat $home/err}
 if(! test -f $home/reindexed) fail did-not-reindex
@@ -47,9 +50,9 @@ if(! test -f $home/opened) fail did-not-open
 if(! grep '^thread body$' $home/body >/dev/null) fail body `{cat $home/body}
 if(! grep '^ | 9social/open-post$' $home/tag >/dev/null) fail tag `{cat $home/tag}
 opened=`{cat $home/opened}
-if(! ~ $opened $home/tmp/9social-threads.*) fail opened-path $opened
+if(! ~ $opened /tmp/9social/threads.*) fail opened-path $opened
 
-$testcmd extra >$home/out >[2]$home/err
+9social/ShowThreads extra >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
 grep 'usage: 9social/ShowThreads' $home/err >/dev/null || fail usage-error `{cat $home/err}

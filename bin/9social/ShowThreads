@@ -12,54 +12,22 @@ fn usage {
 	exit usage
 }
 
-if(! ~ $#* 0)
-	usage
-
-render_threads=9social/lib/render-threads
-reindex=9social/reindex
-open_file_window=9social/lib/open-file-window
-if(~ $0 */ShowThreads){
-	render_threads=`{echo $0 | sed 's;/ShowThreads$;/lib/render-threads;'}
-	reindex=`{echo $0 | sed 's;/ShowThreads$;/reindex;'}
-	open_file_window=`{echo $0 | sed 's;/ShowThreads$;/lib/open-file-window;'}
-}
+if(! ~ $#* 0) usage
 
 index=$home^/lib/9social/index
-if(! test -d $index/posts){
-	$reindex
-	if(! ~ $status '')
-		fail 'cannot build index'
-}
-
 if(! test -d $index/posts)
-	fail 'index not found'
+	9social/reindex || fail 'cannot build index'
 
-tmpdir=$home^/tmp
-if(! test -d $tmpdir)
-	mkdir $tmpdir >[2]/dev/null
-if(! test -d $tmpdir)
-	tmpdir=/tmp
-if(! test -d $tmpdir)
-	fail 'cannot use threads directory'
+if(! test -d $index/posts) fail 'index not found'
 
-base=$tmpdir^/9social-threads.^$pid
-threadfile=$base
-n=2
-while(test -e $threadfile){
-	threadfile=$base^.^$n
-	n=`{echo $n | awk '{print $1+1}'}
-}
-if(test -e $threadfile)
-	fail 'threads already exists: '^$threadfile
+threadfile=`{9social/lib/mk-temp-file threads} ||
+	fail 'cannot create threads temp file'
 
-$render_threads >$threadfile
-st=$status
-if(! ~ $st '')
+9social/lib/render-threads >$threadfile ||
 	fail 'cannot create threads view'
-if(! test -f $threadfile)
-	fail 'cannot create threads view'
+if(! test -f $threadfile) fail 'cannot create threads view'
 
-if(! $open_file_window $threadfile ' | 9social/open-post')
+if(! 9social/lib/open-file-window $threadfile ' | 9social/open-post')
 	exit $status
 
 exit ''

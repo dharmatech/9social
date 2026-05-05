@@ -1,0 +1,34 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit fail
+}
+
+mk_temp_file=$repo^/bin/9social/lib/mk-temp-file
+prefix=mk-temp-file-test-^$pid
+
+temp_file=`{$mk_temp_file $prefix}
+if(! ~ $status '')
+	fail 'mk-temp-file failed'
+if(! test -f $temp_file)
+	fail 'mk-temp-file did not create file'
+if(! echo $temp_file | grep '^/tmp/9social/'^$prefix^'.[0-9]+$' >/dev/null)
+	fail 'unexpected temp file path: '^$temp_file
+
+temp_file2=`{$mk_temp_file $prefix}
+if(! ~ $status '')
+	fail 'second mk-temp-file failed'
+if(~ $temp_file $temp_file2)
+	fail 'second mk-temp-file reused existing path'
+if(! test -f $temp_file2)
+	fail 'second mk-temp-file did not create file'
+
+$mk_temp_file '../bad' >/tmp/9social/mk-temp-file-bad.^$pid >[2]/dev/null
+if(~ $status '')
+	fail 'mk-temp-file accepted bad prefix'
+
+rm -f $temp_file $temp_file2 /tmp/9social/mk-temp-file-bad.^$pid
+exit ''

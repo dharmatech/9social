@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork e
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-render=$repo/bin/9social/lib/render-threads
+render=9social/lib/render-threads
 reindex=$repo/bin/9social/reindex
 base=/tmp/9social-render-threads-test.$pid
 u1=550e8400-e29b-41d4-a716-446655440000
@@ -32,6 +32,8 @@ fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
+
+bind -b $repo/bin /bin || fail bind
 
 fn post {
 	file=$1
