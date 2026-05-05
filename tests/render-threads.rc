@@ -11,6 +11,8 @@ root2=22222222-2222-4222-8222-222222222222
 reply1=33333333-3333-4333-8333-333333333333
 reply2=44444444-4444-4444-8444-444444444444
 like1=55555555-5555-4555-8555-555555555555
+like2=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+like3=bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
 orphan=66666666-6666-4666-8666-666666666666
 cyclea=77777777-7777-4777-8777-777777777777
 cycleb=88888888-8888-4888-8888-888888888888
@@ -19,6 +21,8 @@ root2id=9social:post:$u2:$root2
 reply1id=9social:post:$u2:$reply1
 reply2id=9social:post:$u1:$reply2
 like1id=9social:post:$u1:$like1
+like2id=9social:post:$u2:$like2
+like3id=9social:post:$u1:$like3
 orphanid=9social:post:$u2:$orphan
 cycleaid=9social:post:$u1:$cyclea
 cyclebid=9social:post:$u1:$cycleb
@@ -63,6 +67,8 @@ post $home/lib/9social/feeds/9social-user-bob/posts/root2 $root2id bob 2026-05-0
 post $home/lib/9social/feeds/9social-user-bob/posts/reply1 $reply1id bob 2026-05-01T02:00:00Z reply $root1id Reply1
 post $home/lib/9social/self/posts/reply2 $reply2id alice 2026-05-01T03:00:00Z reply $root1id Reply2
 post $home/lib/9social/self/posts/like1 $like1id alice 2026-05-03T00:00:00Z like $root1id Like1
+post $home/lib/9social/feeds/9social-user-bob/posts/like2 $like2id bob 2026-05-03T01:00:00Z like $root1id Like2
+post $home/lib/9social/self/posts/like3 $like3id alice 2026-05-03T02:00:00Z like $root1id DuplicateLike
 post $home/lib/9social/feeds/9social-user-bob/posts/orphan $orphanid bob 2026-05-04T00:00:00Z reply $missingid Orphan
 $reindex >$home/reindex.out >[2]$home/reindex.err || fail reindex `{cat $home/reindex.err}
 $render >$home/out >[2]$home/err || fail render `{cat $home/err}
@@ -75,7 +81,7 @@ title: Orphan
 $root2id
 title: Root2
 
-2026-05-01T00:00:00Z  alice
+2026-05-01T00:00:00Z  alice L:2 R:2
 $root1id
 title: Root1
     2026-05-01T02:00:00Z  bob
@@ -88,6 +94,8 @@ title: Root1
 EOF2
 cmp $home/out $home/expected >/dev/null || fail basic-output `{cat $home/out}
 if(grep Like1 $home/out >/dev/null) fail like-visible
+if(grep Like2 $home/out >/dev/null) fail like2-visible
+if(grep DuplicateLike $home/out >/dev/null) fail duplicate-like-visible
 if(! ~ `{cat $home/err} '') fail basic-stderr `{cat $home/err}
 
 setup cycle

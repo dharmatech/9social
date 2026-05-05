@@ -1,0 +1,141 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/Like' >[1=2]
+	exit usage
+}
+
+fn profiledata {
+	awk -F': ' '
+		function trim(s){
+			gsub(/^[ \t]+/, "", s)
+			gsub(/[ \t]+$/, "", s)
+			return s
+		}
+		$1 == "id" && id == "" { id = trim(substr($0, index($0, ": ")+2)) }
+		$1 == "name" && name == "" { name = trim(substr($0, index($0, ": ")+2)) }
+		END {
+			if(id !~ /^9social:user:[0-9a-f-]+$/ || name == "")
+				exit 1
+			sub(/^9social:user:/, "", id)
+			print id
+			print name
+		}
+	' $1
+}
+
+if(! ~ $#* 0)
+	usage
+
+wsys=/mnt/wsys
+if(! ~ $#wsysdir 0)
+	wsys=$wsysdir
+
+if(! test -f $wsys/index){
+	echo 'Like: acme window system not available' >[1=2]
+	echo 'Like: run from an acme post window' >[1=2]
+	exit 'no acme'
+}
+
+check_self=9social/lib/check-self
+post_id=9social/lib/post-id
+liked_post=9social/lib/liked-post
+reindex=9social/reindex
+uuidcmd=9social/uuid
+if(~ $0 */Like){
+	check_self=`{echo $0 | sed 's;/Like$;/lib/check-self;'}
+	post_id=`{echo $0 | sed 's;/Like$;/lib/post-id;'}
+	liked_post=`{echo $0 | sed 's;/Like$;/lib/liked-post;'}
+	reindex=`{echo $0 | sed 's;/Like$;/reindex;'}
+	uuidcmd=`{echo $0 | sed 's;/Like$;/uuid;'}
+}
+
+source=$%
+if(~ $#source 0 || ~ $source '')
+	fail 'missing post path'
+if(! test -f $source)
+	fail 'post file not found: '^$source
+
+self=$home^/lib/9social/self
+profile=$self^/profile
+posts=$self^/posts
+selfposts=$posts^/
+
+if(awk -v 'post='$source -v 'prefix='$selfposts 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
+	fail 'cannot like own post'
+
+if(! $check_self)
+	exit $status
+
+target=`{$post_id $source}
+if(! ~ $status '' || ! ~ $#target 1)
+	fail 'bad post id: '^$source
+
+# Rebuild before checking so duplicate detection is based on current local files.
+$reindex >/dev/null
+if(! ~ $status '')
+	fail 'cannot reindex'
+
+if($liked_post $target >[2]/dev/null){
+	echo 'already liked'
+	exit ''
+}
+
+pdata=`{profiledata $profile >[2]/dev/null}
+if(! ~ $status '' || ! ~ $#pdata 2)
+	fail 'bad profile: '^$profile
+useruuid=$pdata(1)
+author=$pdata(2)
+
+date=`{date -u -f 'YYYY-MM-DDThh:mm:ss[Z]'}
+if(! ~ $#date 1)
+	fail 'cannot generate date'
+day=`{echo $date | sed 's/T.*//'}
+if(! ~ $#day 1)
+	fail 'cannot generate filename'
+
+postuuid=`{$uuidcmd}
+if(! ~ $#postuuid 1)
+	fail 'cannot generate uuid'
+likeid=9social:post:^$useruuid^:^$postuuid
+
+base=$day^'-like'
+relpost=posts^/$base
+likefile=$posts^/$base
+n=2
+while(test -e $likefile){
+	relpost=posts^/$base^'-'^$n
+	likefile=$posts^/$base^'-'^$n
+	n=`{echo $n | awk '{print $1+1}'}
+}
+if(test -e $likefile)
+	fail 'post already exists: '^$relpost
+
+{
+	echo 'id: '^$likeid
+	echo 'author: '^$author
+	echo 'date: '^$date
+	echo 'type: like'
+	echo 'target: '^$target
+	echo
+} >$likefile
+if(! ~ $status '')
+	fail 'cannot write post: '^$relpost
+
+if(! @{cd $self && git/add $relpost})
+	fail 'git add failed'
+if(! @{cd $self && git/commit -m 'like: '^$target $relpost})
+	fail 'git commit failed'
+
+$reindex >/dev/null
+if(! ~ $status '')
+	fail 'cannot reindex'
+
+echo 'liked: '^$target
+echo 'posted: '^$relpost
+exit ''

@@ -1,0 +1,98 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/Like
+u1=550e8400-e29b-41d4-a716-446655440000
+u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
+targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
+target=9social:post:$u2:$targetuuid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	home=/tmp/9social-like-test.$pid.$1
+	rm -rf $home
+	mkdir -p $home/lib/9social/self $home/lib/9social/feeds/9social-user-dennis/posts $home/wsys || fail mkdir
+	cd $home/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$u1
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >profile
+	mkdir posts || fail posts
+	feedpost=$home/lib/9social/feeds/9social-user-dennis/posts/2026-05-04-feed
+	>$feedpost {
+		echo 'id: '^$target
+		echo 'author: dennis'
+		echo 'date: 2026-05-04T10:00:00Z'
+		echo 'title: Feed Post'
+		echo
+		echo body
+	}
+	>$home/wsys/index echo ok
+}
+
+fn runlike {
+	%=$source wsysdir=$home/wsys $cmd >$home/out >[2]$home/err
+	st=$status
+}
+
+fn likeposts {
+	posts=`{walk $home/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$'}
+}
+
+setup ok
+source=$feedpost
+runlike
+if(! ~ $st '') fail ok-status $st `{cat $home/err}
+likeposts
+if(! ~ $#posts 1) fail ok-post-count $#posts
+likefile=$posts(1)
+if(! ~ $likefile */posts/????-??-??-like) fail ok-filename $likefile
+grep '^type: like$' $likefile >/dev/null || fail ok-type
+grep '^target: '^$target^'$' $likefile >/dev/null || fail ok-target
+grep '^author: dharmatech$' $likefile >/dev/null || fail ok-author
+grep '^liked: '^$target^'$' $home/out >/dev/null || fail ok-liked-output `{cat $home/out}
+grep '^posted: posts/' $home/out >/dev/null || fail ok-posted-output `{cat $home/out}
+if(! test -d $home/lib/9social/index/targets) fail ok-reindexed
+
+runlike
+if(! ~ $st '') fail duplicate-status $st `{cat $home/err}
+grep '^already liked$' $home/out >/dev/null || fail duplicate-output `{cat $home/out}
+likeposts
+if(! ~ $#posts 1) fail duplicate-post-count $#posts
+
+setup self
+selfpost=$home/lib/9social/self/posts/2026-05-04-self
+>$selfpost {
+	echo 'id: 9social:post:'^$u1^':11111111-1111-4111-8111-111111111111'
+	echo 'author: dharmatech'
+	echo 'date: 2026-05-04T11:00:00Z'
+	echo 'title: Self'
+	echo
+	echo body
+}
+source=$selfpost
+runlike
+if(~ $st '') fail self-status
+grep 'cannot like own post' $home/err >/dev/null || fail self-error `{cat $home/err}
+
+setup missing
+source=$home/lib/9social/feeds/9social-user-dennis/posts/missing
+runlike
+if(~ $st '') fail missing-status
+grep 'post file not found' $home/err >/dev/null || fail missing-error `{cat $home/err}
+
+setup usage
+$cmd extra >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/Like' $home/err >/dev/null || fail usage-error `{cat $home/err}
+
+rm -rf /tmp/9social-like-test.$pid.*
+echo ok
+exit ''

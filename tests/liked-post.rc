@@ -1,0 +1,83 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/liked-post
+base=/tmp/9social-liked-post-test.$pid
+u1=550e8400-e29b-41d4-a716-446655440000
+u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
+targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
+likeuuid=f25e4e1d-9333-45ad-a704-d904721ccd74
+target=9social:post:$u2:$targetuuid
+likeid=9social:post:$u1:$likeuuid
+encoded=9social_post_$u2^_$targetuuid
+elike=9social_post_$u1^_$likeuuid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	home=$base.$1
+	rm -rf $home
+	mkdir -p $home/lib/9social/self $home/lib/9social/index/targets/$encoded/likes || fail mkdir
+	{
+		echo 'id: 9social:user:'^$u1
+		echo 'name: dharmatech'
+		echo 'display: dharmatech'
+	} >$home/lib/9social/self/profile
+}
+
+fn runliked {
+	$cmd $* >$home/out >[2]$home/err
+	st=$status
+}
+
+fn writelike {
+	post=$home/lib/9social/self/likepost
+	>$post {
+		echo 'id: '^$likeid
+		echo 'author: '^$1
+		echo 'date: 2026-05-04T12:00:00Z'
+		echo 'type: like'
+		echo 'target: '^$2
+		echo
+	}
+	echo $post >$home/lib/9social/index/targets/$encoded/likes/$elike
+}
+
+setup liked
+writelike dharmatech $target
+runliked $target
+if(! ~ $st '') fail liked-status $st `{cat $home/err}
+if(test -s $home/out) fail liked-output
+
+setup none
+runliked $target
+if(~ $st '') fail none-status
+if(test -s $home/out) fail none-output
+
+setup wrong-author
+writelike somebodyelse $target
+runliked $target
+if(~ $st '') fail wrong-author-status
+
+setup wrong-target
+writelike dharmatech 9social:post:$u2:11111111-1111-4111-8111-111111111111
+runliked $target
+if(~ $st '') fail wrong-target-status
+
+setup bad-id
+runliked 9social:post:not-a-uuid:$targetuuid
+if(~ $st '') fail bad-id-status
+grep 'malformed post id' $home/err >/dev/null || fail bad-id-error `{cat $home/err}
+
+setup usage
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/liked-post' $home/err >/dev/null || fail usage-error `{cat $home/err}
+
+rm -rf $base.*
+echo ok
+exit ''

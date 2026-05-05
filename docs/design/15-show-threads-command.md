@@ -82,6 +82,8 @@ Each entry should show:
 
 * date
 * `author:` field value
+* optional like count
+* optional direct reply count
 * canonical post ID
 * title
 
@@ -89,10 +91,32 @@ It should not show body preview text in Level 1.
 
 Level 1 should use the post's `author:` field directly. Mapping authors to profile display names can be added later.
 
+Counts are shown on the first line after the author, using compact labels:
+
+```text
+L:<like-count> R:<reply-count>
+```
+
+Omit each count independently when it is zero. For example, show `L:4`, `R:2`, `L:4 R:2`, or no count suffix.
+
+`R:n` means direct replies only, not total descendants.
+
+`L:n` counts current unique likes by author for the post. Until `Unlike` exists, this means at most one valid `type: like` record per `(author, target)` pair.
+
+Counts are local and viewer-relative. They are derived only from local `self` and refreshed `feeds` data.
+
+Counts are generated view data, not stored in the canonical post file.
+
+Malformed like records should be ignored for counts. They may produce warnings, but they should not prevent `ShowThreads` from rendering.
+
+Duplicate like records from the same `author:` for the same target count once.
+
+No special counting rule is needed for self-likes. The `Like` command prevents creating them, but if a valid manually-created like exists locally, count logic can treat it like any other valid like record.
+
 Example:
 
 ```text
-2026-05-02T03:07:00Z  joe
+2026-05-02T03:07:00Z  joe L:4 R:2
 9social:post:5a6118ed-f894-4e9d-8e84-c20ea45f74b9:f6d240b1-c112-4d81-8dde-09cc106706a9
 title: A smaller system on the PDP-7
 
@@ -185,8 +209,6 @@ Level 1 `ShowThreads` does not support:
 * filtering by author
 * filtering by date
 * pagination
-* like counts
-* reply counts
 * global thread discovery beyond locally available feeds
 
 ---
@@ -208,5 +230,11 @@ A straightforward implementation can:
 2. parse each post header with `post-meta`
 3. identify roots and replies
 4. build parent-child relationships from `target:` values
-5. render the thread forest into a temporary file
-6. open that file in Acme with `9social/open-post` in the tag
+5. calculate `R:n` from the in-memory direct-child reply lists
+6. calculate `L:n` from `index/targets/<encoded-id>/likes`, counting unique valid like authors
+7. render the thread forest into a temporary file
+8. open that file in Acme with `9social/open-post` in the tag
+
+For Level 1, count calculation can live inside `render-threads`. A separate count helper can be extracted later if other views need the same data.
+
+When a future `Unlike` record exists, update like counting to use the latest valid like/unlike event for each `(author, target)` pair.

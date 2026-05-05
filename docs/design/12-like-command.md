@@ -116,7 +116,11 @@ A typical workflow is:
 
 ## Tag Placement
 
-`9social/open-post` should add `9social/Like` when opening posts from followed feeds.
+`9social/open-post` should add `9social/Like` when opening posts from followed feeds if the local index does not show that the current user has already liked the post.
+
+If the index is missing or unreadable, `open-post` should prefer showing `9social/Like` rather than rebuilding the index during post opening. `Like` itself remains responsible for enforcing idempotence before publishing.
+
+If the local index shows that the current user has already liked the post, Level 1 should omit `9social/Like` from the tag. `9social/Unlike` can be considered later.
 
 For followed-feed posts:
 
@@ -142,6 +146,7 @@ Before creating a like record, `Like` should validate:
 * `$%` is set
 * `$%` names a readable post file
 * the target post has a valid `id:` field, using `bin/9social/lib/post-id`
+* the target post is not under `$home/lib/9social/self/posts/`
 
 `Like` should generate:
 
@@ -149,13 +154,13 @@ Before creating a like record, `Like` should validate:
 * a UTC timestamp
 * a filename under `self/posts/`
 
-The filename only needs to be unique within the user's own `posts/` directory. A reasonable Level 1 form is:
+The filename only needs to be unique within the user's own `posts/` directory. Level 1 should use:
 
 ```text
-YYYY-MM-DD-like-<short-target-or-counter>
+YYYY-MM-DD-like-<n>
 ```
 
-The final naming rule can reuse the same collision handling used by `new-post` and `publish-draft`.
+where `<n>` is omitted for the first available filename or incremented using the same collision handling style used by `new-post` and `publish-draft`.
 
 The Git commit should include only the new like record, not unrelated dirty files.
 
@@ -173,6 +178,16 @@ Once the local index exists, `Like` should be idempotent.
 
 Before creating a like record, `Like` should check the index for existing likes targeting the current post. It should read those like record files and check whether any valid like was authored by the current user.
 
+The current user should be identified by reading `name:` from `$home/lib/9social/self/profile` and comparing it to the like record `author:` field. This matches the existing authorship model for ordinary posts and replies.
+
+This check should live in a reusable helper such as:
+
+```rc
+9social/lib/liked-post <post-id>
+```
+
+The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `open-post` can use this helper to decide whether to show `9social/Like`; `Like` can use it to enforce idempotence.
+
 If the current user has already liked the target post, `Like` should print a short message such as:
 
 ```text
@@ -182,6 +197,17 @@ already liked
 and exit successfully without creating a new like record or Git commit.
 
 If no current-user like exists, `Like` creates one `type: like` record and commits it locally.
+
+After a successful commit, `Like` should run `9social/reindex` so subsequent `open-post` calls can immediately omit `9social/Like` for that target.
+
+On success, `Like` should print:
+
+```text
+liked: <target-post-id>
+posted: posts/<like-file>
+```
+
+`Like` does not push.
 
 If the index is missing or stale, `Like` may run `9social/reindex` first and then check again.
 
@@ -247,8 +273,39 @@ The timeline may use them later to enrich post summaries, but Level 1 should ski
 Level 1 does not support:
 
 * displaying like counts
-* unliking a post
+* implementing `Unlike`
 * pushing after liking
 * liking by post ID from the shell
 * global like counts
 
+
+---
+
+## Future Unlike Model
+
+The Level 1 like design is compatible with a future `9social/Unlike` command.
+
+`Unlike` should create a new immutable reaction record rather than deleting the original like record.
+
+A future unlike record may look like:
+
+```text
+id: 9social:post:<self-user-uuid>:<unlike-post-uuid>
+author: dharmatech
+date: 2026-05-04T12:34:56Z
+type: unlike
+target: 9social:post:<target-user-uuid>:<target-post-uuid>
+
+```
+
+This allows a user to perform a sequence such as:
+
+```text
+Like, Unlike, Like, Unlike
+```
+
+without mutating or deleting old records.
+
+When `Unlike` exists, clients should calculate current like state per `(author, target)` pair by sorting that author's like/unlike records for the target by `date:` and taking the latest valid event.
+
+Until `Unlike` exists, Level 1 treats any valid like by the current user for a target as meaning the post is already liked.

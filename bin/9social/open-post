@@ -109,24 +109,30 @@ post_id=9social/lib/post-id
 if(~ $0 */open-post)
 	post_id=`{echo $0 | sed 's;/open-post$;/lib/post-id;'}
 
-$post_id $post >/dev/null
+opened_id=`{$post_id $post}
 st=$status
-if(! ~ $st '')
+if(! ~ $st '' || ! ~ $#opened_id 1)
 	fail 'bad post id: '^$post
 
 if(~ $mode acme){
 	open_file_window=9social/lib/open-file-window
 	post_meta=9social/lib/post-meta
 	encode_id=9social/lib/encode-id
+	liked_post=9social/lib/liked-post
 	if(~ $0 */open-post){
 		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
 		post_meta=`{echo $0 | sed 's;/open-post$;/lib/post-meta;'}
 		encode_id=`{echo $0 | sed 's;/open-post$;/lib/encode-id;'}
+		liked_post=`{echo $0 | sed 's;/open-post$;/lib/liked-post;'}
 	}
-	actions='9social/Reply'
+	actions='9social/Reply 9social/Like'
 	selfpost=$home/lib/9social/self/posts/
 	if(awk -v 'post='^$post -v 'prefix='^$selfpost 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
 		actions='9social/Reply 9social/Update 9social/Delete'
+	if not {
+		if($liked_post $opened_id >/dev/null >[2]/dev/null)
+			actions='9social/Reply'
+	}
 	target=`{$post_meta $post >[2]/dev/null | awk -F ' ' '$1=="target" && target=="" { target=$2 } END { if(target != "") print target }'}
 	if(! ~ $#target 0){
 		$encode_id $target >/dev/null >[2]/dev/null

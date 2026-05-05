@@ -47,12 +47,10 @@ for(entry in `{ls -p $index/posts >[2]/dev/null | sort}){
 			END {
 				if(data["id"] !~ canon)
 					exit 0
-				if(data["type"] == "like")
-					exit 0
 				target = ""
-				if(data["type"] == "reply" && data["target"] ~ canon)
+				if((data["type"] == "reply" || data["type"] == "like") && data["target"] ~ canon)
 					target = data["target"]
-				print data["id"] "\t" data["date"] "\t" data["author"] "\t" data["title"] "\t" target "\t" postpath
+				print data["id"] "\t" data["date"] "\t" data["author"] "\t" data["title"] "\t" data["type"] "\t" target "\t" postpath
 			}
 		' $post >>$records
 	}
@@ -84,12 +82,22 @@ awk '
 		}
 	}
 
+	function countsuffix(node,    suffix)
+	{
+		suffix = ""
+		if(likecount[node] > 0)
+			suffix = suffix " L:" likecount[node]
+		if(childn[node] > 0)
+			suffix = suffix " R:" childn[node]
+		return suffix
+	}
+
 	function printentry(node, depth,    indent, i)
 	{
 		indent = ""
 		for(i = 0; i < depth; i++)
 			indent = indent "    "
-		print indent date[node] "  " author[node]
+		print indent date[node] "  " author[node] countsuffix(node)
 		print indent id[node]
 		if(title[node] == "")
 			print indent "title:"
@@ -131,12 +139,22 @@ awk '
 
 	{
 		key = $1
+		type = $5
+		rectarget = $6
+		if(type == "like"){
+			if(rectarget != "" && $3 != "" && !likeseen[rectarget, $3]){
+				likeseen[rectarget, $3] = 1
+				likecount[rectarget]++
+			}
+			next
+		}
 		seen[key] = 1
 		id[key] = $1
 		date[key] = $2
 		author[key] = $3
 		title[key] = $4
-		target[key] = $5
+		if(type == "reply")
+			target[key] = rectarget
 		all[++alln] = key
 	}
 
