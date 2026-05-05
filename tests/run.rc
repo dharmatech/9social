@@ -2,7 +2,7 @@
 rfork e
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 
-for(t in follow.rc refresh.rc init-self.rc new-post.rc new-post-editor.rc check-self.rc valid-draft.rc encode-id.rc mk-temp-file.rc post-meta.rc reindex.rc render-threads.rc liked-post.rc post-path.rc post-id.rc post-title.rc check-post.rc publish.rc like.rc cancel.rc push.rc delete.rc update.rc timeline.rc open-post.rc Timeline.rc ShowThreads.rc Menu.rc){
+for(t in follow.rc refresh.rc init-self.rc new-post.rc new-post-editor.rc check-self.rc valid-draft.rc valid-profile.rc encode-id.rc mk-temp-file.rc post-meta.rc reindex.rc render-threads.rc liked-post.rc post-path.rc post-id.rc post-title.rc check-post.rc publish.rc like.rc cancel.rc push.rc delete.rc update.rc timeline.rc open-post.rc Timeline.rc ShowThreads.rc Menu.rc){
 	echo tests/$t
 	$repo/tests/$t || exit $status
 }

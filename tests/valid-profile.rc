@@ -1,0 +1,51 @@
+#!/bin/rc
+rfork e
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/valid-profile.awk
+base=/tmp/9social-valid-profile-test.$pid
+useruuid=550e8400-e29b-41d4-a716-446655440000
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+profile=$base.profile
+rm -f $base.*
+>$profile {
+	echo 'id: 9social:user:'^$useruuid
+	echo 'name: dharmatech'
+	echo 'display: Dharma Tech'
+}
+profiledata=`{$cmd $profile}
+if(! ~ $status '') fail valid-status
+if(! ~ $#profiledata 2) fail valid-output-count $#profiledata
+if(! ~ $profiledata(1) $useruuid) fail valid-uuid $profiledata(1)
+if(! ~ $profiledata(2) dharmatech) fail valid-name $profiledata(2)
+
+>$profile {
+	echo 'name: dharmatech'
+	echo 'display: Dharma Tech'
+}
+if($cmd $profile >/dev/null)
+	fail missing-id-status
+
+>$profile {
+	echo 'id: 9social:user:not-a-uuid'
+	echo 'name: dharmatech'
+	echo 'display: Dharma Tech'
+}
+if($cmd $profile >/dev/null)
+	fail bad-id-status
+
+>$profile {
+	echo 'id 9social:user:'^$useruuid
+	echo 'name: dharmatech'
+	echo 'display: Dharma Tech'
+}
+if($cmd $profile >/dev/null)
+	fail malformed-status
+
+rm -f $base.*
+echo ok
+exit ''

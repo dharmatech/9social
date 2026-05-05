@@ -18,34 +18,6 @@ fn usage {
 	exit usage
 }
 
-fn validprofile {
-	awk -F': ' '
-		function trim(s){
-			gsub(/^[ \t]+/, "", s)
-			gsub(/[ \t]+$/, "", s)
-			return s
-		}
-		index($0, ": ") == 0 { bad=1; next }
-		{
-			key=$1
-			val=trim(substr($0, index($0, ": ")+2))
-			if(key == "id") id=val
-			else if(key == "name") name=val
-			else if(key == "display") display=val
-		}
-		END {
-			if(bad || id == "" || name == "" || display == "")
-				exit 1
-			if(id !~ /^9social:user:[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/)
-				exit 1
-			uuid=id
-			sub(/^9social:user:/, "", uuid)
-			print uuid
-			print name
-		}
-	' $1 >[2]/dev/null
-}
-
 fn validmeta {
 	awk -F': ' '
 		function trim(s){
@@ -129,7 +101,7 @@ if(! test -e $self/.git)
 if(! test -f $profile)
 	fail 'bad profile: '^$profile
 
-profiledata=`{validprofile $profile}
+profiledata=`{9social/lib/valid-profile.awk $profile}
 if(! ~ $status '')
 	fail 'bad profile: '^$profile
 if(! ~ $#profiledata 2)

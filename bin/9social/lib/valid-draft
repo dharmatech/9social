@@ -14,6 +14,8 @@ BEGIN {
 
 	if(path ~ "^/tmp/9social-new-post\\.[0-9]+(\\.[0-9]+)?$")
 		exit 0
+	if(path ~ "^/tmp/9social/9social-new-post\\.[0-9]+(\\.[0-9]+)?$")
+		exit 0
 
 	exit 1
 }

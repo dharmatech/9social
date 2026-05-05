@@ -1,4 +1,5 @@
 #!/bin/awk -f
+# Read one post file and emit one normalized thread record.
 
 BEGIN {
 	canon = "^9social:post:[0-9a-f-]+:[0-9a-f-]+$"

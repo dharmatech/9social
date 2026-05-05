@@ -1,4 +1,5 @@
 #!/bin/awk -f
+# Read normalized thread records and render the threaded view.
 
 BEGIN { FS = "\t" }
 

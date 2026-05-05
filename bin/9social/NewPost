@@ -12,8 +12,7 @@ fn usage {
 	exit usage
 }
 
-if(! ~ $#* 0)
-	usage
+if(! ~ $#* 0) usage
 
 draft=()
 if(! test -f /mnt/wsys/index){
@@ -21,44 +20,19 @@ if(! test -f /mnt/wsys/index){
 	echo 'NewPost: run from acme, or use 9social/new-post' >[1=2]
 	exit 'no acme'
 }
-check_self=9social/lib/check-self
-open_draft_window=9social/lib/open-draft-window
-if(~ $0 */NewPost){
-	check_self=`{echo $0 | sed 's;/NewPost$;/lib/check-self;'}
-	open_draft_window=`{echo $0 | sed 's;/NewPost$;/lib/open-draft-window;'}
-}
 
-if(! $check_self)
-	exit $status
+9social/lib/check-self || exit $status
 
-tmpdir=$home^/tmp
-if(! test -d $tmpdir)
-	mkdir $tmpdir >[2]/dev/null
-if(! test -d $tmpdir)
-	tmpdir=/tmp
-if(! test -d $tmpdir)
-	fail 'cannot use draft directory'
-
-base=$tmpdir^/9social-new-post.^$pid
-draft=$base
-n=2
-while(test -e $draft){
-	draft=$base^.^$n
-	n=`{echo $n | awk '{print $1+1}'}
-}
-if(test -e $draft)
-	fail 'draft already exists: '^$draft
+draft=`{9social/lib/mk-temp-file 9social-new-post} ||
+	fail 'cannot create draft temp file'
 
 {
 	echo 'Title: '
 	echo
-} >$draft
-if(! ~ $status '')
-	fail 'cannot create draft'
-if(test -e $draft && ! test -f $draft)
-	fail 'cannot create draft'
+} >$draft || fail 'cannot create draft'
 
-if(! $open_draft_window $draft)
-	exit $status
+test -f $draft || fail 'cannot create draft'
+
+9social/lib/open-draft-window $draft || exit $status
 
 exit ''

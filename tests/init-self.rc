@@ -9,6 +9,8 @@ fn fail {
 	exit fail
 }
 
+bind -b $repo/bin /bin || fail bind
+
 fn setup {
 	testhome=/tmp/9social-init-self-test.$pid.$1
 	rm -rf $testhome

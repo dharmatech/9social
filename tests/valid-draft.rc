@@ -12,6 +12,8 @@ fn fail {
 $cmd /usr/glenda/tmp/9social-new-post.123 || fail home-base
 $cmd /usr/glenda/tmp/9social-new-post.123.2 || fail home-suffix
 $cmd /tmp/9social-new-post.456 || fail tmp-base
+$cmd /tmp/9social/9social-new-post.456 || fail tmp-dir-base
+$cmd /tmp/9social/9social-new-post.456.3 || fail tmp-dir-suffix
 $cmd /tmp/9social-new-post.456.3 || fail tmp-suffix
 
 if($cmd /usr/glenda/tmp/not-a-draft)
