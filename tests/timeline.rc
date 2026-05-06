@@ -46,7 +46,7 @@ grep 'skip post .*\.keep' $testhome/err >/dev/null && fail keep-warning
 grep '^------------------------------------------------------------------------$' $testhome/out >/dev/null || fail keep-separator-missing
 if(! grep '^2026-04-29T18:10:35Z  Dennis Ritchie$' $testhome/out >/dev/null) fail keep-post-missing
 expected=$feed^'/posts/2026-04-29-test'
-grep -s $expected $testhome/out || fail keep-open-post-missing
+grep -s $expected $testhome/out || fail keep-OpenPost-missing
 grep '^title: Timeline Test$' $testhome/out >/dev/null || fail keep-title-missing
 
 

@@ -274,11 +274,11 @@ The command reads all feeds and posts first, then sorts the combined post list g
 
 ## Acme Open Integration
 
-The Acme-oriented `9social/open-post` command should support opening posts from either full local paths or canonical post IDs once the local index exists.
+The Acme-oriented `9social/OpenPost` command should support opening posts from either full local paths or canonical post IDs once the local index exists.
 
-This means timeline output can continue to show full paths for transparency, while future timeline variants may show canonical post IDs and still use the same `open-post` command.
+This means timeline output can continue to show full paths for transparency, while future timeline variants may show canonical post IDs and still use the same `OpenPost` command.
 
-`timeline` itself should not perform index lookup in Level 1. Opening by ID is handled by `open-post` through `9social/lib/post-path`.
+`timeline` itself should not perform index lookup in Level 1. Opening by ID is handled by `OpenPost` through `9social/lib/post-path`.
 
 ---
 

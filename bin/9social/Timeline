@@ -53,7 +53,7 @@ if(! ~ $st '')
 if(! test -f $timelinefile)
 	fail 'cannot create timeline'
 
-if(! $open_file_window $timelinefile ' | 9social/open-post')
+if(! $open_file_window $timelinefile ' | 9social/OpenPost')
 	exit $status
 
 exit ''

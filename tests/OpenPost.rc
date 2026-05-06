@@ -1,7 +1,8 @@
 #!/bin/rc
 rfork e
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/open-post
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/OpenPost
 useruuid=550e8400-e29b-41d4-a716-446655440000
 postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
@@ -11,8 +12,10 @@ fn fail {
 	exit fail
 }
 
+bind -b $repo/bin /bin || fail bind-repo
+
 fn setup {
-	testhome=/tmp/9social-open-post-test.$pid.$1
+	testhome=/tmp/9social-OpenPost-test.$pid.$1
 	rm -rf $testhome
 	postdir=$testhome/lib/9social/feeds/9social-user-dennis/posts
 	mkdir -p $postdir || fail mkdir
@@ -26,6 +29,7 @@ fn setup {
 		echo body
 	}
 	home=$testhome
+	fakebound=0
 	plumbcmd=$testhome/fake-plumb
 	>$plumbcmd {
 		echo '#!/bin/rc'
@@ -33,6 +37,35 @@ fn setup {
 		echo 'cat >'^$testhome^'/body'
 	}
 	chmod +x $plumbcmd
+}
+
+fn bindfake {
+	if(~ $fakebound 0){
+		mkdir -p $testhome/bin/9social/lib || fail fake-mkdir
+		bind -b $testhome/bin/9social/lib /bin/9social/lib || fail bind-fake
+		fakebound=1
+	}
+}
+
+fn fakeopen {
+	bindfake
+	open_file_window=$testhome/bin/9social/lib/open-file-window
+	>$open_file_window {
+		echo '#!/bin/rc'
+		echo 'echo $1 >'^$testhome^'/opened'
+		echo 'echo $2 >'^$testhome^'/tag'
+	}
+	chmod +x $open_file_window
+}
+
+fn fakecurrent {
+	bindfake
+	current_line=$testhome/bin/9social/lib/current-line
+	>$current_line {
+		echo '#!/bin/rc'
+		echo 'echo open this 9social:post:'^$useruuid^':'^$postuuid
+	}
+	chmod +x $current_line
 }
 
 fn runopen {
@@ -48,29 +81,13 @@ grep '^-i -d edit -a action=showdata filename='^$post^'$' $testhome/args >/dev/n
 grep '^title: Test Post$' $testhome/body >/dev/null || fail token-body
 
 setup explicit
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
+fakeopen
 token=$post
-# Force the script-local helper path by running through a copy named like open-post.
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $open_file_window $testhome/lib/open-file-window
-$testcmd $token >$testhome/out >[2]$testhome/err
+$cmd $token >$testhome/out >[2]$testhome/err
 st=$status
-if(! ~ $st '') fail explicit-status $st
+if(! ~ $st '') fail explicit-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail explicit-opened `{cat $testhome/opened}
 grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail explicit-tag `{cat $testhome/tag}
-
-
-
 
 setup feedreply
 >$post {
@@ -83,26 +100,12 @@ setup feedreply
 	echo
 	echo body
 }
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
-cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
-cp $open_file_window $testhome/lib/open-file-window
-$testcmd $post >$testhome/out >[2]$testhome/err
+fakeopen
+$cmd $post >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail feedreply-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail feedreply-opened `{cat $testhome/opened}
-grep '^ | 9social/open-post 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail feedreply-tag `{cat $testhome/tag}
+grep '^ | 9social/OpenPost 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail feedreply-tag `{cat $testhome/tag}
 
 setup badtargettag
 >$post {
@@ -115,63 +118,27 @@ setup badtargettag
 	echo
 	echo body
 }
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
-cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
-cp $open_file_window $testhome/lib/open-file-window
-$testcmd $post >$testhome/out >[2]$testhome/err
+fakeopen
+$cmd $post >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail badtargettag-status $st `{cat $testhome/err}
 grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail badtargettag-tag `{cat $testhome/tag}
 
 setup explicitid
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib $home/lib/9social/index/posts
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $repo/bin/9social/lib/post-path $testhome/lib/post-path
-cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
-cp $open_file_window $testhome/lib/open-file-window
+fakeopen
+mkdir -p $home/lib/9social/index/posts
 encoded=9social_post_$useruuid^_$postuuid
 echo $post >$home/lib/9social/index/posts/$encoded
 id=9social:post:$useruuid:$postuuid
-$testcmd $id >$testhome/out >[2]$testhome/err
+$cmd $id >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail explicitid-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail explicitid-opened `{cat $testhome/opened}
 grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail explicitid-tag `{cat $testhome/tag}
 
 setup alreadyliked
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib $home/lib/9social/self/posts $home/lib/9social/index/targets/9social_post_$useruuid^_$postuuid/likes
+fakeopen
+mkdir -p $home/lib/9social/self/posts $home/lib/9social/index/targets/9social_post_$useruuid^_$postuuid/likes
 {
 	echo 'id: 9social:user:'^$useruuid
 	echo 'name: dharmatech'
@@ -188,42 +155,18 @@ likeid=9social:post:$useruuid:$targetuuid
 	echo
 }
 echo $likepost >$home/lib/9social/index/targets/9social_post_$useruuid^_$postuuid/likes/9social_post_$useruuid^_$targetuuid
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $repo/bin/9social/lib/liked-post $testhome/lib/liked-post
-cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
-cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
-cp $open_file_window $testhome/lib/open-file-window
-$testcmd $post >$testhome/out >[2]$testhome/err
+$cmd $post >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail alreadyliked-status $st `{cat $testhome/err}
 grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail alreadyliked-tag `{cat $testhome/tag}
 
 setup currentlineid
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-current_line=$testhome/fake-current-line
->$current_line {
-	echo '#!/bin/rc'
-	echo 'echo open this 9social:post:'^$useruuid^':'^$postuuid
-}
-chmod +x $current_line
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib $home/lib/9social/index/posts
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $repo/bin/9social/lib/post-path $testhome/lib/post-path
-cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
-cp $open_file_window $testhome/lib/open-file-window
-cp $current_line $testhome/lib/current-line
+fakeopen
+fakecurrent
+mkdir -p $home/lib/9social/index/posts
 encoded=9social_post_$useruuid^_$postuuid
 echo $post >$home/lib/9social/index/posts/$encoded
-$testcmd >$testhome/out >[2]$testhome/err
+$cmd >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail currentlineid-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail currentlineid-opened `{cat $testhome/opened}
@@ -241,25 +184,12 @@ post=$selfdir/2026-04-29-self
 	echo
 	echo body
 }
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $open_file_window $testhome/lib/open-file-window
-$testcmd $post >$testhome/out >[2]$testhome/err
+fakeopen
+$cmd $post >$testhome/out >[2]$testhome/err
 st=$status
-if(! ~ $st '') fail selfpath-status $st
+if(! ~ $st '') fail selfpath-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail selfpath-opened `{cat $testhome/opened}
 grep '^ | 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
-
 
 setup selfreply
 selfdir=$testhome/lib/9social/self/posts
@@ -275,26 +205,12 @@ post=$selfdir/2026-04-29-self-reply
 	echo
 	echo body
 }
-open_file_window=$testhome/fake-open
->$open_file_window {
-	echo '#!/bin/rc'
-	echo 'echo $1 >'^$testhome^'/opened'
-	echo 'echo $2 >'^$testhome^'/tag'
-}
-chmod +x $open_file_window
-testcmd=$testhome/open-post
-cp $cmd $testcmd
-chmod +x $testcmd
-mkdir -p $testhome/lib
-cp $repo/bin/9social/lib/post-id $testhome/lib/post-id
-cp $repo/bin/9social/lib/post-meta $testhome/lib/post-meta
-cp $repo/bin/9social/lib/encode-id $testhome/lib/encode-id
-cp $open_file_window $testhome/lib/open-file-window
-$testcmd $post >$testhome/out >[2]$testhome/err
+fakeopen
+$cmd $post >$testhome/out >[2]$testhome/err
 st=$status
 if(! ~ $st '') fail selfreply-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail selfreply-opened `{cat $testhome/opened}
-grep '^ | 9social/open-post 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfreply-tag `{cat $testhome/tag}
+grep '^ | 9social/OpenPost 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfreply-tag `{cat $testhome/tag}
 
 setup badprefix
 token=bad:post:9social-user-dennis/posts/2026-04-29-test
@@ -335,7 +251,7 @@ setup usage
 $cmd a b >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/open-post' $testhome/err >/dev/null || fail usage-error
+grep 'usage: 9social/OpenPost' $testhome/err >/dev/null || fail usage-error
 
 echo ok
 exit ''

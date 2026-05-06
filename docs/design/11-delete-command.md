@@ -16,6 +16,8 @@ Deletion is useful for test posts, mistakes, and ordinary cleanup. It should fit
 
 `Delete` is an Acme tag command.
 
+`Delete` is the Acme wrapper for deleting the current self post. A future command-line core command may expose the same operation without Acme by accepting an explicit self-post path or post ID.
+
 Level 1 accepts no arguments. It operates on the current Acme window path, provided by Acme through `$%`.
 
 Invalid arguments print:
@@ -50,7 +52,7 @@ This prevents accidentally deleting local cached copies of other people's posts 
 
 A typical workflow is:
 
-1. User opens their own post with `9social/open-post`.
+1. User opens their own post with `9social/OpenPost`.
 2. The post window tag includes:
 
 ```text
@@ -110,7 +112,7 @@ posts/2026-04-29-test-post
 
 ## Tag Placement
 
-`9social/open-post` should add `9social/Delete` only when opening a post from the user's own self repository.
+`9social/OpenPost` should add `9social/Delete` only when opening a post from the user's own self repository.
 
 For self posts:
 

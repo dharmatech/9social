@@ -25,10 +25,10 @@ It opens a new Acme window containing the threaded view.
 The window tag should include:
 
 ```text
-9social/open-post
+9social/OpenPost
 ```
 
-This lets the user place the cursor on a post ID and middle-click `9social/open-post` to open the full post.
+This lets the user place the cursor on a post ID and middle-click `9social/OpenPost` to open the full post.
 
 ---
 
@@ -161,14 +161,14 @@ The window body contains the generated threaded view.
 The window tag includes:
 
 ```text
-9social/open-post
+9social/OpenPost
 ```
 
 To open a post:
 
 1. place the cursor on the canonical post ID line
-2. middle-click `9social/open-post` in the tag
-3. `open-post` resolves the ID through `9social/lib/post-path`
+2. middle-click `9social/OpenPost` in the tag
+3. `OpenPost` resolves the ID through `9social/lib/post-path`
 
 ---
 
@@ -233,7 +233,7 @@ A straightforward implementation can:
 5. calculate `R:n` from the in-memory direct-child reply lists
 6. calculate `L:n` from `index/targets/<encoded-id>/likes`, counting unique valid like authors
 7. render the thread forest into a temporary file
-8. open that file in Acme with `9social/open-post` in the tag
+8. open that file in Acme with `9social/OpenPost` in the tag
 
 For Level 1, count calculation can live inside `render-threads`. A separate count helper can be extracted later if other views need the same data.
 

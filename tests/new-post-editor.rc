@@ -1,6 +1,7 @@
 #!/bin/rc
 rfork e
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/new-post
 testhome=/tmp/9social-new-post-editor.$pid
 rm -rf $testhome

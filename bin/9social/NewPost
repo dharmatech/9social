@@ -23,15 +23,8 @@ if(! test -f /mnt/wsys/index){
 
 9social/lib/check-self || exit $status
 
-draft=`{9social/lib/mk-temp-file 9social-new-post} ||
-	fail 'cannot create draft temp file'
-
-{
-	echo 'Title: '
-	echo
-} >$draft || fail 'cannot create draft'
-
-test -f $draft || fail 'cannot create draft'
+draft=`{9social/lib/new-post-draft} ||
+	fail 'cannot create draft'
 
 9social/lib/open-draft-window $draft || exit $status
 

@@ -1,0 +1,29 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	if(! ~ $#draft 0)
+		echo 'draft: '^$draft >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/lib/new-post-draft' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 0) usage
+
+draft=()
+draft=`{9social/lib/mk-temp-file 9social-new-post} ||
+	fail 'cannot create draft temp file'
+
+{
+	echo 'Title: '
+	echo
+} >$draft || fail 'cannot create draft'
+
+test -f $draft || fail 'cannot create draft'
+
+echo $draft
+exit ''

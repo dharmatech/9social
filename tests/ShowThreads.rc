@@ -48,7 +48,7 @@ if(! ~ $st '') fail status $st `{cat $home/err}
 if(! test -f $home/reindexed) fail did-not-reindex
 if(! test -f $home/opened) fail did-not-open
 if(! grep '^thread body$' $home/body >/dev/null) fail body `{cat $home/body}
-if(! grep '^ | 9social/open-post$' $home/tag >/dev/null) fail tag `{cat $home/tag}
+if(! grep '^ | 9social/OpenPost$' $home/tag >/dev/null) fail tag `{cat $home/tag}
 opened=`{cat $home/opened}
 if(! ~ $opened /tmp/9social/threads.*) fail opened-path $opened
 

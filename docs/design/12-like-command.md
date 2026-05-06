@@ -16,6 +16,8 @@ Define how a user likes another user's post from Acme.
 
 `Like` is an Acme tag command.
 
+`Like` is the Acme wrapper for liking the currently open post. A future command-line core command may expose the same operation without Acme by accepting an explicit target post path or post ID.
+
 Level 1 accepts no arguments. It operates on the current Acme window path, provided by Acme through `$%`.
 
 Invalid arguments print:
@@ -97,7 +99,7 @@ Likes must target post IDs, not local filesystem paths.
 
 A typical workflow is:
 
-1. User opens another user's post with `9social/open-post`.
+1. User opens another user's post with `9social/OpenPost`.
 2. The post window tag includes:
 
 ```text
@@ -116,9 +118,9 @@ A typical workflow is:
 
 ## Tag Placement
 
-`9social/open-post` should add `9social/Like` when opening posts from followed feeds if the local index does not show that the current user has already liked the post.
+`9social/OpenPost` should add `9social/Like` when opening posts from followed feeds if the local index does not show that the current user has already liked the post.
 
-If the index is missing or unreadable, `open-post` should prefer showing `9social/Like` rather than rebuilding the index during post opening. `Like` itself remains responsible for enforcing idempotence before publishing.
+If the index is missing or unreadable, `OpenPost` should prefer showing `9social/Like` rather than rebuilding the index during post opening. `Like` itself remains responsible for enforcing idempotence before publishing.
 
 If the local index shows that the current user has already liked the post, Level 1 should omit `9social/Like` from the tag. `9social/Unlike` can be considered later.
 
@@ -186,7 +188,7 @@ This check should live in a reusable helper such as:
 9social/lib/liked-post <post-id>
 ```
 
-The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `open-post` can use this helper to decide whether to show `9social/Like`; `Like` can use it to enforce idempotence.
+The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Like`; `Like` can use it to enforce idempotence.
 
 If the current user has already liked the target post, `Like` should print a short message such as:
 
@@ -198,7 +200,7 @@ and exit successfully without creating a new like record or Git commit.
 
 If no current-user like exists, `Like` creates one `type: like` record and commits it locally.
 
-After a successful commit, `Like` should run `9social/reindex` so subsequent `open-post` calls can immediately omit `9social/Like` for that target.
+After a successful commit, `Like` should run `9social/reindex` so subsequent `OpenPost` calls can immediately omit `9social/Like` for that target.
 
 On success, `Like` should print:
 
@@ -242,7 +244,7 @@ This makes post view enrichment efficient without changing the stored post forma
 
 ## Post View Display
 
-Level 1 `open-post` should focus on opening the post and exposing actions in the tag.
+Level 1 `OpenPost` should focus on opening the post and exposing actions in the tag.
 
 It should not mutate the displayed post body to add counts yet.
 

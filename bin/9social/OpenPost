@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/open-post [post-file | post-id | 9social:post:<feed-relative-post-path>]' >[1=2]
+	echo 'usage: 9social/OpenPost [post-file | post-id | 9social:post:<feed-relative-post-path>]' >[1=2]
 	exit usage
 }
 
@@ -50,15 +50,7 @@ fn lineid {
 }
 
 if(~ $#* 0){
-	current_line=9social/lib/current-line
-	open_file_window=9social/lib/open-file-window
-	post_path=9social/lib/post-path
-	if(~ $0 */open-post){
-		current_line=`{echo $0 | sed 's;/open-post$;/lib/current-line;'}
-		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
-		post_path=`{echo $0 | sed 's;/open-post$;/lib/post-path;'}
-	}
-	line=`{$current_line}
+	line=`{/bin/9social/lib/current-line}
 	st=$status
 	if(! ~ $st '')
 		fail 'cannot read current line'
@@ -67,7 +59,7 @@ if(~ $#* 0){
 		postid=`{echo $line | lineid}
 		if(! ~ $status '' || ! ~ $#postid 1)
 			fail 'no post path on current line'
-		post=`{$post_path $postid}
+		post=`{/bin/9social/lib/post-path $postid}
 		if(! ~ $status '')
 			fail 'post file not found: '^$postid
 	}
@@ -75,11 +67,8 @@ if(~ $#* 0){
 }
 if not if(~ $#* 1){
 	arg=$1
-	post_path=9social/lib/post-path
-	if(~ $0 */open-post)
-		post_path=`{echo $0 | sed 's;/open-post$;/lib/post-path;'}
 	if(~ $arg 9social:post:*){
-		post=`{$post_path $arg >[2]/dev/null}
+		post=`{/bin/9social/lib/post-path $arg >[2]/dev/null}
 		if(~ $status ''){
 			mode=acme
 		}
@@ -105,42 +94,28 @@ if not
 if(! test -f $post)
 	fail 'post file not found: '^$post
 
-post_id=9social/lib/post-id
-if(~ $0 */open-post)
-	post_id=`{echo $0 | sed 's;/open-post$;/lib/post-id;'}
-
-opened_id=`{$post_id $post}
+opened_id=`{/bin/9social/lib/post-id $post}
 st=$status
 if(! ~ $st '' || ! ~ $#opened_id 1)
 	fail 'bad post id: '^$post
 
 if(~ $mode acme){
-	open_file_window=9social/lib/open-file-window
-	post_meta=9social/lib/post-meta
-	encode_id=9social/lib/encode-id
-	liked_post=9social/lib/liked-post
-	if(~ $0 */open-post){
-		open_file_window=`{echo $0 | sed 's;/open-post$;/lib/open-file-window;'}
-		post_meta=`{echo $0 | sed 's;/open-post$;/lib/post-meta;'}
-		encode_id=`{echo $0 | sed 's;/open-post$;/lib/encode-id;'}
-		liked_post=`{echo $0 | sed 's;/open-post$;/lib/liked-post;'}
-	}
 	actions='9social/Reply 9social/Like'
 	selfpost=$home/lib/9social/self/posts/
 	if(awk -v 'post='^$post -v 'prefix='^$selfpost 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
 		actions='9social/Reply 9social/Update 9social/Delete'
 	if not {
-		if($liked_post $opened_id >/dev/null >[2]/dev/null)
+		if(/bin/9social/lib/liked-post $opened_id >/dev/null >[2]/dev/null)
 			actions='9social/Reply'
 	}
-	target=`{$post_meta $post >[2]/dev/null | awk -F ' ' '$1=="target" && target=="" { target=$2 } END { if(target != "") print target }'}
+	target=`{/bin/9social/lib/post-meta $post >[2]/dev/null | awk -F ' ' '$1=="target" && target=="" { target=$2 } END { if(target != "") print target }'}
 	if(! ~ $#target 0){
-		$encode_id $target >/dev/null >[2]/dev/null
+		/bin/9social/lib/encode-id $target >/dev/null >[2]/dev/null
 		if(~ $status '')
-			actions='9social/open-post '^$actions
+			actions='9social/OpenPost '^$actions
 	}
 	tag=' | '^$actions
-	$open_file_window $post $tag
+	/bin/9social/lib/open-file-window $post $tag
 	st=$status
 	if(! ~ $st '')
 		fail 'cannot open post'

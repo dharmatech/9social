@@ -218,6 +218,22 @@ Capitalized command names are used for Acme tag workflows, for example:
 9social/Cancel
 ```
 
+### CLI core, Acme wrapper
+
+9social should not require Acme for its core behavior. The file, Git, post, reply, reaction, index, and timeline operations should be available from ordinary command-line tools wherever practical.
+
+Acme commands should be thin wrappers around those core operations. Their job is to provide Acme-specific behavior, such as:
+
+* reading the current Acme window path from `$%`
+* reading the current line or cursor context
+* saving an Acme buffer before acting
+* opening Acme windows
+* adding useful commands to Acme tags
+
+The underlying state changes should live in command-line commands or shared helpers that can be tested without a live Acme session.
+
+For example, `Timeline` opens a timeline view in Acme, while `timeline` renders timeline text. Future mutation commands should follow the same shape where useful: a command-line core that performs the operation, plus a minimal capitalized Acme wrapper that gathers Acme context and delegates.
+
 Level 1 keeps these command families distinct and does not define case aliases.
 
 ---

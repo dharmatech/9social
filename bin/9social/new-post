@@ -14,9 +14,6 @@ fn usage {
 
 draft=()
 mode=editor
-publish=9social/lib/publish-draft
-if(~ $0 */new-post)
-	publish=`{echo $0 | sed 's;/new-post$;/lib/publish-draft;'}
 
 if(~ $#* 0)
 	mode=editor
@@ -25,29 +22,20 @@ if not if(~ $#* 1 && ~ $1 -)
 if not
 	usage
 
-if(test -d $home^/tmp)
-	tmpdir=$home^/tmp
-if not
-	tmpdir=/tmp
-
-draft=$tmpdir^/9social-new-post.^$pid
-if(test -e $draft)
-	draft=$tmpdir^/9social-new-post.^$pid^.^`{date -n}
-
 if(~ $mode stdin){
-	if(! cat >$draft)
-		fail 'cannot read stdin'
+	draft=`{9social/lib/mk-temp-file 9social-new-post} ||
+		fail 'cannot create draft temp file'
+	cat >$draft || fail 'cannot read stdin'
 }
 if not {
-	if(! echo 'Title: ' >$draft)
+	draft=`{9social/lib/new-post-draft} ||
 		fail 'cannot create draft'
 	if(~ $#editor 0)
 		editor=sam
-	if(! $editor $draft)
-		fail 'editor failed'
+	$editor $draft || fail 'editor failed'
 }
 
-$publish $draft
+9social/lib/publish-draft $draft
 st=$status
 if(! ~ $st ''){
 	if(echo $st | grep 'empty$' >/dev/null){

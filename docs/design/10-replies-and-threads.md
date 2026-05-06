@@ -297,14 +297,14 @@ The target post file does not need to live in a specific local feed directory. T
 
 ### Opening Reply Targets
 
-When `9social/open-post` opens a post that has a syntactically valid `target:` field, it should include `9social/open-post` in the Acme window tag.
+When `9social/OpenPost` opens a post that has a syntactically valid `target:` field, it should include `9social/OpenPost` in the Acme window tag.
 
 This supports reply traversal:
 
 1. user opens a reply post
 2. user places the cursor on the `target:` value
-3. user middle-clicks `9social/open-post` in the tag
-4. `open-post` resolves the target post ID through the local index and opens the target post
+3. user middle-clicks `9social/OpenPost` in the tag
+4. `OpenPost` resolves the target post ID through the local index and opens the target post
 
 This is intentionally Acme-native. The stored reply file remains plain text; the extra command appears only in the window tag.
 

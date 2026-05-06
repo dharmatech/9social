@@ -36,7 +36,7 @@ bin/9social/push                   tests/push.rc
 bin/9social/timeline               tests/timeline.rc
 bin/9social/Timeline               tests/Timeline.rc
 bin/9social/ShowThreads            tests/ShowThreads.rc, tests/render-threads.rc
-bin/9social/open-post              tests/open-post.rc
+bin/9social/OpenPost              tests/OpenPost.rc
 ```
 
 Helper tests generally follow helper names:
@@ -70,5 +70,5 @@ Some behavior depends on the live Acme filesystem and is intentionally not fully
 Examples:
 
 * Middle-click `9social/NewPost`, edit the draft, then middle-click `9social/Publish`.
-* Middle-click `9social/Timeline` or `9social/ShowThreads`, place the cursor on a post reference, then middle-click `9social/open-post`.
+* Middle-click `9social/Timeline` or `9social/ShowThreads`, place the cursor on a post reference, then middle-click `9social/OpenPost`.
 * Open another user's post and verify the tag commands such as `9social/Reply` and `9social/Like`.

@@ -16,6 +16,8 @@ Define how a user updates one of their own existing 9social posts from Acme.
 
 `Update` is an Acme tag command.
 
+`Update` is the Acme wrapper for saving and committing the current self-post window. A future command-line core command may expose the commit and validation operation without Acme by accepting an explicit self-post path.
+
 Level 1 accepts no arguments. It operates on the current Acme window path, provided by Acme through `$%`.
 
 Invalid arguments print:
@@ -50,7 +52,7 @@ A user edits other people's posts by replying, not by changing local cached feed
 
 A typical workflow is:
 
-1. User opens their own post with `9social/open-post`.
+1. User opens their own post with `9social/OpenPost`.
 2. The post window tag includes:
 
 ```text
@@ -170,7 +172,7 @@ Failures should be short diagnostics on stderr.
 
 ## Tag Placement
 
-`9social/open-post` should add `9social/Update` only when opening a post from the user's own self repository.
+`9social/OpenPost` should add `9social/Update` only when opening a post from the user's own self repository.
 
 For self posts:
 
