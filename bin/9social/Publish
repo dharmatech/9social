@@ -10,36 +10,23 @@ fn usage {
 	exit usage
 }
 
-if(! ~ $#* 0)
-	usage
-
-publish=9social/lib/publish-draft
-valid_draft=9social/lib/valid-draft
-if(~ $0 */Publish){
-	publish=`{echo $0 | sed 's;/Publish$;/lib/publish-draft;'}
-	valid_draft=`{echo $0 | sed 's;/Publish$;/lib/valid-draft;'}
-}
+if(! ~ $#* 0) usage
 
 draft=$%
 if(~ $#draft 0 || ~ $draft '')
 	fail 'missing draft path'
-if(! $valid_draft $draft)
+if(! 9social/lib/valid-draft $draft)
 	fail 'invalid draft path: '^$draft
 if(! test -f $draft)
 	fail 'draft file not found: '^$draft
 
 if(! ~ $#winid 0 && ! ~ $winid ''){
 	ctl=/mnt/acme/$winid/ctl
-	if(test -e $ctl){
-		if(! echo put >$ctl)
-			fail 'save failed'
-	}
+	if(test -e $ctl)
+		echo put >$ctl || fail 'save failed'
 }
 
-$publish $draft
-st=$status
-if(! ~ $st '')
-	exit $st
+9social/lib/publish-draft $draft || exit $status
 
 echo 'draft removed; close the Acme window with Del'
 exit ''
