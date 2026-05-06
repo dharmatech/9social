@@ -1,5 +1,5 @@
 #!/bin/rc
-rfork e
+rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/lib/new-post-draft

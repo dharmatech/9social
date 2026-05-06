@@ -63,6 +63,12 @@ bin/9social/lib/render-threads     tests/render-threads.rc
 * If changing shared format, profile, index, post parsing, or Git behavior, run the full suite.
 * If changing an Acme-only command, run automated helper tests plus a manual Acme smoke test.
 
+## Workflow tests
+
+For broader non-interactive coverage, use simulated users and local repositories rather than real remote services.
+
+See `docs/meta/simulated-multi-user-testing.md`.
+
 ## Acme smoke tests
 
 Some behavior depends on the live Acme filesystem and is intentionally not fully mocked. For commands such as `NewPost`, `Reply`, `Timeline`, `ShowThreads`, `Like`, `Delete`, and `Update`, use Acme manually after the focused automated tests pass.

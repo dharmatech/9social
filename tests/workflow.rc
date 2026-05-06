@@ -1,0 +1,159 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+root=/tmp/9social-workflow.$pid
+verbose=0
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	echo root: $root >[1=2]
+	exit fail
+}
+
+fn usage {
+	echo 'usage: tests/workflow.rc [-v]' >[1=2]
+	exit usage
+}
+
+fn say {
+	if(~ $verbose 1)
+		echo $*
+}
+
+fn showfile {
+	if(~ $verbose 1 && test -s $1)
+		cat $1
+}
+
+fn showcmd {
+	if(~ $verbose 1){
+		u=$1
+		shift
+		echo
+		echo '% '^$u^': '^$"*
+	}
+}
+
+fn asuser {
+	u=$1
+	shift
+	home=$root/homes/$u user=$u $*
+}
+
+fn mkremote {
+	u=$1
+	remote=$root/remotes/$u
+	mkdir -p $remote || fail $u remote-mkdir
+	cd $remote || fail $u remote-cd
+	git/init . >/dev/null >[2]/dev/null || fail $u remote-git-init
+	echo $u >README.md || fail $u remote-readme
+	git/add README.md || fail $u remote-git-add
+	git/commit -m init README.md >/dev/null >[2]/dev/null || fail $u remote-git-commit
+	say 'remote '^$u^': '^$remote
+}
+
+fn inituser {
+	u=$1
+	mkdir -p $root/homes/$u || fail $u home-mkdir
+	showcmd $u 9social/init-self $root/remotes/$u
+	asuser $u 9social/init-self $root/remotes/$u >$root/$u.init.out >[2]$root/$u.init.err
+	st=$status
+	if(! ~ $st '') fail $u init-self $st `{cat $root/$u.init.err}
+	showfile $root/$u.init.out
+	showfile $root/$u.init.err
+	if(~ $verbose 1){
+		echo profile:
+		cat $root/homes/$u/lib/9social/self/profile
+	}
+}
+
+fn assertgrep {
+	pat=$1
+	file=$2
+	msg=$3
+	grep $pat $file >/dev/null || fail $msg `{cat $file}
+}
+
+if(~ $#* 0)
+	verbose=0
+if not if(~ $#* 1 && ~ $1 -v)
+	verbose=1
+if not
+	usage
+
+rm -rf $root
+mkdir -p $root/remotes $root/homes || fail mkdir-root
+bind -b $repo/bin /bin || fail bind
+
+say 'test root: '^$root
+say
+say 'creating README-only local repositories'
+mkremote rms
+mkremote linus
+mkremote alan
+
+say
+say 'initializing simulated users'
+inituser rms
+inituser linus
+inituser alan
+
+showcmd rms 9social/new-post -
+{
+	echo 'Title: Free Software and Emacs'
+	echo
+	echo 'Software should respect the user''s freedom.'
+	echo 'Emacs remains a good place to build extensible tools.'
+} | asuser rms 9social/new-post - >$root/rms.new-post.out >[2]$root/rms.new-post.err
+st=$status
+if(! ~ $st '') fail rms new-post $st `{cat $root/rms.new-post.err}
+assertgrep '^posted: posts/' $root/rms.new-post.out rms-new-post-output
+showfile $root/rms.new-post.out
+showfile $root/rms.new-post.err
+if(~ $verbose 1){
+	post=`{walk $root/homes/rms/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$'}
+	echo 'created post: '^$post
+	cat $post
+}
+
+showcmd rms 9social/push
+asuser rms 9social/push >$root/rms.push.out >[2]$root/rms.push.err
+st=$status
+if(! ~ $st '') fail rms push $st `{cat $root/rms.push.err}
+showfile $root/rms.push.out
+showfile $root/rms.push.err
+
+showcmd linus 9social/follow $root/remotes/rms
+asuser linus 9social/follow $root/remotes/rms >$root/linus.follow.out >[2]$root/linus.follow.err
+st=$status
+if(! ~ $st '') fail linus follow $st `{cat $root/linus.follow.err}
+showfile $root/linus.follow.out
+showfile $root/linus.follow.err
+if(~ $verbose 1){
+	echo 'linus following:'
+	cat $root/homes/linus/lib/9social/self/following
+}
+
+showcmd linus 9social/refresh
+asuser linus 9social/refresh >$root/linus.refresh.out >[2]$root/linus.refresh.err
+st=$status
+if(! ~ $st '') fail linus refresh $st `{cat $root/linus.refresh.err}
+assertgrep '^clone '^$root^'/remotes/rms$' $root/linus.refresh.out linus-refresh-clone
+showfile $root/linus.refresh.out
+showfile $root/linus.refresh.err
+
+showcmd linus 9social/timeline
+asuser linus 9social/timeline >$root/linus.timeline.out >[2]$root/linus.timeline.err
+st=$status
+if(! ~ $st '') fail linus timeline $st `{cat $root/linus.timeline.err}
+assertgrep '^.*  rms$' $root/linus.timeline.out linus-timeline-author
+assertgrep '^title: Free Software and Emacs$' $root/linus.timeline.out linus-timeline-title
+assertgrep 'Software should respect the user''s freedom\.' $root/linus.timeline.out linus-timeline-body
+assertgrep $root^'/homes/linus/lib/9social/feeds/rms/posts/' $root/linus.timeline.out linus-timeline-path
+showfile $root/linus.timeline.out
+showfile $root/linus.timeline.err
+
+rm -rf $root
+echo ok
+exit ''
