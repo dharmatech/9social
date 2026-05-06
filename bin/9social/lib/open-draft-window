@@ -12,20 +12,13 @@ fn usage {
 	exit usage
 }
 
-if(! ~ $#* 1)
-	usage
+if(! ~ $#* 1) usage
 
 draft=$1
-if(! test -f $draft)
-	fail 'draft file not found: '^$draft
 
-open_file_window=9social/lib/open-file-window
-if(~ $0 */lib/open-draft-window)
-	open_file_window=`{echo $0 | sed 's;/open-draft-window$;/open-file-window;'}
+test -f $draft || fail 'draft file not found: '^$draft
 
-$open_file_window $draft ' | 9social/Publish 9social/Cancel'
-st=$status
-if(! ~ $st '')
-	exit $st
+9social/lib/open-file-window $draft ' | 9social/Publish 9social/Cancel' ||
+	exit $status
 
 exit ''
