@@ -3,7 +3,12 @@
 
 These are the directions for setting up the 9social client on 9front.
 
+In this example, we'll use github as the location of the user's profile repository.
+
 ### Setup ssh
+
+If you're already using 9front and ssh to work with clone, pull and push to github, you can skip this section.
+Otherwise, read on:
 
 Generate an ssh key:
 
@@ -49,11 +54,11 @@ git/get: fetch failed: pktline: short read from transport
 failed to clone git@github.com:dharmatech/9social.git: cleaning 9social
 ```
 
-Do the following:
+Run the steps that are shown in the output.
+For example, with the above output example, you'd run:
 
 ```
 echo 'ssh sha256=uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s server=github.com' >> /usr/lorinda/lib/sshthumbs
-
 ```
 
 Then do the clone again:
@@ -70,18 +75,44 @@ Add it around line 3, after the other two `bind` lines.
 
 ```
 bind -qa $home/src/9social/bin /bin
+cat $home/key >/mnt/factotum/ctl
 ```
 
-- Note: we may need a step that does `chmod 755` on the scripts.
-    - Consider: a setup script that does this
+Make sure all the 9social scripts are executable:
 
 ```
 cd
 cd src/9social/bin/9social
 chmod 755 * lib/*
+cd
 ```
 
-### timeline, follow, refresh
+
+### create repository
+
+Create a github repository for your 9social user.
+
+Go to:
+
+https://github.com/new
+
+Repository name: `9social-user-[YOUR-USERNAME]`
+
+So for example `9social-user-rms`
+
+Create a blank `README` file.
+
+### Run `init-self`
+
+Copy your clone address that starts with `git` .
+
+Run `init-self`:
+
+```
+9social/init-self git@github.com:dharmatech/9social-user-dharmatech.git
+```
+
+### 9social Tutorial
 
 Start acme
 
@@ -96,6 +127,8 @@ The timeline is empty. So let’s follow some people:
 9social/follow https://github.com/dharmatech/9social-user-joe.git
 9social/follow https://github.com/dharmatech/9social-user-dharmatech.git
 ```
+
+`dennis` and `joe` are accounts I'm using for testing.
 
 Run `9social/Timeline` 
 
@@ -119,25 +152,3 @@ Now run `9social/Timeline` again.
 
 That is all you have to do to follow and read others posts.
 If you would like to create your own posts, do the following.
-
-#### create repository
-
-Go to:
-
-https://github.com/new
-
-Repository name: `9social-user-[YOUR-USERNAME]`
-
-So for example `9social-user-rms`
-
-Create a blank `README` file.
-
-#### Run `init-self`
-
-Copy your clone address that starts with `git` .
-
-Run `init-self`:
-
-```
-9social/init-self git@github.com:dharmatech/9social-user-dharmatech.git
-```
