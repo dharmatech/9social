@@ -30,7 +30,8 @@ bin/9social/Publish                tests/publish.rc
 bin/9social/reply                  tests/reply.rc
 bin/9social/Cancel                 tests/cancel.rc
 bin/9social/Reply                  manual Acme smoke test; related helpers have focused tests
-bin/9social/Like                   tests/like.rc
+bin/9social/like                   tests/like.rc
+bin/9social/Like                   tests/Like.rc
 bin/9social/Delete                 tests/delete.rc
 bin/9social/Update                 tests/update.rc
 bin/9social/push                   tests/push.rc

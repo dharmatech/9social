@@ -180,6 +180,71 @@ if(! ~ $st '') fail linus push $st `{cat $root/linus.push.err}
 showfile $root/linus.push.out
 showfile $root/linus.push.err
 
+showcmd alan 9social/follow $root/remotes/rms
+asuser alan 9social/follow $root/remotes/rms >$root/alan.follow-rms.out >[2]$root/alan.follow-rms.err
+st=$status
+if(! ~ $st '') fail alan follow-rms $st `{cat $root/alan.follow-rms.err}
+showfile $root/alan.follow-rms.out
+showfile $root/alan.follow-rms.err
+
+showcmd alan 9social/refresh
+asuser alan 9social/refresh >$root/alan.refresh-rms.out >[2]$root/alan.refresh-rms.err
+st=$status
+if(! ~ $st '') fail alan refresh-rms $st `{cat $root/alan.refresh-rms.err}
+showfile $root/alan.refresh-rms.out
+showfile $root/alan.refresh-rms.err
+
+alan_rms_post=`{walk $root/homes/alan/lib/9social/feeds/rms/posts | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$'}
+if(! ~ $#alan_rms_post 1)
+	fail alan-rms-post-path $#alan_rms_post
+rms_target=`{asuser alan 9social/lib/post-id $alan_rms_post}
+if(! ~ $#rms_target 1)
+	fail alan-rms-post-id $#rms_target
+
+showcmd alan 9social/like $alan_rms_post
+asuser alan 9social/like $alan_rms_post >$root/alan.like.out >[2]$root/alan.like.err
+st=$status
+if(! ~ $st '') fail alan like $st `{cat $root/alan.like.err}
+assertgrep '^liked: '^$rms_target^'$' $root/alan.like.out alan-like-output
+showfile $root/alan.like.out
+showfile $root/alan.like.err
+if(~ $verbose 1){
+	likepost=`{walk $root/homes/alan/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$'}
+	echo 'created like: '^$likepost
+	cat $likepost
+}
+
+showcmd alan 9social/push
+asuser alan 9social/push >$root/alan.push.out >[2]$root/alan.push.err
+st=$status
+if(! ~ $st '') fail alan push $st `{cat $root/alan.push.err}
+showfile $root/alan.push.out
+showfile $root/alan.push.err
+
+showcmd rms 9social/follow $root/remotes/alan
+asuser rms 9social/follow $root/remotes/alan >$root/rms.follow-alan.out >[2]$root/rms.follow-alan.err
+st=$status
+if(! ~ $st '') fail rms follow-alan $st `{cat $root/rms.follow-alan.err}
+showfile $root/rms.follow-alan.out
+showfile $root/rms.follow-alan.err
+
+showcmd rms 9social/refresh
+asuser rms 9social/refresh >$root/rms.refresh-alan.out >[2]$root/rms.refresh-alan.err
+st=$status
+if(! ~ $st '') fail rms refresh-alan $st `{cat $root/rms.refresh-alan.err}
+showfile $root/rms.refresh-alan.out
+showfile $root/rms.refresh-alan.err
+
+encoded_rms_target=`{asuser rms 9social/lib/encode-id $rms_target}
+if(! ~ $#encoded_rms_target 1)
+	fail rms-encode-like-target $#encoded_rms_target
+likes=$root/homes/rms/lib/9social/index/targets/$encoded_rms_target/likes
+if(! test -d $likes)
+	fail rms-like-index-missing $likes
+likecount=`{ls -p $likes | wc -l}
+if(! ~ $likecount 1)
+	fail rms-like-index-count $likecount
+
 showcmd rms 9social/follow $root/remotes/linus
 asuser rms 9social/follow $root/remotes/linus >$root/rms.follow.out >[2]$root/rms.follow.err
 st=$status

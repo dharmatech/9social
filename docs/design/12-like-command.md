@@ -1,24 +1,44 @@
-# 9social — Acme Like Command
+# 9social — Like Commands
 
 ## Purpose
 
-Define how a user likes another user's post from Acme.
+Define how a user likes another user's post from the command line and from Acme.
 
 `Like` is the first concrete reaction command for 9social. Earlier design notes used the word `upvote`, but Level 1 uses `like` because it is short, familiar, and does not imply ranking.
 
 ---
 
-## Command
+## Commands
+
+### Command-line core
+
+```rc
+9social/like <post-file>
+```
+
+`like` is the non-interactive core command. It accepts an explicit local post file path, creates a like record in the current user's `self/posts/`, commits it locally, and rebuilds the local index.
+
+It does not require Acme. This command is suitable for terminal workflows and automated tests.
+
+Invalid arguments print:
+
+```text
+usage: 9social/like <post-file>
+```
+
+and exit with `usage`.
+
+### Acme wrapper
 
 ```rc
 9social/Like
 ```
 
-`Like` is an Acme tag command.
+`Like` is an Acme tag command and thin wrapper around `like`. It accepts no arguments, reads the current Acme window path from `$%`, and delegates to:
 
-`Like` is the Acme wrapper for liking the currently open post. A future command-line core command may expose the same operation without Acme by accepting an explicit target post path or post ID.
-
-Level 1 accepts no arguments. It operates on the current Acme window path, provided by Acme through `$%`.
+```rc
+9social/like $%
+```
 
 Invalid arguments print:
 
@@ -107,12 +127,13 @@ A typical workflow is:
 ```
 
 3. User middle-clicks `9social/Like`.
-4. `Like` reads the target post ID from the current post window.
-5. `Like` writes a `type: like` record into the user's `self/posts/` directory.
-6. `Like` commits the new like record locally.
-7. The user later runs `9social/push` when ready.
+4. `Like` delegates to `9social/like $%`.
+5. `like` reads the target post ID from the current post file.
+6. `like` writes a `type: like` record into the user's `self/posts/` directory.
+7. `like` commits the new like record locally.
+8. The user later runs `9social/push` when ready.
 
-`Like` does not push.
+`like` does not push. `Like` also does not push because it delegates to `like`.
 
 ---
 
@@ -142,15 +163,14 @@ Level 1 does not show `Like` on the user's own posts.
 
 ## Publishing Behavior
 
-Before creating a like record, `Like` should validate:
+Before creating a like record, `like` should validate:
 
 * `$home/lib/9social/self` exists and is usable, using `bin/9social/lib/check-self`
-* `$%` is set
-* `$%` names a readable post file
+* the explicit `<post-file>` names a readable post file
 * the target post has a valid `id:` field, using `bin/9social/lib/post-id`
 * the target post is not under `$home/lib/9social/self/posts/`
 
-`Like` should generate:
+`like` should generate:
 
 * a new post UUID for the like record
 * a UTC timestamp
@@ -176,9 +196,9 @@ like: 9social:post:<target-user-uuid>:<target-post-uuid>
 
 ## Duplicate Likes
 
-Once the local index exists, `Like` should be idempotent.
+Once the local index exists, `like` should be idempotent.
 
-Before creating a like record, `Like` should check the index for existing likes targeting the current post. It should read those like record files and check whether any valid like was authored by the current user.
+Before creating a like record, `like` should check the index for existing likes targeting the current post. It should read those like record files and check whether any valid like was authored by the current user.
 
 The current user should be identified by reading `name:` from `$home/lib/9social/self/profile` and comparing it to the like record `author:` field. This matches the existing authorship model for ordinary posts and replies.
 
@@ -188,9 +208,9 @@ This check should live in a reusable helper such as:
 9social/lib/liked-post <post-id>
 ```
 
-The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Like`; `Like` can use it to enforce idempotence.
+The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Like`; `like` can use it to enforce idempotence.
 
-If the current user has already liked the target post, `Like` should print a short message such as:
+If the current user has already liked the target post, `like` should print a short message such as:
 
 ```text
 already liked
@@ -198,20 +218,20 @@ already liked
 
 and exit successfully without creating a new like record or Git commit.
 
-If no current-user like exists, `Like` creates one `type: like` record and commits it locally.
+If no current-user like exists, `like` creates one `type: like` record and commits it locally.
 
-After a successful commit, `Like` should run `9social/reindex` so subsequent `OpenPost` calls can immediately omit `9social/Like` for that target.
+After a successful commit, `like` should run `9social/reindex` so subsequent `OpenPost` calls can immediately omit `9social/Like` for that target.
 
-On success, `Like` should print:
+On success, `like` should print:
 
 ```text
 liked: <target-post-id>
 posted: posts/<like-file>
 ```
 
-`Like` does not push.
+`like` does not push. `Like` also does not push because it delegates to `like`.
 
-If the index is missing or stale, `Like` may run `9social/reindex` first and then check again.
+If the index is missing or stale, `like` may run `9social/reindex` first and then check again.
 
 Historical duplicate like records may still exist. `reindex` should tolerate them. When calculating counts, clients should treat likes as a current-state signal by author and target:
 
@@ -222,7 +242,7 @@ Historical duplicate like records may still exist. `reindex` should tolerate the
 
 ## Counts And Indexing
 
-Like counts are not required for the first `Like` implementation or the first index implementation.
+Like counts are not required for the first `like` implementation or the first index implementation.
 
 The core primitive is the like record itself.
 

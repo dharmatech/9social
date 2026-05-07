@@ -1,7 +1,5 @@
 #!/bin/rc
 rfork en
-repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/Like
 u1=550e8400-e29b-41d4-a716-446655440000
 u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
 targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
@@ -15,7 +13,7 @@ fn fail {
 fn setup {
 	home=/tmp/9social-like-test.$pid.$1
 	rm -rf $home
-	mkdir -p $home/lib/9social/self $home/lib/9social/feeds/9social-user-dennis/posts $home/wsys || fail mkdir
+	mkdir -p $home/lib/9social/self $home/lib/9social/feeds/9social-user-dennis/posts || fail mkdir
 	cd $home/lib/9social/self || fail cd
 	git/init . >/dev/null >[2]/dev/null || fail git-init
 	{
@@ -33,11 +31,10 @@ fn setup {
 		echo
 		echo body
 	}
-	>$home/wsys/index echo ok
 }
 
 fn runlike {
-	%=$source wsysdir=$home/wsys $cmd >$home/out >[2]$home/err
+	9social/like $source >$home/out >[2]$home/err
 	st=$status
 }
 
@@ -88,10 +85,10 @@ if(~ $st '') fail missing-status
 grep 'post file not found' $home/err >/dev/null || fail missing-error `{cat $home/err}
 
 setup usage
-$cmd extra >$home/out >[2]$home/err
+9social/like >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/Like' $home/err >/dev/null || fail usage-error `{cat $home/err}
+grep 'usage: 9social/like <post-file>' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
 rm -rf /tmp/9social-like-test.$pid.*
 echo ok

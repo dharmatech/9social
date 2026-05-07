@@ -1,0 +1,93 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/like <post-file>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 1)
+	usage
+
+source=$1
+if(! test -f $source)
+	fail 'post file not found: '^$source
+
+self=$home^/lib/9social/self
+profile=$self^/profile
+posts=$self^/posts
+selfposts=$posts^/
+
+if(awk -v 'post='$source -v 'prefix='$selfposts 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
+	fail 'cannot like own post'
+
+if(! 9social/lib/check-self)
+	exit $status
+
+target=`{9social/lib/post-id $source}
+if(! ~ $status '' || ! ~ $#target 1)
+	fail 'bad post id: '^$source
+
+# Rebuild before checking so duplicate detection is based on current local files.
+9social/reindex >/dev/null || fail 'cannot reindex'
+
+if(9social/lib/liked-post $target >[2]/dev/null){
+	echo 'already liked'
+	exit ''
+}
+
+pdata=`{9social/lib/valid-profile.awk $profile >[2]/dev/null}
+if(! ~ $status '' || ! ~ $#pdata 2)
+	fail 'bad profile: '^$profile
+useruuid=$pdata(1)
+author=$pdata(2)
+
+date=`{date -u -f 'YYYY-MM-DDThh:mm:ss[Z]'}
+if(! ~ $#date 1)
+	fail 'cannot generate date'
+day=`{echo $date | sed 's/T.*//'}
+if(! ~ $#day 1)
+	fail 'cannot generate filename'
+
+postuuid=`{9social/uuid}
+if(! ~ $#postuuid 1)
+	fail 'cannot generate uuid'
+likeid=9social:post:^$useruuid^:^$postuuid
+
+base=$day^'-like'
+relpost=posts^/$base
+likefile=$posts^/$base
+n=2
+while(test -e $likefile){
+	relpost=posts^/$base^'-'^$n
+	likefile=$posts^/$base^'-'^$n
+	n=`{echo $n | awk '{print $1+1}'}
+}
+if(test -e $likefile)
+	fail 'post already exists: '^$relpost
+
+{
+	echo 'id: '^$likeid
+	echo 'author: '^$author
+	echo 'date: '^$date
+	echo 'type: like'
+	echo 'target: '^$target
+	echo
+} >$likefile
+if(! ~ $status '')
+	fail 'cannot write post: '^$relpost
+
+if(! @{cd $self && git/add $relpost})
+	fail 'git add failed'
+if(! @{cd $self && git/commit -m 'like: '^$target $relpost})
+	fail 'git commit failed'
+
+9social/reindex >/dev/null || fail 'cannot reindex'
+
+echo 'liked: '^$target
+echo 'posted: '^$relpost
+exit ''
