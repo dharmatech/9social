@@ -12,6 +12,7 @@ See a video demo here:
 
 https://www.youtube.com/watch?v=q6qVnlCjcAI
 
-See [docs/getting-started.md]() for directons on
-how to run the client yourself and participate in the network.
+See [docs/getting-started.md](docs/getting-started.md)
+for directons on how to run the client yourself
+and participate in the network.
 
