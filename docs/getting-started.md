@@ -87,6 +87,15 @@ chmod 755 * lib/*
 cd
 ```
 
+#### Tests
+
+At this point, you can run the unit tests if you'd like:
+
+```
+cd
+cd src/9social
+./tests/run.rc
+```
 
 ### create repository
 
