@@ -97,7 +97,7 @@ cd src/9social
 ./tests/run.rc
 ```
 
-### create repository
+### Create repository
 
 Create a github repository for your 9social user.
 
@@ -147,17 +147,3 @@ Run `9social/refresh`
 
 Now run `9social/Timeline` again.
 
-- `9social/timeline` : layout
-    
-    ![image.png](attachment:c859c186-0721-4fb9-a2b8-5d6ae0e1ba47:image.png)
-    
-    - should `9social/timeline` implement word wrap?
-        - Is there a facility in 9front to implement this?
-            - Some shell command or a combination of them?
-    - The indentation looks good, however, it looks weird when a line is too long
-        - Consider: instead of indentation, use a horizontal line
-    - Should we list the posts in ascending order?
-        - I.e. newest at the bottom?
-
-That is all you have to do to follow and read others posts.
-If you would like to create your own posts, do the following.
