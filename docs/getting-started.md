@@ -7,7 +7,7 @@ In this example, we'll use github as the location of the user's profile reposito
 
 ### Setup ssh
 
-If you're already using 9front and ssh to work with clone, pull and push to github, you can skip this section.
+If you're already using 9front and ssh to clone, pull and push to github, you can skip this section.
 Otherwise, read on:
 
 Generate an ssh key:
