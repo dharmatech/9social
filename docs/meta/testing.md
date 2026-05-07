@@ -37,7 +37,8 @@ bin/9social/Update                 tests/update.rc
 bin/9social/push                   tests/push.rc
 bin/9social/timeline               tests/timeline.rc
 bin/9social/Timeline               tests/Timeline.rc
-bin/9social/ShowThreads            tests/ShowThreads.rc, tests/render-threads.rc
+bin/9social/show-threads            tests/show-threads.rc, tests/render-threads.rc
+bin/9social/ShowThreads            tests/ShowThreads.rc
 bin/9social/OpenPost              tests/OpenPost.rc
 ```
 

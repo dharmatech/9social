@@ -3,6 +3,12 @@
 
 Small, experimental, local-first, decentralized social network
 
+Video demo:
+
+https://www.youtube.com/watch?v=q6qVnlCjcAI
+
+
+
  - Follow users
  - Reply to posts
  - Upvote posts

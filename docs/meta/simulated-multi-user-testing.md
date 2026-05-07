@@ -58,11 +58,13 @@ However, 9social identity should come from `$home/lib/9social/self/profile`, not
 
 ## Local Repositories
 
-Remote repositories should be simulated with local Git repositories under the test root.
+Remote repositories are simulated with local Git repositories under the test root.
+
+Each simulated remote starts as an ordinary repository created with `git/init`. A temporary seed repository creates an initial README commit and pushes it into the remote before the simulated user runs `init-self`. This preserves the 9front `git/clone` requirement that the repository not be empty.
 
 This lets tests exercise real `git/clone`, `git/pull`, `git/push`, `follow`, `refresh`, and `reindex` behavior without talking to a network service.
 
-The workflow should initialize one local self repository per simulated user, then use those repository paths in `following` files.
+The workflow should initialize one local self repository per simulated user, then use the local repository paths in `following` files.
 
 ## Helper Shape
 

@@ -1,0 +1,18 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+
+fn run {
+	t=$1
+	echo tests/$t
+	$repo/tests/$t || exit $status
+}
+
+# Expanded suffix of tests/run.rc before workflow.rc.
+# Adjust this list while isolating the predecessor that makes workflow fail.
+for(t in follow.rc refresh.rc init-self.rc new-post.rc new-post-editor.rc new-post-draft.rc check-self.rc valid-draft.rc valid-profile.rc encode-id.rc mk-temp-file.rc post-meta.rc reindex.rc render-threads.rc show-threads.rc liked-post.rc post-path.rc post-id.rc post-title.rc check-post.rc publish.rc reply-draft.rc reply.rc like.rc Like.rc cancel.rc push.rc delete.rc update.rc timeline.rc workflow.rc)
+	run $t
+
+echo ok
+exit ''

@@ -1,0 +1,22 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/show-threads' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 0) usage
+
+index=$home^/lib/9social/index
+if(! test -d $index/posts)
+	9social/reindex || fail 'cannot build index'
+
+if(! test -d $index/posts) fail 'index not found'
+
+9social/lib/render-threads
+exit $status

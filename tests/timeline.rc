@@ -40,6 +40,14 @@ setup keep
 	echo
 	echo 'Visible body.'
 }
+>$feed/posts/2026-04-29-like {
+	echo 'id: 9social:post:'^$useruuid^':aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:11:00Z'
+	echo 'type: like'
+	echo 'target: 9social:post:'^$useruuid^':'^$postuuid
+	echo
+}
 runtimeline
 if(! ~ $st '') fail keep-status $st
 grep 'skip post .*\.keep' $testhome/err >/dev/null && fail keep-warning
@@ -48,6 +56,8 @@ if(! grep '^2026-04-29T18:10:35Z  Dennis Ritchie$' $testhome/out >/dev/null) fai
 expected=$feed^'/posts/2026-04-29-test'
 grep -s $expected $testhome/out || fail keep-OpenPost-missing
 grep '^title: Timeline Test$' $testhome/out >/dev/null || fail keep-title-missing
+grep '2026-04-29-like' $testhome/out >/dev/null && fail like-visible
+grep 'skip post .*2026-04-29-like' $testhome/err >/dev/null && fail like-warning
 
 
 

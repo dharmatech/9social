@@ -14,16 +14,11 @@ fn usage {
 
 if(! ~ $#* 0) usage
 
-index=$home^/lib/9social/index
-if(! test -d $index/posts)
-	9social/reindex || fail 'cannot build index'
-
-if(! test -d $index/posts) fail 'index not found'
-
+threadfile=()
 threadfile=`{9social/lib/mk-temp-file threads} ||
 	fail 'cannot create threads temp file'
 
-9social/lib/render-threads >$threadfile ||
+9social/show-threads >$threadfile ||
 	fail 'cannot create threads view'
 if(! test -f $threadfile) fail 'cannot create threads view'
 

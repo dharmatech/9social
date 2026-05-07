@@ -1,8 +1,8 @@
-# 9social — Acme ShowThreads Command
+# 9social — Thread View Commands
 
 ## Purpose
 
-Display an Acme-native threaded view of locally available posts.
+Display a threaded view of locally available posts from the command line and from Acme.
 
 `Timeline` shows a flat chronological list of post summaries.
 
@@ -12,15 +12,43 @@ The threaded view should prioritize structure over body preview text.
 
 ---
 
-## Usage
+## Commands
+
+### Command-line core
+
+```rc
+9social/show-threads
+```
+
+`show-threads` is the non-interactive core command. It writes the threaded view to standard output.
+
+It does not require Acme. This command is suitable for terminal workflows, automated tests, and scripts that want the threaded view as plain text.
+
+Invalid arguments print:
+
+```text
+usage: 9social/show-threads
+```
+
+and exit with `usage`.
+
+If local indexing cannot be prepared, `show-threads` should print a command-prefixed error and exit nonzero.
+
+### Acme wrapper
 
 ```rc
 9social/ShowThreads
 ```
 
-`ShowThreads` is intended to be run from Acme.
+`ShowThreads` is an Acme command and thin wrapper around `show-threads`.
 
-It opens a new Acme window containing the threaded view.
+It creates a temporary file, runs:
+
+```rc
+9social/show-threads > <temp-file>
+```
+
+and opens that file in a new Acme window.
 
 The window tag should include:
 
@@ -34,7 +62,7 @@ This lets the user place the cursor on a post ID and middle-click `9social/OpenP
 
 ## Data Source
 
-`ShowThreads` reads local data only.
+`show-threads` reads local data only.
 
 It depends on the derived local index defined in `14-index.md`:
 
@@ -43,7 +71,9 @@ $home/lib/9social/index/posts
 $home/lib/9social/index/targets
 ```
 
-It may run `9social/reindex` first if the index is missing.
+`show-threads` may run `9social/reindex` first if the index is missing.
+
+If `reindex` fails, or if `$home/lib/9social/index/posts` still does not exist after reindexing, `show-threads` should fail clearly rather than rendering a partial view.
 
 Level 1 should not perform network access.
 
@@ -154,7 +184,9 @@ There is no artificial maximum reply depth in Level 1.
 
 ## Acme Behavior
 
-`ShowThreads` should open a new Acme window using the same Acme file interface style as `Timeline` and `NewPost`.
+`ShowThreads` should contain only the Acme-specific behavior.
+
+It should create a temporary file, run `9social/show-threads` into that file, and open a new Acme window using the same Acme file interface style as `Timeline` and `NewPost`.
 
 The window body contains the generated threaded view.
 
@@ -176,17 +208,17 @@ To open a post:
 
 `timeline` and `Timeline` remain the default chronological view.
 
-`ShowThreads` is a structural view.
+`show-threads` and `ShowThreads` are structural views.
 
-It should not replace `Timeline`.
+They should not replace `timeline` or `Timeline`.
 
-Level 1 may implement only the Acme command `ShowThreads`. A lower-level shell command such as `9social/threads` can be added later if useful.
+The lowercase `show-threads` command provides the terminal and testable core. The uppercase `ShowThreads` command provides the Acme presentation.
 
 ---
 
 ## Missing Or Malformed Data
 
-`ShowThreads` should tolerate malformed local data.
+`show-threads` should tolerate malformed local data.
 
 It should skip posts that lack a valid `id:` field.
 
@@ -196,13 +228,13 @@ It should not fail the whole view because one post is malformed.
 
 Warnings may be printed to the Acme errors window.
 
-`ShowThreads` should also defend against cycles in malformed local data. If a cycle is detected during rendering, stop descending that branch, warn, and continue rendering the rest of the view.
+`show-threads` should also defend against cycles in malformed local data. If a cycle is detected during rendering, stop descending that branch, warn, and continue rendering the rest of the view.
 
 ---
 
 ## Non-Goals
 
-Level 1 `ShowThreads` does not support:
+Level 1 thread views do not support:
 
 * body previews
 * collapsing or expanding threads
@@ -224,16 +256,22 @@ Useful helpers:
 
 The index already maps a post ID to local path and target IDs to reply records.
 
-A straightforward implementation can:
+A straightforward `show-threads` implementation can:
 
-1. scan `index/posts` to collect locally available posts
-2. parse each post header with `post-meta`
-3. identify roots and replies
-4. build parent-child relationships from `target:` values
-5. calculate `R:n` from the in-memory direct-child reply lists
-6. calculate `L:n` from `index/targets/<encoded-id>/likes`, counting unique valid like authors
-7. render the thread forest into a temporary file
-8. open that file in Acme with `9social/OpenPost` in the tag
+1. ensure `index/posts` exists, running `9social/reindex` if needed
+2. scan `index/posts` to collect locally available posts
+3. parse each post header with `post-meta`
+4. identify roots and replies
+5. build parent-child relationships from `target:` values
+6. calculate `R:n` from the in-memory direct-child reply lists
+7. calculate `L:n` from `index/targets/<encoded-id>/likes`, counting unique valid like authors
+8. render the thread forest to standard output
+
+A straightforward `ShowThreads` implementation can:
+
+1. create a temporary file
+2. run `9social/show-threads > <temp-file>`
+3. open that file in Acme with `9social/OpenPost` in the tag
 
 For Level 1, count calculation can live inside `render-threads`. A separate count helper can be extracted later if other views need the same data.
 

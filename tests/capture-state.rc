@@ -1,0 +1,82 @@
+#!/bin/rc
+
+fn section {
+	echo
+	echo '== '^$1^' =='
+}
+
+section 'basic'
+echo 'argv0='^$0
+echo 'pid='^$pid
+echo 'cwd='^`{pwd}
+echo 'user='^$user
+echo 'home='^$home
+echo 'path='^$"path
+
+echo
+section 'selected env'
+for(n in home user path editor wsysdir service objtype git_clone git_pull git_push git_init git_add git_commit branch){
+	if(test -e /env/$n)
+		echo $n^'='^`{cat /env/$n}
+	if not
+		echo $n^'=<unset>'
+}
+
+section '9social and git command resolution'
+for(c in git/clone git/pull git/push git/init git/add git/commit git/query git/log 9social/refresh 9social/reindex 9social/timeline 9social/workflow){
+	echo '$ whatis '^$c
+	whatis $c
+}
+
+section 'possibly shadowing names'
+for(c in git clone pull push init add commit query log refresh reindex timeline workflow){
+	echo '$ whatis '^$c
+	whatis $c
+}
+
+section 'namespace relevant binds'
+ns | grep '/bin|/tmp|9social|git|mnt/wsys|mnt/plumb|mnt/term'
+
+section 'full namespace'
+ns
+
+section 'git local smoke'
+root=/tmp/9social-capture-git.$pid
+rm -rf $root
+mkdir -p $root/remote $root/seed $root/clone || {
+	echo 'mkdir failed: '^$root
+	exit 'mkdir failed'
+}
+
+@{cd $root/remote && git/init . >/dev/null >$root/remote-init.err}
+echo 'remote-init-status='^$status
+cat $root/remote-init.err
+
+@{cd $root/seed && git/init . >/dev/null >$root/seed-init.err && echo smoke >README.md && git/add README.md >$root/seed-add.err >[2=1] && git/commit -m init README.md >$root/seed-commit.err >[2=1]}
+echo 'seed-init-add-commit-status='^$status
+cat $root/seed-init.err
+cat $root/seed-add.err
+cat $root/seed-commit.err
+
+@{cd $root/seed && git/push -u $root/remote >$root/seed-push.out >$root/seed-push.err}
+echo 'seed-push-status='^$status
+cat $root/seed-push.out
+cat $root/seed-push.err
+
+git/clone $root/remote $root/clone >$root/clone.out >$root/clone.err
+echo 'clone-status='^$status
+cat $root/clone.out
+cat $root/clone.err
+
+echo 'clone-head:'
+cat $root/clone/.git/HEAD >[2]/dev/null
+if(test -f $root/clone/README.md)
+	echo 'clone-readme=present'
+if not
+	echo 'clone-readme=missing'
+
+echo 'clone-files:'
+walk $root/clone
+
+rm -rf $root
+exit ''

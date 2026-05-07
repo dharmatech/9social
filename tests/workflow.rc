@@ -44,12 +44,13 @@ fn asuser {
 fn mkremote {
 	u=$1
 	remote=$root/remotes/$u
-	mkdir -p $remote || fail $u remote-mkdir
-	cd $remote || fail $u remote-cd
-	git/init . >/dev/null >[2]/dev/null || fail $u remote-git-init
-	echo $u >README.md || fail $u remote-readme
-	git/add README.md || fail $u remote-git-add
-	git/commit -m init README.md >/dev/null >[2]/dev/null || fail $u remote-git-commit
+	seed=$root/seeds/$u
+	mkdir -p $remote $seed || fail $u remote-mkdir
+	@{cd $remote && git/init . >/dev/null >[2]/dev/null} || fail $u remote-git-init
+	@{cd $seed && git/init . >/dev/null >[2]/dev/null} || fail $u seed-git-init
+	echo $u >$seed/README.md || fail $u seed-readme
+	@{cd $seed && git/add README.md && git/commit -m init README.md >/dev/null >[2]/dev/null} || fail $u seed-git-commit
+	@{cd $seed && git/push -u $remote >/dev/null >[2]/dev/null} || fail $u seed-git-push
 	say 'remote '^$u^': '^$remote
 }
 
@@ -83,7 +84,7 @@ if not
 	usage
 
 rm -rf $root
-mkdir -p $root/remotes $root/homes || fail mkdir-root
+mkdir -p $root/remotes $root/seeds $root/homes || fail mkdir-root
 bind -b $repo/bin /bin || fail bind
 
 say 'test root: '^$root

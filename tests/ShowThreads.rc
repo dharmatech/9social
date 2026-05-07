@@ -1,7 +1,6 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/ShowThreads
 base=/tmp/9social-ShowThreads-test.$pid
 
 fn fail {
@@ -14,24 +13,16 @@ bindir=$base/bin
 rm -rf $base.* $bindir
 mkdir -p $home/tmp $bindir/9social/lib || fail mkdir
 
-testcmd=$bindir/9social/ShowThreads
-cp $cmd $testcmd || fail copy-command
-chmod +x $testcmd
+cp $repo/bin/9social/ShowThreads $bindir/9social/ShowThreads || fail copy-command
+chmod +x $bindir/9social/ShowThreads
 cp $repo/bin/9social/lib/mk-temp-file $bindir/9social/lib/mk-temp-file || fail copy-mk-temp-file
 chmod +x $bindir/9social/lib/mk-temp-file
 
->$bindir/9social/reindex {
-	echo '#!/bin/rc'
-	echo 'mkdir -p $home/lib/9social/index/posts'
-	echo 'echo reindexed >$home/reindexed'
-}
-chmod +x $bindir/9social/reindex
-
->$bindir/9social/lib/render-threads {
+>$bindir/9social/show-threads {
 	echo '#!/bin/rc'
 	echo 'echo thread body'
 }
-chmod +x $bindir/9social/lib/render-threads
+chmod +x $bindir/9social/show-threads
 
 >$bindir/9social/lib/open-file-window {
 	echo '#!/bin/rc'
@@ -45,7 +36,6 @@ bind -b $bindir /bin || fail bind
 9social/ShowThreads >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail status $st `{cat $home/err}
-if(! test -f $home/reindexed) fail did-not-reindex
 if(! test -f $home/opened) fail did-not-open
 if(! grep '^thread body$' $home/body >/dev/null) fail body `{cat $home/body}
 if(! grep '^ | 9social/OpenPost$' $home/tag >/dev/null) fail tag `{cat $home/tag}
