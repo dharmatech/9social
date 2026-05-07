@@ -54,7 +54,7 @@ git/get: fetch failed: pktline: short read from transport
 failed to clone git@github.com:dharmatech/9social.git: cleaning 9social
 ```
 
-Run the steps that are shown in the output.
+Run the step that is shown in the output.
 For example, with the above output example, you'd run:
 
 ```
