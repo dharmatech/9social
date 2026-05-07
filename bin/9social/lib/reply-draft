@@ -1,0 +1,56 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	if(! ~ $#draft 0)
+		echo 'draft: '^$draft >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/lib/reply-draft <post-file>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 1)
+	usage
+
+source=$1
+draft=()
+if(! test -f $source)
+	fail 'post file not found: '^$source
+
+target=`{9social/lib/post-id $source}
+if(! ~ $status '')
+	fail 'bad post id: '^$source
+if(! ~ $#target 1)
+	fail 'bad post id: '^$source
+
+title=`{9social/lib/post-title $source}
+if(! ~ $status '')
+	fail 'bad post title: '^$source
+
+draft=`{9social/lib/mk-temp-file 9social-new-post} ||
+	fail 'cannot create draft temp file'
+
+{
+	if(~ $#title 0)
+		echo 'Title:'
+	if not {
+		if(~ $title(1) Re:*)
+			echo 'Title:' $title
+		if not
+			echo 'Title: Re:' $title
+	}
+	echo
+} >$draft || fail 'cannot create draft'
+
+test -f $draft || fail 'cannot create draft'
+
+{
+	echo 'type: reply'
+	echo 'target: '^$target
+} >$draft^.meta || fail 'cannot create draft metadata'
+
+echo $draft
+exit ''

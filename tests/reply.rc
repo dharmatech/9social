@@ -1,0 +1,127 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/reply
+useruuid=550e8400-e29b-41d4-a716-446655440000
+targetuser=11111111-1111-4111-8111-111111111111
+targetpostuuid=22222222-2222-4222-8222-222222222222
+targetid=9social:post:^$targetuser^:^$targetpostuuid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+bind -b $repo/bin /bin || fail bind
+
+fn setup {
+	testhome=/tmp/9social-reply-test.$pid.$1
+	rm -rf $testhome
+	mkdir -p $testhome/lib/9social/self $testhome/lib/9social/feeds/rms/posts || fail mkdir
+	cd $testhome/lib/9social/self || fail cd
+	git/init . >/dev/null >[2]/dev/null || fail git-init
+	{
+		echo 'id: 9social:user:'^$useruuid
+		echo 'name: linus'
+		echo 'display: linus'
+	} >profile
+	target=$testhome/lib/9social/feeds/rms/posts/target
+	{
+		echo 'id: '^$targetid
+		echo 'author: rms'
+		echo 'date: 2026-05-06T12:00:00Z'
+		echo 'title: Free Software and Emacs'
+		echo
+		echo 'Original body.'
+	} >$target
+	home=$testhome
+}
+
+fn runreply {
+	$cmd $target >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+fn onepost {
+	posts=`{walk $home/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$'}
+	if(! ~ $#posts 1)
+		fail $1 expected-one-post got $#posts
+	post=$posts(1)
+}
+
+setup ok
+{
+	echo 'Linux also needs freedom-respecting tools.'
+} | runreply
+if(! ~ $st '') fail ok-status $st `{cat $testhome/err}
+onepost ok
+grep '^type: reply$' $post >/dev/null || fail ok-type
+grep '^target: '^$targetid^'$' $post >/dev/null || fail ok-target
+grep '^title: Re: Free Software and Emacs$' $post >/dev/null || fail ok-title
+grep '^Linux also needs freedom-respecting tools\.$' $post >/dev/null || fail ok-body
+grep '^posted: posts/' $testhome/out >/dev/null || fail ok-output
+
+setup re
+{
+	echo 'id: '^$targetid
+	echo 'author: rms'
+	echo 'date: 2026-05-06T12:00:00Z'
+	echo 'title: Re: Kernel Extensions'
+	echo
+	echo 'Original body.'
+} >$target
+{
+	echo 'No duplicate Re prefix.'
+} | runreply
+if(! ~ $st '') fail re-status $st `{cat $testhome/err}
+onepost re
+grep '^title: Re: Kernel Extensions$' $post >/dev/null || fail re-title
+if(grep '^title: Re: Re:' $post >/dev/null) fail re-duplicate
+
+setup notitle
+{
+	echo 'id: '^$targetid
+	echo 'author: rms'
+	echo 'date: 2026-05-06T12:00:00Z'
+	echo
+	echo 'Original body.'
+} >$target
+{
+	echo 'Reply without target title.'
+} | runreply
+if(! ~ $st '') fail notitle-status $st `{cat $testhome/err}
+onepost notitle
+grep '^title:$' $post >/dev/null || fail notitle-blank-title
+grep '^Reply without target title\.$' $post >/dev/null || fail notitle-body
+
+setup badtarget
+{
+	echo 'author: rms'
+	echo
+	echo 'missing id'
+} >$target
+{
+	echo 'Should not post.'
+} | runreply
+if(~ $st '') fail badtarget-status
+grep 'bad post id' $testhome/err >/dev/null || fail badtarget-error `{cat $testhome/err}
+posts=`{walk $home/lib/9social/self/posts >[2]/dev/null | grep '/posts/' | grep -v '/posts$'}
+if(! ~ $#posts 0) fail badtarget-created
+
+setup missing
+rm -f $target
+{
+	echo 'Should not post.'
+} | runreply
+if(~ $st '') fail missing-status
+grep 'post file not found' $testhome/err >/dev/null || fail missing-error `{cat $testhome/err}
+
+setup usage
+$cmd >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/reply <post-file>' $testhome/err >/dev/null || fail usage-error
+
+echo ok
+exit ''

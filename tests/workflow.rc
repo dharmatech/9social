@@ -154,6 +154,62 @@ assertgrep $root^'/homes/linus/lib/9social/feeds/rms/posts/' $root/linus.timelin
 showfile $root/linus.timeline.out
 showfile $root/linus.timeline.err
 
+rms_post=`{walk $root/homes/linus/lib/9social/feeds/rms/posts | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$'}
+if(! ~ $#rms_post 1)
+	fail linus-rms-post-path $#rms_post
+
+showcmd linus 9social/reply $rms_post
+{
+	echo 'A practical kernel also needs good tools around it.'
+} | asuser linus 9social/reply $rms_post >$root/linus.reply.out >[2]$root/linus.reply.err
+st=$status
+if(! ~ $st '') fail linus reply $st `{cat $root/linus.reply.err}
+assertgrep '^posted: posts/' $root/linus.reply.out linus-reply-output
+showfile $root/linus.reply.out
+showfile $root/linus.reply.err
+if(~ $verbose 1){
+	replypost=`{walk $root/homes/linus/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$'}
+	echo 'created reply: '^$replypost
+	cat $replypost
+}
+
+showcmd linus 9social/push
+asuser linus 9social/push >$root/linus.push.out >[2]$root/linus.push.err
+st=$status
+if(! ~ $st '') fail linus push $st `{cat $root/linus.push.err}
+showfile $root/linus.push.out
+showfile $root/linus.push.err
+
+showcmd rms 9social/follow $root/remotes/linus
+asuser rms 9social/follow $root/remotes/linus >$root/rms.follow.out >[2]$root/rms.follow.err
+st=$status
+if(! ~ $st '') fail rms follow $st `{cat $root/rms.follow.err}
+showfile $root/rms.follow.out
+showfile $root/rms.follow.err
+if(~ $verbose 1){
+	echo 'rms following:'
+	cat $root/homes/rms/lib/9social/self/following
+}
+
+showcmd rms 9social/refresh
+asuser rms 9social/refresh >$root/rms.refresh.out >[2]$root/rms.refresh.err
+st=$status
+if(! ~ $st '') fail rms refresh $st `{cat $root/rms.refresh.err}
+assertgrep '^clone '^$root^'/remotes/linus$' $root/rms.refresh.out rms-refresh-clone
+showfile $root/rms.refresh.out
+showfile $root/rms.refresh.err
+
+showcmd rms 9social/timeline
+asuser rms 9social/timeline >$root/rms.timeline.out >[2]$root/rms.timeline.err
+st=$status
+if(! ~ $st '') fail rms timeline $st `{cat $root/rms.timeline.err}
+assertgrep '^.*  linus$' $root/rms.timeline.out rms-timeline-reply-author
+assertgrep '^title: Re: Free Software and Emacs$' $root/rms.timeline.out rms-timeline-reply-title
+assertgrep 'A practical kernel also needs good tools around it\.' $root/rms.timeline.out rms-timeline-reply-body
+assertgrep $root^'/homes/rms/lib/9social/feeds/linus/posts/' $root/rms.timeline.out rms-timeline-reply-path
+showfile $root/rms.timeline.out
+showfile $root/rms.timeline.err
+
 rm -rf $root
 echo ok
 exit ''

@@ -1,0 +1,67 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/lib/reply-draft
+targetid=9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+bind -b $repo/bin /bin || fail bind
+
+base=/tmp/9social-reply-draft-test.$pid
+rm -rf $base
+mkdir -p $base || fail mkdir
+
+target=$base/target
+{
+	echo 'id: '^$targetid
+	echo 'author: rms'
+	echo 'date: 2026-05-06T12:00:00Z'
+	echo 'title: Free Software and Emacs'
+	echo
+	echo 'Original body.'
+} >$target
+
+draft=`{$cmd $target >[2]$base/err}
+st=$status
+if(! ~ $st '') fail ok-status $st `{cat $base/err}
+if(! test -f $draft) fail ok-draft-missing $draft
+grep '^Title: Re: Free Software and Emacs$' $draft >/dev/null || fail ok-title `{cat $draft}
+grep '^type: reply$' $draft^.meta >/dev/null || fail ok-meta-type `{cat $draft^.meta}
+grep '^target: '^$targetid^'$' $draft^.meta >/dev/null || fail ok-meta-target `{cat $draft^.meta}
+rm -f $draft $draft^.meta
+
+{
+	echo 'id: '^$targetid
+	echo 'title: Re: Kernel Extensions'
+	echo
+} >$target
+
+draft=`{$cmd $target >[2]$base/err}
+st=$status
+if(! ~ $st '') fail re-status $st `{cat $base/err}
+grep '^Title: Re: Kernel Extensions$' $draft >/dev/null || fail re-title `{cat $draft}
+if(grep '^Title: Re: Re:' $draft >/dev/null) fail re-duplicate
+rm -f $draft $draft^.meta
+
+{
+	echo 'author: rms'
+	echo
+} >$target
+$cmd $target >$base/out >[2]$base/err
+st=$status
+if(~ $st '') fail bad-status
+grep 'bad post id' $base/err >/dev/null || fail bad-error `{cat $base/err}
+
+$cmd >$base/out >[2]$base/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/reply-draft <post-file>' $base/err >/dev/null || fail usage-error `{cat $base/err}
+
+rm -rf $base
+echo ok
+exit ''

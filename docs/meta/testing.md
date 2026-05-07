@@ -27,6 +27,7 @@ bin/9social/init-self              tests/init-self.rc
 bin/9social/new-post               tests/new-post.rc, tests/new-post-editor.rc
 bin/9social/NewPost                manual Acme smoke test; related automated tests cover helpers and publishing
 bin/9social/Publish                tests/publish.rc
+bin/9social/reply                  tests/reply.rc
 bin/9social/Cancel                 tests/cancel.rc
 bin/9social/Reply                  manual Acme smoke test; related helpers have focused tests
 bin/9social/Like                   tests/like.rc
@@ -54,6 +55,7 @@ bin/9social/lib/post-title         tests/post-title.rc
 bin/9social/lib/check-post         tests/check-post.rc
 bin/9social/lib/liked-post         tests/liked-post.rc
 bin/9social/lib/render-threads     tests/render-threads.rc
+bin/9social/lib/reply-draft        tests/reply-draft.rc
 ```
 
 ## Rule of thumb

@@ -22,78 +22,18 @@ if(! test -f /mnt/wsys/index){
 	exit 'no acme'
 }
 
-post_id=9social/lib/post-id
-post_title=9social/lib/post-title
-check_self=9social/lib/check-self
-open_draft_window=9social/lib/open-draft-window
-if(~ $0 */Reply){
-	post_id=`{echo $0 | sed 's;/Reply$;/lib/post-id;'}
-	post_title=`{echo $0 | sed 's;/Reply$;/lib/post-title;'}
-	check_self=`{echo $0 | sed 's;/Reply$;/lib/check-self;'}
-	open_draft_window=`{echo $0 | sed 's;/Reply$;/lib/open-draft-window;'}
-}
-
 source=$%
 if(~ $#source 0 || ~ $source '')
 	fail 'missing post path'
-if(! test -f $source)
-	fail 'post file not found: '^$source
 
-target=`{$post_id $source}
-if(! ~ $status '')
-	fail 'bad post id: '^$source
-if(! ~ $#target 1)
-	fail 'bad post id: '^$source
-
-title=`{$post_title $source}
-if(! ~ $status '')
-	fail 'bad post title: '^$source
-
-if(! $check_self)
+if(! 9social/lib/check-self)
 	exit $status
 
-tmpdir=$home^/tmp
-if(! test -d $tmpdir)
-	mkdir $tmpdir >[2]/dev/null
-if(! test -d $tmpdir)
-	tmpdir=/tmp
-if(! test -d $tmpdir)
-	fail 'cannot use draft directory'
+draft=`{9social/lib/reply-draft $source}
+st=$status
+if(! ~ $st '')
+	exit $st
 
-base=$tmpdir^/9social-new-post.^$pid
-draft=$base
-n=2
-while(test -e $draft || test -e $draft^.meta){
-	draft=$base^.^$n
-	n=`{echo $n | awk '{print $1+1}'}
-}
-if(test -e $draft || test -e $draft^.meta)
-	fail 'draft already exists: '^$draft
-
-{
-	if(~ $#title 0)
-		echo 'Title:'
-	if not {
-		if(~ $title(1) Re:*)
-			echo 'Title:' $title
-		if not
-			echo 'Title: Re:' $title
-	}
-	echo
-} >$draft
-if(! ~ $status '')
-	fail 'cannot create draft'
-if(test -e $draft && ! test -f $draft)
-	fail 'cannot create draft'
-
-{
-	echo 'type: reply'
-	echo 'target: '^$target
-} >$draft^.meta
-if(! ~ $status '')
-	fail 'cannot create draft metadata'
-
-if(! $open_draft_window $draft)
-	exit $status
+9social/lib/open-draft-window $draft || exit $status
 
 exit ''

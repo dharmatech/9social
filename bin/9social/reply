@@ -1,0 +1,27 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	if(! ~ $#draft 0)
+		echo 'draft: '^$draft >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/reply <post-file>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 1)
+	usage
+
+draft=()
+draft=`{9social/lib/reply-draft $1}
+st=$status
+if(! ~ $st '')
+	exit $st
+
+cat >>$draft || fail 'cannot read stdin'
+
+9social/lib/publish-draft $draft
+exit $status

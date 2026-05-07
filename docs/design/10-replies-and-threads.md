@@ -328,6 +328,20 @@ A small helper such as `bin/9social/lib/post-id` should do this parsing and vali
 
 ---
 
+## Command-Line Reply
+
+The command-line reply core is:
+
+```text
+9social/reply <post-file>
+```
+
+`reply` reads reply body text from standard input. It uses `9social/lib/reply-draft` to extract the target post ID from `<post-file>`, create a temporary draft, and write reply metadata in a sidecar file. It then appends the standard input body and delegates publication to `9social/lib/publish-draft`.
+
+If the target post has a title, `reply` uses `Title: Re: <target title>` as the draft title. If the target title already starts with `Re:`, it does not add another prefix. If the target post has no title, `reply` writes a blank `Title:` line and lets publication preserve that blank title.
+
+This gives automated tests and terminal workflows a non-Acme way to create reply posts. The Acme `9social/Reply` command uses the same `reply-draft` helper, then opens the draft in an editable Acme window instead of publishing immediately.
+
 ## Draft Experience
 
 A reply draft may look similar to ordinary post creation:
