@@ -69,7 +69,7 @@ git/clone git@github.com:dharmatech/9social.git
 
 ### Setup
 
-Add these lines at the end of `$home/lib/profile`.
+Add these lines at the end of `$home/lib/profile`.\
 Add a newline after the last line.
 
 ```
@@ -83,7 +83,7 @@ in order to have these `profile` lines take effect.
 #### Permissions
 
 The scripts should all be executable
-when you clone the repository from github.
+when you clone the repository from github.\
 However, in case they aren't, you can set the mode on them as follows:
 
 ```
