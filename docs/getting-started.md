@@ -69,22 +69,30 @@ git/clone git@github.com:dharmatech/9social.git
 
 ### Setup
 
-Add this to `$home/lib/profile` 
-
-Add it around line 3, after the other two `bind` lines.
+Add these lines at the end of `$home/lib/profile`.
+Add a newline after the last line.
 
 ```
 bind -qa $home/src/9social/bin /bin
 cat $home/key >/mnt/factotum/ctl
 ```
 
-Make sure all the 9social scripts are executable:
+At this point, log out and log back in
+in order to have these `profile` lines take effect.
+
+#### Permissions
+
+The scripts should all be executable
+when you clone the repository from github.
+However, in case they aren't, you can set the mode on them as follows:
 
 ```
 cd
 cd src/9social/bin/9social
 chmod 755 * lib/*
 cd
+cd src/9social
+chmod 755 tests/*
 ```
 
 #### Tests
@@ -96,6 +104,10 @@ cd
 cd src/9social
 ./tests/run.rc
 ```
+
+If the tests don't pass,
+make sure to log out and log in
+so your new profile lines take effect.
 
 ### Create repository
 
@@ -113,7 +125,7 @@ Create a blank `README` file.
 
 ### Run `init-self`
 
-Copy your clone address that starts with `git` .
+Copy your clone address that starts with `git`.
 
 Run `init-self`:
 
@@ -147,3 +159,6 @@ Run `9social/refresh`
 
 Now run `9social/Timeline` again.
 
+See a video demo here:
+
+https://www.youtube.com/watch?v=q6qVnlCjcAI
