@@ -179,3 +179,9 @@ Now run `9social/Timeline` again.
 See a video demo here:
 
 https://www.youtube.com/watch?v=q6qVnlCjcAI
+
+### Sharing your profile
+
+If you create a 9social profile,
+feel free to create an issue on this repository
+so others can know where to follow you.
