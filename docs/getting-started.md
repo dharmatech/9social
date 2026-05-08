@@ -69,12 +69,29 @@ git/clone git@github.com:dharmatech/9social.git
 
 ### Setup
 
-Add these lines at the end of `$home/lib/profile`.\
-Add a newline after the last line.
+Add this line to `$home/lib/profile`:
 
 ```
 bind -qa $home/src/9social/bin /bin
+```
+
+You can add it towards the beginning of the file,
+perhaps after the early `bind` lines.
+
+Add this line to `$home/lib/profile` right before `rio`:
+
+```
 cat $home/key >/mnt/factotum/ctl
+```
+
+so it might look like this:
+
+```
+...
+plumber
+cat $home/key >/mnt/factotum/ctl
+rio
+...
 ```
 
 At this point, log out and log back in
