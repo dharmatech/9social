@@ -35,32 +35,10 @@ for(feed in $feedlist){
 				echo $0^': skip feed (missing posts): '^$feed >[1=2]
 			}
 			if(test -d $feed/posts){
-				if(! awk -F': ' '
-					$1=="name" && name=="" {
-						name=substr($0, index($0, ": ")+2)
-					}
-					$1=="display" && display=="" {
-						display=substr($0, index($0, ": ")+2)
-					}
-					END {
-						if(name == "" || display == "")
-							exit 1
-					}
-				' $feed/profile >/dev/null >[2]/dev/null){
+				if(! 9social/lib/valid-profile.awk $feed/profile >/dev/null >[2]/dev/null){
 					echo $0^': skip feed (bad profile): '^$feed >[1=2]
 				}
-				if(awk -F': ' '
-					$1=="name" && name=="" {
-						name=substr($0, index($0, ": ")+2)
-					}
-					$1=="display" && display=="" {
-						display=substr($0, index($0, ": ")+2)
-					}
-					END {
-						if(name == "" || display == "")
-							exit 1
-					}
-				' $feed/profile >/dev/null >[2]/dev/null){
+				if not {
 					for(post in $feed/posts/*){
 						postbase=`{basename $post}
 						if(! ~ $postbase .*){

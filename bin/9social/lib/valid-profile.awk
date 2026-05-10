@@ -1,6 +1,18 @@
 #!/bin/awk -f
-# Validate a 9social profile and print uuid and name.
+# Validate a 9social profile file.
+#
+# Requires:
+#   id: 9social:user:<uuid>
+#   name: <non-empty name>
+#   display: <non-empty display name>
+#
+# On success, prints:
+#   <uuid without 9social:user: prefix>
+#   <name>
+#
+# On failure, exits nonzero and prints nothing.
 
+# Remove leading and trailing spaces and tabs.
 function trim(s)
 {
 	gsub(/^[ \t]+/, "", s)
