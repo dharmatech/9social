@@ -1,0 +1,16 @@
+#!/bin/rc
+
+fn usage {
+	echo 'usage: 9social/show-post <post-file | post-id | 9social:post:<feed-relative-post-path>>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 1)
+	usage
+
+post=`{9social/lib/resolve-post $1}
+if(! ~ $status '')
+	exit $status
+
+cat $post
+exit ''

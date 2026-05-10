@@ -10,29 +10,6 @@ fn usage {
 	exit usage
 }
 
-fn relselfpost {
-	awk -v 'self='^$self -v 'post='^$1 '
-		BEGIN {
-			prefix = self "/posts/"
-			if(index(post, prefix) == 1 && length(post) > length(prefix)){
-				print substr(post, length(self) + 2)
-				exit 0
-			}
-			exit 1
-		}
-	'
-}
-
-fn validrelpath {
-	awk -F/ '
-		{
-			for(i=1; i<=NF; i++)
-				if($i == "" || $i == "..")
-					exit 1
-		}
-	'
-}
-
 if(! ~ $#* 0)
 	usage
 
@@ -42,29 +19,12 @@ if(~ $#% 0 || ~ $% '')
 post=$%
 self=$home/lib/9social/self
 
-check_self=9social/lib/check-self
-check_post=9social/lib/check-post
-post_id=9social/lib/post-id
-if(~ $0 */Update){
-	base=`{echo $0 | sed 's;/Update$;;'}
-	check_self=$base/lib/check-self
-	check_post=$base/lib/check-post
-	post_id=$base/lib/post-id
-}
-
-$check_self
-st=$status
-if(! ~ $st '')
+if(! 9social/lib/check-self)
 	fail 'self repository is not ready'
 
-relpost=`{relselfpost $post}
-st=$status
-if(! ~ $st '' || ! ~ $#relpost 1)
+relpost=`{9social/lib/self-post-path $post}
+if(! ~ $status '' || ! ~ $#relpost 1)
 	fail 'not a self post: '^$post
-
-if(echo $relpost | validrelpath){}
-if not
-	fail 'bad post path: '^$relpost
 
 if(! test -f $post)
 	fail 'post file not found: '^$post
@@ -77,10 +37,10 @@ if(! ~ $#winid 0 && ! ~ $winid ''){
 	}
 }
 
-if(! $check_post $post)
+if(! 9social/lib/check-post $post)
 	fail 'bad post: '^$post
 
-postid=`{$post_id $post}
+postid=`{9social/lib/post-id $post}
 st=$status
 if(! ~ $st '' || ! ~ $#postid 1)
 	fail 'bad post id: '^$post

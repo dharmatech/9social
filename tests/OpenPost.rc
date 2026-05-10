@@ -30,13 +30,6 @@ fn setup {
 	}
 	home=$testhome
 	fakebound=0
-	plumbcmd=$testhome/fake-plumb
-	>$plumbcmd {
-		echo '#!/bin/rc'
-		echo 'echo $* >'^$testhome^'/args'
-		echo 'cat >'^$testhome^'/body'
-	}
-	chmod +x $plumbcmd
 }
 
 fn bindfake {
@@ -61,33 +54,37 @@ fn fakeopen {
 fn fakecurrent {
 	bindfake
 	current_line=$testhome/bin/9social/lib/current-line
+	current_text=$1
 	>$current_line {
 		echo '#!/bin/rc'
-		echo 'echo open this 9social:post:'^$useruuid^':'^$postuuid
+		echo 'echo '^$current_text
 	}
 	chmod +x $current_line
 }
 
 fn runopen {
-	$cmd $token >$testhome/out >[2]$testhome/err
+	$cmd >$testhome/out >[2]$testhome/err
 	st=$status
 }
 
-setup token
-token=9social:post:9social-user-dennis/posts/2026-04-29-test
-runopen
-if(! ~ $st '') fail token-status $st
-grep '^-i -d edit -a action=showdata filename='^$post^'$' $testhome/args >/dev/null || fail token-args `{cat $testhome/args}
-grep '^title: Test Post$' $testhome/body >/dev/null || fail token-body
-
-setup explicit
+setup currentlinepath
 fakeopen
-token=$post
-$cmd $token >$testhome/out >[2]$testhome/err
-st=$status
-if(! ~ $st '') fail explicit-status $st `{cat $testhome/err}
-if(! ~ `{cat $testhome/opened} $post) fail explicit-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail explicit-tag `{cat $testhome/tag}
+fakecurrent 'open this '^$post
+runopen
+if(! ~ $st '') fail currentlinepath-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/opened} $post) fail currentlinepath-opened `{cat $testhome/opened}
+grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail currentlinepath-tag `{cat $testhome/tag}
+
+setup currentlineid
+fakeopen
+fakecurrent 'open this 9social:post:'^$useruuid^':'^$postuuid
+mkdir -p $home/lib/9social/index/posts
+encoded=9social_post_$useruuid^_$postuuid
+echo $post >$home/lib/9social/index/posts/$encoded
+runopen
+if(! ~ $st '') fail currentlineid-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/opened} $post) fail currentlineid-opened `{cat $testhome/opened}
+grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail currentlineid-tag `{cat $testhome/tag}
 
 setup feedreply
 >$post {
@@ -101,43 +98,15 @@ setup feedreply
 	echo body
 }
 fakeopen
-$cmd $post >$testhome/out >[2]$testhome/err
-st=$status
+fakecurrent 'open this '^$post
+runopen
 if(! ~ $st '') fail feedreply-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail feedreply-opened `{cat $testhome/opened}
 grep '^ | 9social/OpenPost 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail feedreply-tag `{cat $testhome/tag}
 
-setup badtargettag
->$post {
-	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
-	echo 'author: dennis'
-	echo 'date: 2026-04-29T18:10:35Z'
-	echo 'type: reply'
-	echo 'target: bad-target'
-	echo 'title: Bad Target Reply'
-	echo
-	echo body
-}
-fakeopen
-$cmd $post >$testhome/out >[2]$testhome/err
-st=$status
-if(! ~ $st '') fail badtargettag-status $st `{cat $testhome/err}
-grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail badtargettag-tag `{cat $testhome/tag}
-
-setup explicitid
-fakeopen
-mkdir -p $home/lib/9social/index/posts
-encoded=9social_post_$useruuid^_$postuuid
-echo $post >$home/lib/9social/index/posts/$encoded
-id=9social:post:$useruuid:$postuuid
-$cmd $id >$testhome/out >[2]$testhome/err
-st=$status
-if(! ~ $st '') fail explicitid-status $st `{cat $testhome/err}
-if(! ~ `{cat $testhome/opened} $post) fail explicitid-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail explicitid-tag `{cat $testhome/tag}
-
 setup alreadyliked
 fakeopen
+fakecurrent 'open this '^$post
 mkdir -p $home/lib/9social/self/posts $home/lib/9social/index/targets/9social_post_$useruuid^_$postuuid/likes
 {
 	echo 'id: 9social:user:'^$useruuid
@@ -155,22 +124,9 @@ likeid=9social:post:$useruuid:$targetuuid
 	echo
 }
 echo $likepost >$home/lib/9social/index/targets/9social_post_$useruuid^_$postuuid/likes/9social_post_$useruuid^_$targetuuid
-$cmd $post >$testhome/out >[2]$testhome/err
-st=$status
+runopen
 if(! ~ $st '') fail alreadyliked-status $st `{cat $testhome/err}
 grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail alreadyliked-tag `{cat $testhome/tag}
-
-setup currentlineid
-fakeopen
-fakecurrent
-mkdir -p $home/lib/9social/index/posts
-encoded=9social_post_$useruuid^_$postuuid
-echo $post >$home/lib/9social/index/posts/$encoded
-$cmd >$testhome/out >[2]$testhome/err
-st=$status
-if(! ~ $st '') fail currentlineid-status $st `{cat $testhome/err}
-if(! ~ `{cat $testhome/opened} $post) fail currentlineid-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail currentlineid-tag `{cat $testhome/tag}
 
 setup selfpath
 selfdir=$testhome/lib/9social/self/posts
@@ -185,8 +141,8 @@ post=$selfdir/2026-04-29-self
 	echo body
 }
 fakeopen
-$cmd $post >$testhome/out >[2]$testhome/err
-st=$status
+fakecurrent 'open this '^$post
+runopen
 if(! ~ $st '') fail selfpath-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail selfpath-opened `{cat $testhome/opened}
 grep '^ | 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
@@ -206,52 +162,24 @@ post=$selfdir/2026-04-29-self-reply
 	echo body
 }
 fakeopen
-$cmd $post >$testhome/out >[2]$testhome/err
-st=$status
+fakecurrent 'open this '^$post
+runopen
 if(! ~ $st '') fail selfreply-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail selfreply-opened `{cat $testhome/opened}
 grep '^ | 9social/OpenPost 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfreply-tag `{cat $testhome/tag}
 
-setup badprefix
-token=bad:post:9social-user-dennis/posts/2026-04-29-test
+setup noref
+fakeopen
+fakecurrent 'nothing useful here'
 runopen
-if(~ $st '') fail badprefix-status
-grep 'bad post path' $testhome/err >/dev/null || fail badprefix-error
-
-setup absolute-token
-token=9social:post:/usr/glenda/foo
-runopen
-if(~ $st '') fail absolute-token-status
-grep 'bad post path' $testhome/err >/dev/null || fail absolute-token-error
-
-setup dotdot
-token=9social:post:9social-user-dennis/posts/../profile
-runopen
-if(~ $st '') fail dotdot-status
-grep 'bad post path' $testhome/err >/dev/null || fail dotdot-error
-
-setup missing
-token=9social:post:9social-user-dennis/posts/missing
-runopen
-if(~ $st '') fail missing-status
-grep 'post file not found' $testhome/err >/dev/null || fail missing-error
-
-setup badpost
->$post {
-	echo 'title: no id'
-	echo
-	echo body
-}
-token=9social:post:9social-user-dennis/posts/2026-04-29-test
-runopen
-if(~ $st '') fail badpost-status
-grep 'bad post id' $testhome/err >/dev/null || fail badpost-error
+if(~ $st '') fail noref-status
+grep 'no post path on current line' $testhome/err >/dev/null || fail noref-error `{cat $testhome/err}
 
 setup usage
-$cmd a b >$testhome/out >[2]$testhome/err
+$cmd $post >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/OpenPost' $testhome/err >/dev/null || fail usage-error
+grep 'usage: 9social/OpenPost' $testhome/err >/dev/null || fail usage-error `{cat $testhome/err}
 
 echo ok
 exit ''

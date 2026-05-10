@@ -1,0 +1,44 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/show-post
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+bind -b $repo/bin /bin || fail bind-repo
+
+testhome=/tmp/9social-show-post-test.$pid
+rm -rf $testhome
+postdir=$testhome/lib/9social/feeds/9social-user-dennis/posts
+mkdir -p $postdir || fail mkdir
+post=$postdir/2026-04-29-test
+>$post {
+	echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'title: Test Post'
+	echo
+	echo body
+}
+home=$testhome
+
+$cmd $post >$testhome/out >[2]$testhome/err || fail path-status `{cat $testhome/err}
+cmp $post $testhome/out >/dev/null || fail path-output
+
+token=9social:post:9social-user-dennis/posts/2026-04-29-test
+$cmd $token >$testhome/out >[2]$testhome/err || fail token-status `{cat $testhome/err}
+cmp $post $testhome/out >/dev/null || fail token-output
+
+$cmd >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/show-post' $testhome/err >/dev/null || fail usage-error `{cat $testhome/err}
+
+echo ok
+exit ''

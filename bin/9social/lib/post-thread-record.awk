@@ -1,8 +1,7 @@
-#!/bin/awk -f
+#!/bin/awk -f /bin/9social/lib/id.awk -f
 # Read one post file and emit one normalized thread record.
 
 BEGIN {
-	canon = "^9social:post:[0-9a-f-]+:[0-9a-f-]+$"
 	postpath = ARGV[1]
 }
 
@@ -21,10 +20,10 @@ done { next }
 }
 
 END {
-	if(data["id"] !~ canon)
+	if(! is_post_id(data["id"]))
 		exit 0
 	target = ""
-	if((data["type"] == "reply" || data["type"] == "like") && data["target"] ~ canon)
+	if((data["type"] == "reply" || data["type"] == "like") && is_post_id(data["target"]))
 		target = data["target"]
 	print data["id"] "\t" data["date"] "\t" data["author"] "\t" data["title"] "\t" data["type"] "\t" target "\t" postpath
 }

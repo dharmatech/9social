@@ -1,0 +1,23 @@
+#!/bin/rc
+
+fn usage {
+	echo 'usage: 9social/lib/self-post-path <post-path>' >[1=2]
+	exit usage
+}
+
+if(! ~ $#* 1)
+	usage
+
+awk -v 'self='^$home^/lib/9social/self -v 'post='^$1 '
+	BEGIN {
+		prefix = self "/posts/"
+		if(index(post, prefix) != 1 || length(post) <= length(prefix))
+			exit 1
+		rel = substr(post, length(self) + 2)
+		n = split(rel, part, "/")
+		for(i = 1; i <= n; i++)
+			if(part[i] == "" || part[i] == "..")
+				exit 1
+		print rel
+	}
+'

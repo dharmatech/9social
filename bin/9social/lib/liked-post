@@ -27,20 +27,13 @@ if(! ~ $#* 1)
 
 target=$1
 profile=$home^/lib/9social/self/profile
-encode_id=9social/lib/encode-id
-post_meta=9social/lib/post-meta
-if(~ $0 */lib/liked-post){
-	encode_id=`{echo $0 | sed 's;/lib/liked-post$;/lib/encode-id;'}
-	post_meta=`{echo $0 | sed 's;/lib/liked-post$;/lib/post-meta;'}
-}
-
 if(! test -f $profile)
 	exit 'not liked'
 author=`{profilename $profile >[2]/dev/null}
 if(! ~ $status '' || ! ~ $#author 1)
 	exit 'not liked'
 
-encoded=`{$encode_id $target >[2]/dev/null}
+encoded=`{9social/lib/encode-id $target >[2]/dev/null}
 if(! ~ $status '' || ! ~ $#encoded 1)
 	fail 'malformed post id: '^$target
 likes=$home^/lib/9social/index/targets/^$encoded^/likes
@@ -50,7 +43,7 @@ if(! test -d $likes)
 for(name in `{ls -p $likes >[2]/dev/null | sort}){
 	like=`{cat $likes/$name >[2]/dev/null}
 	if(~ $#like 1 && test -f $like){
-		if($post_meta $like >[2]/dev/null | awk -F '	' -v 'target='$target -v 'author='$author '
+		if(9social/lib/post-meta $like >[2]/dev/null | awk -F '	' -v 'target='$target -v 'author='$author '
 			$1 == "type" && type == "" { type = $2 }
 			$1 == "target" && liketarget == "" { liketarget = $2 }
 			$1 == "author" && likeauthor == "" { likeauthor = $2 }

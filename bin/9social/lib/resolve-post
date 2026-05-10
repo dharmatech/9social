@@ -1,0 +1,56 @@
+#!/bin/rc
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: 9social/lib/resolve-post <post-file | post-id | 9social:post:<feed-relative-post-path>>' >[1=2]
+	exit usage
+}
+
+fn tokenpath {
+	rel=`{echo $1 | sed -n 's;^9social:post:;;p'}
+	if(~ $#rel 0 || ~ $rel '')
+		fail 'bad post token: '^$1
+	if(~ $rel /*)
+		fail 'bad post path: '^$rel
+	if(! echo $rel | awk -F/ '{ for(i=1; i<=NF; i++) if($i == ".." || $i == "") exit 1 }')
+		fail 'bad post path: '^$rel
+	echo $home/lib/9social/feeds/$rel
+}
+
+fn validatepost {
+	post=$1
+	if(~ $post /*){}
+	if not
+		fail 'bad post path: '^$post
+	if(echo $post | awk -F/ '{ for(i=2; i<=NF; i++) if($i == ".." || $i == "") exit 1 }'){}
+	if not
+		fail 'bad post path: '^$post
+	if(! test -f $post)
+		fail 'post file not found: '^$post
+	if(! 9social/lib/check-post $post)
+		fail 'bad post: '^$post
+	echo $post
+}
+
+if(! ~ $#* 1)
+	usage
+
+arg=$1
+if(~ $arg 9social:post:*){
+	if(9social/lib/encode-id $arg >/dev/null >[2]/dev/null){
+		post=`{9social/lib/post-path $arg}
+		if(! ~ $status '')
+			fail 'post file not found: '^$arg
+	}
+	if not
+		post=`{tokenpath $arg}
+}
+if not
+	post=$arg
+
+validatepost $post
+exit ''

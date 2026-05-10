@@ -6,23 +6,23 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/like <post-file>' >[1=2]
+	echo 'usage: 9social/like <post-ref>' >[1=2]
 	exit usage
 }
 
 if(! ~ $#* 1)
 	usage
 
-source=$1
-if(! test -f $source)
-	fail 'post file not found: '^$source
+source=`{9social/lib/resolve-post $1} || fail 'cannot resolve post: '^$1
+if(! ~ $#source 1)
+	fail 'cannot resolve post: '^$1
 
 self=$home^/lib/9social/self
 profile=$self^/profile
 posts=$self^/posts
 selfposts=$posts^/
 
-if(awk -v 'post='$source -v 'prefix='$selfposts 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
+if(~ $source $selfposts^*)
 	fail 'cannot like own post'
 
 if(! 9social/lib/check-self)

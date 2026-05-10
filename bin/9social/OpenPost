@@ -6,127 +6,43 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/OpenPost [post-file | post-id | 9social:post:<feed-relative-post-path>]' >[1=2]
+	echo 'usage: 9social/OpenPost' >[1=2]
 	exit usage
 }
 
-fn tokenpath {
-	rel=`{echo $1 | sed -n 's;^9social:post:;;p'}
-	if(~ $#rel 0 || ~ $rel '')
-		fail 'bad post token: '^$1
-	if(~ $rel /*)
-		fail 'bad post path: '^$rel
-	if(! echo $rel | awk -F/ '{ for(i=1; i<=NF; i++) if($i == ".." || $i == "") exit 1 }')
-		fail 'bad post path: '^$rel
-	echo $home/lib/9social/feeds/$rel
+
+if(! ~ $#* 0) usage
+
+line=`{9social/lib/current-line} || fail 'cannot read current line'
+
+ref=`{echo $line | 9social/lib/first-post-path.awk}
+if(! ~ $status '' || ! ~ $#ref 1){
+	ref=`{echo $line | 9social/lib/first-post-id.awk}
+	if(! ~ $status '' || ! ~ $#ref 1)
+		fail 'no post path on current line'
 }
 
-fn linepath {
-	awk '
-		{
-			for(i=1; i<=NF; i++){
-				if((index($i, "/lib/9social/feeds/") > 0 || index($i, "/lib/9social/self/posts/") > 0) && index($i, "/posts/") > 0){
-					print $i
-					exit
-				}
-			}
-			exit 1
-		}
-	'
-}
+post=`{9social/lib/resolve-post $ref} || fail 'cannot resolve post: '^$ref
+if(! ~ $#post 1)
+	fail 'cannot resolve post: '^$ref
 
-fn lineid {
-	awk '
-		{
-			for(i=1; i<=NF; i++){
-				if($i ~ /^9social:post:[0-9a-fA-F-]+:[0-9a-fA-F-]+$/){
-					print $i
-					exit
-				}
-			}
-			exit 1
-		}
-	'
-}
-
-if(~ $#* 0){
-	line=`{/bin/9social/lib/current-line}
-	st=$status
-	if(! ~ $st '')
-		fail 'cannot read current line'
-	post=`{echo $line | linepath}
-	if(! ~ $status '' || ! ~ $#post 1){
-		postid=`{echo $line | lineid}
-		if(! ~ $status '' || ! ~ $#postid 1)
-			fail 'no post path on current line'
-		post=`{/bin/9social/lib/post-path $postid}
-		if(! ~ $status '')
-			fail 'post file not found: '^$postid
-	}
-	mode=acme
-}
-if not if(~ $#* 1){
-	arg=$1
-	if(~ $arg 9social:post:*){
-		post=`{/bin/9social/lib/post-path $arg >[2]/dev/null}
-		if(~ $status ''){
-			mode=acme
-		}
-		if not {
-			post=`{tokenpath $arg}
-			mode=plumb
-		}
-	}
-	if not {
-		post=$arg
-		mode=acme
-	}
-}
-if not
-	usage
-
-if(~ $post /*){}
-if not
-	fail 'bad post path: '^$post
-if(echo $post | awk -F/ '{ for(i=2; i<=NF; i++) if($i == ".." || $i == "") exit 1 }'){}
-if not
-	fail 'bad post path: '^$post
-if(! test -f $post)
-	fail 'post file not found: '^$post
-
-opened_id=`{/bin/9social/lib/post-id $post}
-st=$status
-if(! ~ $st '' || ! ~ $#opened_id 1)
+opened_id=`{9social/lib/post-id $post} || fail 'bad post id: '^$post
+if(! ~ $#opened_id 1)
 	fail 'bad post id: '^$post
-
-if(~ $mode acme){
-	actions='9social/Reply 9social/Like'
-	selfpost=$home/lib/9social/self/posts/
-	if(awk -v 'post='^$post -v 'prefix='^$selfpost 'BEGIN { if(index(post, prefix) == 1) exit 0; exit 1 }')
-		actions='9social/Reply 9social/Update 9social/Delete'
-	if not {
-		if(/bin/9social/lib/liked-post $opened_id >/dev/null >[2]/dev/null)
-			actions='9social/Reply'
-	}
-	target=`{/bin/9social/lib/post-meta $post >[2]/dev/null | awk -F ' ' '$1=="target" && target=="" { target=$2 } END { if(target != "") print target }'}
-	if(! ~ $#target 0){
-		/bin/9social/lib/encode-id $target >/dev/null >[2]/dev/null
-		if(~ $status '')
-			actions='9social/OpenPost '^$actions
-	}
-	tag=' | '^$actions
-	/bin/9social/lib/open-file-window $post $tag
-	st=$status
-	if(! ~ $st '')
-		fail 'cannot open post'
-}
+actions='9social/Reply 9social/Like'
+if(~ $post $home/lib/9social/self/posts/^*)
+	actions='9social/Reply 9social/Update 9social/Delete'
 if not {
-	if(~ $#plumbcmd 0)
-		plumbcmd=plumb
-	cat $post | $plumbcmd -i -d edit -a 'action=showdata filename='$post
-	st=$status
-	if(! ~ $st '')
-		fail 'cannot open post'
+	if(9social/lib/liked-post $opened_id >/dev/null >[2]/dev/null)
+		actions='9social/Reply'
 }
+target=`{9social/lib/post-target $post} || fail 'cannot read post target'
+if(! ~ $#target 0){
+	9social/lib/encode-id $target >/dev/null >[2]/dev/null
+	if(~ $status '')
+		actions='9social/OpenPost '^$actions
+}
+tag=' | '^$actions
+9social/lib/open-file-window $post $tag || fail 'cannot open post'
 
 exit ''

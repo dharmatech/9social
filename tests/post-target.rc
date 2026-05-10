@@ -1,0 +1,88 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/post-target
+base=/tmp/9social-post-target-test.$pid
+target=9social:post:550e8400-e29b-41d4-a716-446655440000:22222222-2222-4222-8222-222222222222
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+bind -b $repo/bin /bin || fail bind-repo
+
+fn runtarget {
+	$cmd $file >$base.out >[2]$base.err
+	st=$status
+}
+
+rm -f $base.*
+
+file=$base.normal
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'title: Normal Post'
+	echo
+	echo body
+}
+runtarget
+if(! ~ $st '') fail normal-status $st `{cat $base.err}
+if(test -s $base.out) fail normal-output `{cat $base.out}
+
+file=$base.reply
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: reply'
+	echo 'target: '^$target
+	echo 'title: Reply Post'
+	echo
+	echo body
+}
+runtarget
+if(! ~ $st '') fail reply-status $st `{cat $base.err}
+if(! ~ `{cat $base.out} $target) fail reply-output `{cat $base.out}
+
+file=$base.like
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo 'author: dennis'
+	echo 'date: 2026-04-29T18:10:35Z'
+	echo 'type: like'
+	echo 'target: '^$target
+	echo
+}
+runtarget
+if(! ~ $st '') fail like-status $st `{cat $base.err}
+if(! ~ `{cat $base.out} $target) fail like-output `{cat $base.out}
+
+file=$base.body-target
+>$file {
+	echo 'id: 9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1'
+	echo
+	echo 'target: body text is not metadata'
+}
+runtarget
+if(! ~ $st '') fail body-target-status $st `{cat $base.err}
+if(test -s $base.out) fail body-target-output `{cat $base.out}
+
+file=$base.malformed
+>$file {
+	echo 'not metadata'
+	echo
+}
+runtarget
+if(~ $st '') fail malformed-status
+
+$cmd >$base.out >[2]$base.err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/post-target' $base.err >/dev/null || fail usage-error `{cat $base.err}
+
+rm -f $base.*
+echo ok
+exit ''

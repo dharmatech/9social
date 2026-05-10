@@ -1,4 +1,4 @@
-#!/bin/awk -f
+#!/bin/awk -f /bin/9social/lib/id.awk -f
 
 function fail(){ exit 1 }
 function trim(s){
@@ -6,15 +6,6 @@ function trim(s){
 	gsub(/[ \t]+$/, "", s)
 	return s
 }
-function validuuid(s, a){
-	split(s, a, "-")
-	return length(a[1]) == 8 && length(a[2]) == 4 && length(a[3]) == 4 && length(a[4]) == 4 && length(a[5]) == 12 && s ~ /^[0-9a-f-]+$/
-}
-function validpostid(s, a){
-	split(s, a, ":")
-	return length(a) == 4 && a[1] == "9social" && a[2] == "post" && validuuid(a[3]) && validuuid(a[4])
-}
-
 BEGIN {
 	if(ARGC != 2)
 		fail()
@@ -55,7 +46,7 @@ END {
 		fail()
 	if(id_count != 1 || author_count != 1 || date_count != 1)
 		fail()
-	if(!validpostid(id))
+	if(!is_post_id(id))
 		fail()
 	if(author == "")
 		fail()
@@ -65,7 +56,7 @@ END {
 		fail()
 	if(type_count == 1 && type != "reply" && type != "like")
 		fail()
-	if(target_count == 1 && !validpostid(target))
+	if(target_count == 1 && !is_post_id(target))
 		fail()
 	if(type == "reply" && target_count != 1)
 		fail()

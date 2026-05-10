@@ -63,6 +63,18 @@ grep '^already liked$' $home/out >/dev/null || fail duplicate-output `{cat $home
 likeposts
 if(! ~ $#posts 1) fail duplicate-post-count $#posts
 
+setup postid
+mkdir -p $home/lib/9social/index/posts
+encoded=9social_post_$u2^_$targetuuid
+echo $feedpost >$home/lib/9social/index/posts/$encoded
+source=$target
+runlike
+if(! ~ $st '') fail postid-status $st `{cat $home/err}
+likeposts
+if(! ~ $#posts 1) fail postid-post-count $#posts
+likefile=$posts(1)
+grep '^target: '^$target^'$' $likefile >/dev/null || fail postid-target
+
 setup self
 selfpost=$home/lib/9social/self/posts/2026-05-04-self
 >$selfpost {
@@ -82,13 +94,13 @@ setup missing
 source=$home/lib/9social/feeds/9social-user-dennis/posts/missing
 runlike
 if(~ $st '') fail missing-status
-grep 'post file not found' $home/err >/dev/null || fail missing-error `{cat $home/err}
+grep 'cannot resolve post' $home/err >/dev/null || fail missing-error `{cat $home/err}
 
 setup usage
 9social/like >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/like <post-file>' $home/err >/dev/null || fail usage-error `{cat $home/err}
+grep 'usage: 9social/like <post-ref>' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
 rm -rf /tmp/9social-like-test.$pid.*
 echo ok

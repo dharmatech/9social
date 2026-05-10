@@ -28,7 +28,7 @@ uuid=`{dd -if /dev/random -bs 16 -count 1 -quiet 1 >[2]/dev/null | xd -1x | awk 
 
 if(! ~ $#uuid 1)
 	fail 'cannot generate uuid'
-if(! echo $uuid | awk '/^[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-4[0-9a-f][0-9a-f][0-9a-f]-[89ab][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/ { ok=1 } END { exit !ok }')
+if(! echo $uuid | /bin/9social/lib/valid-uuid-v4.awk)
 	fail 'cannot generate uuid'
 
 echo $uuid

@@ -1,0 +1,102 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/lib/resolve-post
+useruuid=550e8400-e29b-41d4-a716-446655440000
+postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+bind -b $repo/bin /bin || fail bind-repo
+
+fn setup {
+	testhome=/tmp/9social-resolve-post-test.$pid.$1
+	rm -rf $testhome
+	postdir=$testhome/lib/9social/feeds/9social-user-dennis/posts
+	mkdir -p $postdir || fail mkdir
+	post=$postdir/2026-04-29-test
+	>$post {
+		echo 'id: 9social:post:'^$useruuid^':'^$postuuid
+		echo 'author: dennis'
+		echo 'date: 2026-04-29T18:10:35Z'
+		echo 'title: Test Post'
+		echo
+		echo body
+	}
+	home=$testhome
+}
+
+fn runresolve {
+	$cmd $ref >$testhome/out >[2]$testhome/err
+	st=$status
+}
+
+setup path
+ref=$post
+runresolve
+if(! ~ $st '') fail path-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/out} $post) fail path-output `{cat $testhome/out}
+
+setup token
+ref=9social:post:9social-user-dennis/posts/2026-04-29-test
+runresolve
+if(! ~ $st '') fail token-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/out} $post) fail token-output `{cat $testhome/out}
+
+setup id
+mkdir -p $home/lib/9social/index/posts
+encoded=9social_post_$useruuid^_$postuuid
+echo $post >$home/lib/9social/index/posts/$encoded
+ref=9social:post:$useruuid:$postuuid
+runresolve
+if(! ~ $st '') fail id-status $st `{cat $testhome/err}
+if(! ~ `{cat $testhome/out} $post) fail id-output `{cat $testhome/out}
+
+setup badprefix
+ref=bad:post:9social-user-dennis/posts/2026-04-29-test
+runresolve
+if(~ $st '') fail badprefix-status
+grep 'bad post path' $testhome/err >/dev/null || fail badprefix-error `{cat $testhome/err}
+
+setup absolute-token
+ref=9social:post:/usr/glenda/foo
+runresolve
+if(~ $st '') fail absolute-token-status
+grep 'bad post path' $testhome/err >/dev/null || fail absolute-token-error `{cat $testhome/err}
+
+setup dotdot
+ref=9social:post:9social-user-dennis/posts/../profile
+runresolve
+if(~ $st '') fail dotdot-status
+grep 'bad post path' $testhome/err >/dev/null || fail dotdot-error `{cat $testhome/err}
+
+setup missing
+ref=9social:post:9social-user-dennis/posts/missing
+runresolve
+if(~ $st '') fail missing-status
+grep 'post file not found' $testhome/err >/dev/null || fail missing-error `{cat $testhome/err}
+
+setup badpost
+>$post {
+	echo 'title: no id'
+	echo
+	echo body
+}
+ref=9social:post:9social-user-dennis/posts/2026-04-29-test
+runresolve
+if(~ $st '') fail badpost-status
+grep 'bad post' $testhome/err >/dev/null || fail badpost-error `{cat $testhome/err}
+
+setup usage
+$cmd >$testhome/out >[2]$testhome/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/resolve-post' $testhome/err >/dev/null || fail usage-error `{cat $testhome/err}
+
+echo ok
+exit ''

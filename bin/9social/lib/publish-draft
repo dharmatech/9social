@@ -19,58 +19,7 @@ fn usage {
 }
 
 fn validmeta {
-	awk -F': ' '
-		function trim(s){
-			gsub(/^[ \t]+/, "", s)
-			gsub(/[ \t]+$/, "", s)
-			return s
-		}
-		function ishex(s){
-			return s ~ /^[0-9a-fA-F]+$/
-		}
-		function isuuid(s, p){
-			if(split(s, p, "-") != 5)
-				return 0
-			return length(p[1]) == 8 && ishex(p[1]) && \
-				length(p[2]) == 4 && ishex(p[2]) && \
-				length(p[3]) == 4 && ishex(p[3]) && \
-				length(p[4]) == 4 && ishex(p[4]) && \
-				length(p[5]) == 12 && ishex(p[5])
-		}
-		function ispostid(s, p){
-			if(split(s, p, ":") != 4)
-				return 0
-			return p[1] == "9social" && p[2] == "post" && isuuid(p[3]) && isuuid(p[4])
-		}
-		function failmeta(msg){
-			print "publish-draft: bad metadata: " msg > "/fd/2"
-			failed = 1
-			exit 1
-		}
-		index($0, ": ") == 0 { failmeta("malformed field") }
-		{
-			key=$1
-			val=trim(substr($0, index($0, ": ")+2))
-			if(key == "type"){
-				if(type != "") failmeta("duplicate type")
-				type=val
-			} else if(key == "target"){
-				if(target != "") failmeta("duplicate target")
-				target=val
-			} else
-				failmeta("unknown field " key)
-		}
-		END {
-			if(failed)
-				exit 1
-			if(type == "") failmeta("missing type")
-			if(target == "") failmeta("missing target")
-			if(type != "reply") failmeta("unsupported type")
-			if(!ispostid(target)) failmeta("malformed target")
-			print type
-			print target
-		}
-	' $1
+	/bin/9social/lib/valid-draft-meta.awk $1
 }
 
 if(! ~ $#* 1)

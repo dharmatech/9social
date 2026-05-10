@@ -11,6 +11,8 @@ fn fail {
 	exit fail
 }
 
+bind -b $repo/bin /bin || fail bind
+
 fn setup {
 	testhome=/tmp/9social-check-post-test.$pid.$1
 	rm -rf $testhome
@@ -79,6 +81,13 @@ id: 9social:post:'^$useruuid^':'^$targetuuid $post >$testhome/bad
 mv $testhome/bad $post
 $cmd $post >$testhome/out >[2]$testhome/err
 if(~ $status '') fail duplicate-status
+
+setup uppercase
+writepost
+sed 's/550e8400/550E8400/' $post >$testhome/bad
+mv $testhome/bad $post
+$cmd $post >$testhome/out >[2]$testhome/err
+if(~ $status '') fail uppercase-status
 
 setup badtarget
 >$post {

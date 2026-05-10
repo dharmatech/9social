@@ -1,0 +1,52 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/self-post-path
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+home=/tmp/9social-self-post-path-test.$pid
+rm -rf $home
+mkdir -p $home/lib/9social/self/posts || fail mkdir
+
+post=$home/lib/9social/self/posts/2026-05-10-test
+rel=`{$cmd $post}
+if(! ~ $status '' || ! ~ $#rel 1 || ! ~ $rel posts/2026-05-10-test)
+	fail valid $status $#rel $rel
+
+post=$home/lib/9social/self/posts/2026/05/10/test
+rel=`{$cmd $post}
+if(! ~ $status '' || ! ~ $#rel 1 || ! ~ $rel posts/2026/05/10/test)
+	fail nested $status $#rel $rel
+
+post=$home/lib/9social/self/posts/missing
+rel=`{$cmd $post}
+if(! ~ $status '' || ! ~ $#rel 1 || ! ~ $rel posts/missing)
+	fail missing-is-ok $status $#rel $rel
+
+post=$home/lib/9social/feeds/9social-user-dennis/posts/2026-05-10-test
+rel=`{$cmd $post}
+if(~ $status '' || ! ~ $#rel 0)
+	fail feed-accepted $#rel $rel
+
+post=$home/lib/9social/self/posts/
+rel=`{$cmd $post}
+if(~ $status '' || ! ~ $#rel 0)
+	fail empty-accepted $#rel $rel
+
+post=$home/lib/9social/self/posts/../bad
+rel=`{$cmd $post}
+if(~ $status '' || ! ~ $#rel 0)
+	fail dotdot-accepted $#rel $rel
+
+post=$home/lib/9social/self/posts//bad
+rel=`{$cmd $post}
+if(~ $status '' || ! ~ $#rel 0)
+	fail empty-component-accepted $#rel $rel
+
+rm -rf $home
+echo ok
+exit ''
