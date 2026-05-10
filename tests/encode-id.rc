@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/lib/encode-id
+cmd=9social/lib/encode-id
 base=/tmp/9social-encode-id-test.$pid
 id=9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 encoded=9social_post_550e8400-e29b-41d4-a716-446655440000_4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
@@ -10,6 +10,8 @@ fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
+
+bind -b $repo/bin /bin || fail bind
 
 fn runencode {
 	$cmd $* >$base.out >[2]$base.err
@@ -34,6 +36,10 @@ grep 'malformed post id' $base.err >/dev/null || fail bad-post-uuid-error
 runencode 9social:user:550e8400-e29b-41d4-a716-446655440000
 if(~ $st '') fail user-id-status
 grep 'malformed post id' $base.err >/dev/null || fail user-id-error
+
+runencode 9social:post:550E8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+if(~ $st '') fail uppercase-status
+grep 'malformed post id' $base.err >/dev/null || fail uppercase-error
 
 $cmd >$base.out >[2]$base.err
 st=$status

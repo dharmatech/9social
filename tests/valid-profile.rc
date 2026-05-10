@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/lib/valid-profile.awk
+cmd=9social/lib/valid-profile.awk
 base=/tmp/9social-valid-profile-test.$pid
 useruuid=550e8400-e29b-41d4-a716-446655440000
 
@@ -9,6 +9,8 @@ fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
+
+bind -b $repo/bin /bin || fail bind
 
 profile=$base.profile
 rm -f $base.*
@@ -45,6 +47,14 @@ if($cmd $profile >/dev/null)
 }
 if($cmd $profile >/dev/null)
 	fail malformed-status
+
+>$profile {
+	echo 'id: 9social:user:550E8400-e29b-41d4-a716-446655440000'
+	echo 'name: dharmatech'
+	echo 'display: Dharma Tech'
+}
+if($cmd $profile >/dev/null)
+	fail uppercase-status
 
 rm -f $base.*
 echo ok

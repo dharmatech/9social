@@ -1,4 +1,4 @@
-#!/bin/awk -f
+#!/bin/awk -f /bin/9social/lib/id.awk -f
 # Validate a 9social profile file.
 #
 # Requires:
@@ -41,10 +41,9 @@ index($0, ": ") == 0 { bad = 1; next }
 END {
 	if(bad || id == "" || name == "" || display == "")
 		exit 1
-	if(id !~ /^9social:user:[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/)
+	if(!is_user_id(id))
 		exit 1
-	uuid = id
-	sub(/^9social:user:/, "", uuid)
+	uuid = user_id_uuid(id)
 	print uuid
 	print name
 }

@@ -1,15 +1,18 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/lib/post-id
+cmd=9social/lib/post-id
 base=/tmp/9social-post-id-test.$pid
 id=9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 badid=9social:post:not-a-uuid:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+upperid=9social:post:550E8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 
 fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
+
+bind -b $repo/bin /bin || fail bind
 
 fn runpostid {
 	$cmd $file >$base.out >[2]$base.err
@@ -70,6 +73,16 @@ file=$base.body-id
 runpostid
 if(~ $st '') fail body-id-status
 grep 'missing id' $base.err >/dev/null || fail body-id-error
+
+file=$base.uppercase
+>$file {
+	echo 'id: '^$upperid
+	echo
+	echo 'Body text'
+}
+runpostid
+if(~ $st '') fail uppercase-status
+grep 'malformed id' $base.err >/dev/null || fail uppercase-error
 
 rm -f $base.*
 echo ok
