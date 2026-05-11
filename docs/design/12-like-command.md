@@ -231,7 +231,7 @@ posted: posts/<like-file>
 
 `like` does not push. `Like` also does not push because it delegates to `like`.
 
-If the index is missing or stale, `like` may run `9social/reindex` first and then check again.
+If the index is missing or stale, `like` may run `9social/reindex` first and then check again. Future latency improvements are discussed in `17-local-action-latency.md`, including commit-now-index-later and local outbox approaches.
 
 Historical duplicate like records may still exist. `reindex` should tolerate them. When calculating counts, clients should treat likes as a current-state signal by author and target:
 

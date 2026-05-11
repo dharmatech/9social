@@ -1,63 +1,25 @@
 #!/bin/rc
 rfork en
-u1=550e8400-e29b-41d4-a716-446655440000
-u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
-targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
-target=9social:post:$u2:$targetuuid
 
 fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
 
-fn setup {
-	home=/tmp/9social-Like-test.$pid.$1
-	rm -rf $home
-	mkdir -p $home/lib/9social/self $home/lib/9social/feeds/9social-user-dennis/posts $home/wsys || fail mkdir
-	cd $home/lib/9social/self || fail cd
-	git/init . >/dev/null >[2]/dev/null || fail git-init
-	{
-		echo 'id: 9social:user:'^$u1
-		echo 'name: dharmatech'
-		echo 'display: dharmatech'
-	} >profile
-	mkdir posts || fail posts
-	feedpost=$home/lib/9social/feeds/9social-user-dennis/posts/2026-05-04-feed
-	>$feedpost {
-		echo 'id: '^$target
-		echo 'author: dennis'
-		echo 'date: 2026-05-04T10:00:00Z'
-		echo 'title: Feed Post'
-		echo
-		echo body
-	}
-	>$home/wsys/index echo ok
-}
+home=/tmp/9social-Like-test.$pid
+rm -rf $home
+mkdir -p $home || fail mkdir
 
-setup ok
-%=$feedpost wsysdir=$home/wsys 9social/Like >$home/out >[2]$home/err
-st=$status
-if(! ~ $st '') fail ok-status $st `{cat $home/err}
-grep '^liked: '^$target^'$' $home/out >/dev/null || fail ok-liked-output `{cat $home/out}
-
-setup usage
 9social/Like extra >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
 grep 'usage: 9social/Like' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
-setup missing-wsys
-%=$feedpost wsysdir=$home/missing 9social/Like >$home/out >[2]$home/err
+9social/Like >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail missing-wsys-status
 grep 'Like: acme window system not available' $home/err >/dev/null || fail missing-wsys-error `{cat $home/err}
 
-setup missing-path
-%=() wsysdir=$home/wsys 9social/Like >$home/out >[2]$home/err
-st=$status
-if(~ $st '') fail missing-path-status
-grep 'missing post path' $home/err >/dev/null || fail missing-path-error `{cat $home/err}
-
-rm -rf /tmp/9social-Like-test.$pid.*
+rm -rf $home
 echo ok
 exit ''

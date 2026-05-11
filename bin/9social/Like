@@ -13,11 +13,7 @@ fn usage {
 if(! ~ $#* 0)
 	usage
 
-wsys=/mnt/wsys
-if(! ~ $#wsysdir 0)
-	wsys=$wsysdir
-
-if(! test -f $wsys/index){
+if(! test -f /mnt/wsys/index){
 	echo 'Like: acme window system not available' >[1=2]
 	echo 'Like: run from an acme post window' >[1=2]
 	exit 'no acme'

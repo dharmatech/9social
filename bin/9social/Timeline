@@ -21,39 +21,15 @@ if(! test -f /mnt/wsys/index){
 	exit 'no acme'
 }
 
-timeline=9social/timeline
-open_file_window=9social/lib/open-file-window
-if(~ $0 */Timeline){
-	timeline=`{echo $0 | sed 's;/Timeline$;/timeline;'}
-	open_file_window=`{echo $0 | sed 's;/Timeline$;/lib/open-file-window;'}
-}
+timelinefile=`{9social/lib/mk-temp-file timeline} ||
+	fail 'cannot create timeline temp file'
 
-tmpdir=$home^/tmp
-if(! test -d $tmpdir)
-	mkdir $tmpdir >[2]/dev/null
-if(! test -d $tmpdir)
-	tmpdir=/tmp
-if(! test -d $tmpdir)
-	fail 'cannot use timeline directory'
-
-base=$tmpdir^/9social-timeline.^$pid
-timelinefile=$base
-n=2
-while(test -e $timelinefile){
-	timelinefile=$base^.^$n
-	n=`{echo $n | awk '{print $1+1}'}
-}
-if(test -e $timelinefile)
-	fail 'timeline already exists: '^$timelinefile
-
-$timeline >$timelinefile
-st=$status
-if(! ~ $st '')
+9social/timeline >$timelinefile ||
 	fail 'cannot create timeline'
 if(! test -f $timelinefile)
 	fail 'cannot create timeline'
 
-if(! $open_file_window $timelinefile ' | 9social/OpenPost')
+if(! 9social/lib/open-file-window $timelinefile ' | 9social/OpenPost')
 	exit $status
 
 exit ''
