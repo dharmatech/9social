@@ -163,7 +163,7 @@ It should use `/mnt/wsys`, which is bound to `/mnt/acme` for commands running un
 The Acme window creation mechanics should live in a shared helper, for example:
 
 ```text
-bin/9social/lib/open-draft-window
+bin/9social/lib/draft/open-window
 ```
 
 `NewPost` and future draft-producing Acme commands such as `Reply` should both use this helper instead of copying the Acme filesystem logic.
@@ -171,7 +171,7 @@ bin/9social/lib/open-draft-window
 Expected helper interface:
 
 ```rc
-9social/lib/open-draft-window <draft-path>
+9social/lib/draft/open-window <draft-path>
 ```
 
 Expected mechanism:

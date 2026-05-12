@@ -34,6 +34,6 @@ st=$status
 if(! ~ $st '')
 	exit $st
 
-9social/lib/open-draft-window $draft || exit $status
+9social/lib/draft/open-window $draft || exit $status
 
 exit ''

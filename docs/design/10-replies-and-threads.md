@@ -274,7 +274,7 @@ Expected flow:
 2. user invokes `9social/Post/Reply` from that post window
 3. `Reply` reads the current window path from Acme's `$%` environment variable
 4. `Reply` parses the post file's `id:` field
-5. `Reply` opens a new Acme draft window using the shared `bin/9social/lib/open-draft-window` helper defined by the Acme `NewPost` design
+5. `Reply` opens a new Acme draft window using the shared `bin/9social/lib/draft/open-window` helper defined by the Acme `NewPost` design
 6. on publish, the system creates a new post with:
 
 * `type: reply`

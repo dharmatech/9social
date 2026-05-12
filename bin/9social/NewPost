@@ -25,6 +25,6 @@ if(! test -f /mnt/wsys/index){
 draft=`{9social/lib/draft/new} ||
 	fail 'cannot create draft'
 
-9social/lib/open-draft-window $draft || exit $status
+9social/lib/draft/open-window $draft || exit $status
 
 exit ''
