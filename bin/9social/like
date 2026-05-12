@@ -28,7 +28,7 @@ if(~ $source $selfposts^*)
 if(! 9social/lib/check-self)
 	exit $status
 
-target=`{9social/lib/post-id $source}
+target=`{9social/lib/post/id.awk $source}
 if(! ~ $status '' || ! ~ $#target 1)
 	fail 'bad post id: '^$source
 

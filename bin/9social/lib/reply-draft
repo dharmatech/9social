@@ -20,7 +20,7 @@ draft=()
 if(! test -f $source)
 	fail 'post file not found: '^$source
 
-target=`{9social/lib/post-id $source}
+target=`{9social/lib/post/id.awk $source}
 if(! ~ $status '')
 	fail 'bad post id: '^$source
 if(! ~ $#target 1)

@@ -100,6 +100,31 @@ if(grep Like2 $home/out >/dev/null) fail like2-visible
 if(grep DuplicateLike $home/out >/dev/null) fail duplicate-like-visible
 if(! ~ `{cat $home/err} '') fail basic-stderr `{cat $home/err}
 
+setup tabs
+post $home/lib/9social/self/posts/root-tab $root1id alice 2026-05-01T00:00:00Z - - Parent
+>$home/lib/9social/feeds/9social-user-bob/posts/reply-tab {
+	echo 'id: '^$reply1id
+	echo 'author: bob'
+	echo 'date: 2026-05-01T02:00:00Z'
+	echo 'type: reply'
+	echo 'target: '^$root1id
+	echo 'title: Reply	Tabbed'
+	echo
+	echo body
+}
+$reindex >$home/reindex.out >[2]$home/reindex.err || fail tabs-reindex `{cat $home/reindex.err}
+$render >$home/out >[2]$home/err || fail tabs-render `{cat $home/err}
+cat >$home/expected <<EOF2
+2026-05-01T00:00:00Z  alice R:1
+$root1id
+title: Parent
+    2026-05-01T02:00:00Z  bob
+    $reply1id
+    title: Reply    Tabbed
+EOF2
+cmp $home/out $home/expected >/dev/null || fail tabs-output `{cat $home/out}
+if(! ~ `{cat $home/err} '') fail tabs-stderr `{cat $home/err}
+
 setup cycle
 post $home/lib/9social/self/posts/cyclea $cycleaid alice 2026-05-01T01:00:00Z reply $cyclebid CycleA
 post $home/lib/9social/self/posts/cycleb $cyclebid alice 2026-05-01T02:00:00Z reply $cycleaid CycleB

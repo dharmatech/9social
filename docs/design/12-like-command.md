@@ -167,7 +167,7 @@ Before creating a like record, `like` should validate:
 
 * `$home/lib/9social/self` exists and is usable, using `bin/9social/lib/check-self`
 * the explicit `<post-file>` names a readable post file
-* the target post has a valid `id:` field, using `bin/9social/lib/post-id`
+* the target post has a valid `id:` field, using `bin/9social/lib/post/id.awk`
 * the target post is not under `$home/lib/9social/self/posts/`
 
 `like` should generate:

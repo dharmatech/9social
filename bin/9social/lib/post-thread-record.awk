@@ -5,6 +5,12 @@ BEGIN {
 	postpath = ARGV[1]
 }
 
+function clean_field(s)
+{
+	gsub(/\t/, "    ", s)
+	return s
+}
+
 /^[ \t]*$/ { done = 1; next }
 done { next }
 
@@ -25,5 +31,12 @@ END {
 	target = ""
 	if((data["type"] == "reply" || data["type"] == "like") && is_post_id(data["target"]))
 		target = data["target"]
-	print data["id"] "\t" data["date"] "\t" data["author"] "\t" data["title"] "\t" data["type"] "\t" target "\t" postpath
+	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		data["id"],
+		data["date"],
+		clean_field(data["author"]),
+		clean_field(data["title"]),
+		data["type"],
+		target,
+		postpath
 }

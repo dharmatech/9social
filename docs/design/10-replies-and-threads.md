@@ -324,7 +324,7 @@ The extracted ID must match the canonical post ID form:
 
 If `$%` is unset, the file is unreadable, the header has no `id:`, the header has multiple `id:` fields, or the ID is malformed, `Reply` should fail without creating a draft.
 
-A small helper such as `bin/9social/lib/post-id` should do this parsing and validation. Given a post file path, it prints the canonical post ID and exits successfully, or prints an error and exits nonzero. This gives `Reply` a simple tested primitive before adding Acme window behavior.
+A small helper such as `bin/9social/lib/post/id.awk` should do this parsing and validation. Given a post file path, it prints the canonical post ID and exits successfully, or prints an error and exits nonzero. This gives `Reply` a simple tested primitive before adding Acme window behavior.
 
 ---
 

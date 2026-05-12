@@ -26,7 +26,7 @@ post=`{9social/lib/resolve-post $ref} || fail 'cannot resolve post: '^$ref
 if(! ~ $#post 1)
 	fail 'cannot resolve post: '^$ref
 
-opened_id=`{9social/lib/post-id $post} || fail 'bad post id: '^$post
+opened_id=`{9social/lib/post/id.awk $post} || fail 'bad post id: '^$post
 if(! ~ $#opened_id 1)
 	fail 'bad post id: '^$post
 actions='9social/Reply 9social/Like'

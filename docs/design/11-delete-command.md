@@ -84,7 +84,7 @@ Before deleting, `Delete` should validate:
 * `$home/lib/9social/self` exists and is usable, using `bin/9social/lib/check-self`
 * `$%` is set
 * `$%` names a regular file under `$home/lib/9social/self/posts/`
-* the file has a valid `id:` field, using `bin/9social/lib/post-id`
+* the file has a valid `id:` field, using `bin/9social/lib/post/id.awk`
 
 If any check fails, `Delete` should fail without removing the file.
 

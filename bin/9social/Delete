@@ -29,7 +29,7 @@ if(! ~ $status '' || ! ~ $#relpost 1)
 if(! test -f $post)
 	fail 'post file not found: '^$post
 
-postid=`{9social/lib/post-id $post}
+postid=`{9social/lib/post/id.awk $post}
 st=$status
 if(! ~ $st '' || ! ~ $#postid 1)
 	fail 'bad post id: '^$post

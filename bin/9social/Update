@@ -40,7 +40,7 @@ if(! ~ $#winid 0 && ! ~ $winid ''){
 if(! 9social/lib/check-post $post)
 	fail 'bad post: '^$post
 
-postid=`{9social/lib/post-id $post}
+postid=`{9social/lib/post/id.awk $post}
 st=$status
 if(! ~ $st '' || ! ~ $#postid 1)
 	fail 'bad post id: '^$post

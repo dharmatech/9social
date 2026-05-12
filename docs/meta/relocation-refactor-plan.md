@@ -45,7 +45,7 @@ repo=`{cd $repo && pwd}
 bind -b $repo/bin /bin || fail bind
 ```
 
-Most tests can then execute commands exactly as users do, with paths such as `9social/Like` and `9social/lib/post-id`.
+Most tests can then execute commands exactly as users do, with paths such as `9social/Like` and `9social/lib/post/id.awk`.
 
 For tests that need fake helper commands, use bind layering instead of copied script relocation:
 

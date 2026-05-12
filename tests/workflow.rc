@@ -198,7 +198,7 @@ showfile $root/alan.refresh-rms.err
 alan_rms_post=`{walk $root/homes/alan/lib/9social/feeds/rms/posts | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$'}
 if(! ~ $#alan_rms_post 1)
 	fail alan-rms-post-path $#alan_rms_post
-rms_target=`{asuser alan 9social/lib/post-id $alan_rms_post}
+rms_target=`{asuser alan 9social/lib/post/id.awk $alan_rms_post}
 if(! ~ $#rms_target 1)
 	fail alan-rms-post-id $#rms_target
 

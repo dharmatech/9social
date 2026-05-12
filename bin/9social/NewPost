@@ -14,7 +14,6 @@ fn usage {
 
 if(! ~ $#* 0) usage
 
-draft=()
 if(! test -f /mnt/wsys/index){
 	echo 'NewPost: acme window system not available' >[1=2]
 	echo 'NewPost: run from acme, or use 9social/new-post' >[1=2]
