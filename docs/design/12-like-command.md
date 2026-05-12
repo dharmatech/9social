@@ -31,7 +31,7 @@ and exit with `usage`.
 ### Acme wrapper
 
 ```rc
-9social/Like
+9social/Post/Like
 ```
 
 `Like` is an Acme tag command and thin wrapper around `like`. It accepts no arguments, reads the current Acme window path from `$%`, and delegates to:
@@ -43,7 +43,7 @@ and exit with `usage`.
 Invalid arguments print:
 
 ```text
-usage: 9social/Like
+usage: 9social/Post/Like
 ```
 
 and exit with `usage`.
@@ -123,10 +123,10 @@ A typical workflow is:
 2. The post window tag includes:
 
 ```text
-9social/Reply 9social/Like
+9social/Post/Reply 9social/Post/Like
 ```
 
-3. User middle-clicks `9social/Like`.
+3. User middle-clicks `9social/Post/Like`.
 4. `Like` delegates to `9social/like $%`.
 5. `like` reads the target post ID from the current post file.
 6. `like` writes a `type: like` record into the user's `self/posts/` directory.
@@ -139,22 +139,22 @@ A typical workflow is:
 
 ## Tag Placement
 
-`9social/OpenPost` should add `9social/Like` when opening posts from followed feeds if the local index does not show that the current user has already liked the post.
+`9social/OpenPost` should add `9social/Post/Like` when opening posts from followed feeds if the local index does not show that the current user has already liked the post.
 
-If the index is missing or unreadable, `OpenPost` should prefer showing `9social/Like` rather than rebuilding the index during post opening. `Like` itself remains responsible for enforcing idempotence before publishing.
+If the index is missing or unreadable, `OpenPost` should prefer showing `9social/Post/Like` rather than rebuilding the index during post opening. `Like` itself remains responsible for enforcing idempotence before publishing.
 
-If the local index shows that the current user has already liked the post, Level 1 should omit `9social/Like` from the tag. `9social/Unlike` can be considered later.
+If the local index shows that the current user has already liked the post, Level 1 should omit `9social/Post/Like` from the tag. `9social/Unlike` can be considered later.
 
 For followed-feed posts:
 
 ```text
- | 9social/Reply 9social/Like
+ | 9social/Post/Reply 9social/Post/Like
 ```
 
 For self posts:
 
 ```text
- | 9social/Reply 9social/Update 9social/Delete
+ | 9social/Post/Reply 9social/Post/Update 9social/Post/Delete
 ```
 
 Level 1 does not show `Like` on the user's own posts.
@@ -208,7 +208,7 @@ This check should live in a reusable helper such as:
 9social/lib/liked-post <post-id>
 ```
 
-The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Like`; `like` can use it to enforce idempotence.
+The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Post/Like`; `like` can use it to enforce idempotence.
 
 If the current user has already liked the target post, `like` should print a short message such as:
 
@@ -220,7 +220,7 @@ and exit successfully without creating a new like record or Git commit.
 
 If no current-user like exists, `like` creates one `type: like` record and commits it locally.
 
-After a successful commit, `like` should run `9social/reindex` so subsequent `OpenPost` calls can immediately omit `9social/Like` for that target.
+After a successful commit, `like` should run `9social/reindex` so subsequent `OpenPost` calls can immediately omit `9social/Post/Like` for that target.
 
 On success, `like` should print:
 

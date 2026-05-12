@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/Cancel
+cmd=$repo/bin/9social/Draft/Cancel
 
 fn fail {
 	echo FAIL: $* >[1=2]

@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/Publish' >[1=2]
+	echo 'usage: 9social/Draft/Publish' >[1=2]
 	exit usage
 }
 

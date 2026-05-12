@@ -45,7 +45,7 @@ repo=`{cd $repo && pwd}
 bind -b $repo/bin /bin || fail bind
 ```
 
-Most tests can then execute commands exactly as users do, with paths such as `9social/Like` and `9social/lib/post/id.awk`.
+Most tests can then execute commands exactly as users do, with paths such as `9social/Post/Like` and `9social/lib/post/id.awk`.
 
 For tests that need fake helper commands, use bind layering instead of copied script relocation:
 
@@ -65,7 +65,7 @@ Start with scripts where helper calls are straightforward:
 * `bin/9social/refresh`
 * `bin/9social/init-self`
 * `bin/9social/new-post`
-* `bin/9social/Cancel`
+* `bin/9social/Draft/Cancel`
 * `bin/9social/push`
 * `bin/9social/Timeline`
 * `bin/9social/Menu`
@@ -81,10 +81,10 @@ Run the closest focused tests after each small group.
 
 Then handle commands with more branching, index behavior, or Acme behavior:
 
-* `bin/9social/Reply`
-* `bin/9social/Like`
-* `bin/9social/Delete`
-* `bin/9social/Update`
+* `bin/9social/Post/Reply`
+* `bin/9social/Post/Like`
+* `bin/9social/Post/Delete`
+* `bin/9social/Post/Update`
 * `bin/9social/OpenPost`
 
 `OpenPost` should be refactored carefully because it currently resolves several helpers from multiple branches.
@@ -122,10 +122,10 @@ Some tests may still use `$0` to find the repository root. That is acceptable; t
 After the automated suite passes, manually smoke test the Acme-facing commands that were touched:
 
 * `9social/NewPost`
-* `9social/Reply`
+* `9social/Post/Reply`
 * `9social/Timeline`
 * `9social/ShowThreads`
 * `9social/OpenPost`
-* `9social/Like`
-* `9social/Delete`
-* `9social/Update`
+* `9social/Post/Like`
+* `9social/Post/Delete`
+* `9social/Post/Update`

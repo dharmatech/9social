@@ -6,21 +6,17 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/Cancel' >[1=2]
+	echo 'usage: 9social/Draft/Cancel' >[1=2]
 	exit usage
 }
 
 if(! ~ $#* 0)
 	usage
 
-valid_draft=9social/lib/valid-draft
-if(~ $0 */Cancel)
-	valid_draft=`{echo $0 | sed 's;/Cancel$;/lib/valid-draft;'}
-
 draft=$%
 if(~ $#draft 0 || ~ $draft '')
 	fail 'missing draft path'
-if(! $valid_draft $draft)
+if(! 9social/lib/valid-draft $draft)
 	fail 'invalid draft path: '^$draft
 if(! test -f $draft)
 	fail 'draft file not found: '^$draft

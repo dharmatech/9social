@@ -11,7 +11,7 @@ Define how a user updates one of their own existing 9social posts from Acme.
 ## Command
 
 ```rc
-9social/Update
+9social/Post/Update
 ```
 
 `Update` is an Acme tag command.
@@ -23,7 +23,7 @@ Level 1 accepts no arguments. It operates on the current Acme window path, provi
 Invalid arguments print:
 
 ```text
-usage: 9social/Update
+usage: 9social/Post/Update
 ```
 
 and exit with `usage`.
@@ -56,11 +56,11 @@ A typical workflow is:
 2. The post window tag includes:
 
 ```text
-9social/Reply 9social/Update 9social/Delete
+9social/Post/Reply 9social/Post/Update 9social/Post/Delete
 ```
 
 3. User edits the post window.
-4. User middle-clicks `9social/Update`.
+4. User middle-clicks `9social/Post/Update`.
 5. `Update` saves the Acme buffer to the backing file.
 6. `Update` validates the saved post file.
 7. `Update` commits only that post file locally.
@@ -172,24 +172,24 @@ Failures should be short diagnostics on stderr.
 
 ## Tag Placement
 
-`9social/OpenPost` should add `9social/Update` only when opening a post from the user's own self repository.
+`9social/OpenPost` should add `9social/Post/Update` only when opening a post from the user's own self repository.
 
 For self posts:
 
 ```text
- | 9social/Reply 9social/Update 9social/Delete
+ | 9social/Post/Reply 9social/Post/Update 9social/Post/Delete
 ```
 
 For followed-feed posts:
 
 ```text
- | 9social/Reply
+ | 9social/Post/Reply
 ```
 
 If `Like` is implemented for followed-feed posts, followed-feed posts may later show:
 
 ```text
- | 9social/Reply 9social/Like
+ | 9social/Post/Reply 9social/Post/Like
 ```
 
 ---

@@ -4,7 +4,7 @@
 
 Explore candidate designs for making lightweight local actions feel fast.
 
-The motivating case is `9social/Like`. From Acme, liking a post should feel like a small gesture: the user middle-clicks `9social/Like` and continues reading. If the command performs expensive indexing work synchronously, the interaction feels heavier than the user's intent.
+The motivating case is `9social/Post/Like`. From Acme, liking a post should feel like a small gesture: the user middle-clicks `9social/Post/Like` and continues reading. If the command performs expensive indexing work synchronously, the interaction feels heavier than the user's intent.
 
 This document records candidate approaches. It is not yet a final implementation plan.
 
@@ -17,7 +17,7 @@ A like record affects several layers:
 * the user's durable feed data under `self/posts/`
 * the Git repository for the user's feed
 * the local derived index under `$home/lib/9social/index`
-* Acme-facing UI decisions, such as whether to show `9social/Like`
+* Acme-facing UI decisions, such as whether to show `9social/Post/Like`
 * derived views, such as like counts in threaded views
 
 The durable action is small: create one `type: like` record.
@@ -54,7 +54,7 @@ A later `9social/reindex`, `9social/refresh`, or other maintenance command updat
 
 * The UI may be stale until the next reindex.
 * Like counts may not update immediately.
-* `OpenPost` may continue to show `9social/Like` for the target until the index catches up.
+* `OpenPost` may continue to show `9social/Post/Like` for the target until the index catches up.
 * Duplicate prevention cannot rely only on the derived index.
 
 ### Duplicate Handling
@@ -75,7 +75,7 @@ This check can be factored into a helper if this approach is implemented.
 
 ## Candidate: Local Outbox
 
-In this model, `9social/Like` records a local queued intent instead of creating a feed post immediately.
+In this model, `9social/Post/Like` records a local queued intent instead of creating a feed post immediately.
 
 Example local layout:
 

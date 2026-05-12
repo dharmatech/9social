@@ -214,8 +214,8 @@ Capitalized command names are used for Acme tag workflows, for example:
 
 ```text
 9social/NewPost
-9social/Publish
-9social/Cancel
+9social/Draft/Publish
+9social/Draft/Cancel
 ```
 
 ### CLI core, Acme wrapper

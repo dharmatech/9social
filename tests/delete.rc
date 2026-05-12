@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/Delete
+cmd=$repo/bin/9social/Post/Delete
 useruuid=550e8400-e29b-41d4-a716-446655440000
 postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 postid=9social:post:$useruuid^:$postuuid
@@ -84,7 +84,7 @@ setup usage
 $cmd extra >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/Delete' $testhome/err >/dev/null || fail usage-error
+grep 'usage: 9social/Post/Delete' $testhome/err >/dev/null || fail usage-error
 
 echo ok
 exit ''

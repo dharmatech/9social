@@ -147,7 +147,7 @@ Rules:
 * If writing the final post fails, leave the draft file in place and print its path
 * If `git/add` or `git/commit` fails, leave the draft file in place and print its path
 
-Implementation note: the common draft-to-post publishing behavior should live in `bin/9social/lib/publish-draft` so `9social/new-post` and the Acme `9social/Publish` command use the same validation, metadata generation, filename selection, final write, Git commit, success cleanup, and failure preservation rules. `new-post` is responsible for creating the draft and either opening the editor or reading stdin before invoking the helper.
+Implementation note: the common draft-to-post publishing behavior should live in `bin/9social/lib/publish-draft` so `9social/new-post` and the Acme `9social/Draft/Publish` command use the same validation, metadata generation, filename selection, final write, Git commit, success cleanup, and failure preservation rules. `new-post` is responsible for creating the draft and either opening the editor or reading stdin before invoking the helper.
 
 ---
 

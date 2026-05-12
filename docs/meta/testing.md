@@ -26,14 +26,14 @@ bin/9social/refresh                tests/refresh.rc
 bin/9social/init-self              tests/init-self.rc
 bin/9social/new-post               tests/new-post.rc, tests/new-post-editor.rc
 bin/9social/NewPost                manual Acme smoke test; related automated tests cover helpers and publishing
-bin/9social/Publish                tests/publish.rc
+bin/9social/Draft/Publish                tests/publish.rc
 bin/9social/reply                  tests/reply.rc
-bin/9social/Cancel                 tests/cancel.rc
-bin/9social/Reply                  manual Acme smoke test; related helpers have focused tests
+bin/9social/Draft/Cancel                 tests/cancel.rc
+bin/9social/Post/Reply                  manual Acme smoke test; related helpers have focused tests
 bin/9social/like                   tests/like.rc
-bin/9social/Like                   tests/Like.rc
-bin/9social/Delete                 tests/delete.rc
-bin/9social/Update                 tests/update.rc
+bin/9social/Post/Like                   tests/Like.rc
+bin/9social/Post/Delete                 tests/delete.rc
+bin/9social/Post/Update                 tests/update.rc
 bin/9social/push                   tests/push.rc
 bin/9social/timeline               tests/timeline.rc
 bin/9social/Timeline               tests/Timeline.rc
@@ -79,6 +79,6 @@ Some behavior depends on the live Acme filesystem and is intentionally not fully
 
 Examples:
 
-* Middle-click `9social/NewPost`, edit the draft, then middle-click `9social/Publish`.
+* Middle-click `9social/NewPost`, edit the draft, then middle-click `9social/Draft/Publish`.
 * Middle-click `9social/Timeline` or `9social/ShowThreads`, place the cursor on a post reference, then middle-click `9social/OpenPost`.
-* Open another user's post and verify the tag commands such as `9social/Reply` and `9social/Like`.
+* Open another user's post and verify the tag commands such as `9social/Post/Reply` and `9social/Post/Like`.

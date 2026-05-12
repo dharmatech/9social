@@ -10,12 +10,12 @@ home=/tmp/9social-Like-test.$pid
 rm -rf $home
 mkdir -p $home || fail mkdir
 
-9social/Like extra >$home/out >[2]$home/err
+9social/Post/Like extra >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/Like' $home/err >/dev/null || fail usage-error `{cat $home/err}
+grep 'usage: 9social/Post/Like' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
-9social/Like >$home/out >[2]$home/err
+9social/Post/Like >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail missing-wsys-status
 grep 'Like: acme window system not available' $home/err >/dev/null || fail missing-wsys-error `{cat $home/err}

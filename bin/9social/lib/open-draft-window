@@ -18,7 +18,7 @@ draft=$1
 
 test -f $draft || fail 'draft file not found: '^$draft
 
-9social/lib/open-file-window $draft ' | 9social/Publish 9social/Cancel' ||
+9social/lib/open-file-window $draft ' | 9social/Draft/Publish 9social/Draft/Cancel' ||
 	exit $status
 
 exit ''

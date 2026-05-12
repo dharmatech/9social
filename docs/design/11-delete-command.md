@@ -11,7 +11,7 @@ Deletion is useful for test posts, mistakes, and ordinary cleanup. It should fit
 ## Command
 
 ```rc
-9social/Delete
+9social/Post/Delete
 ```
 
 `Delete` is an Acme tag command.
@@ -23,7 +23,7 @@ Level 1 accepts no arguments. It operates on the current Acme window path, provi
 Invalid arguments print:
 
 ```text
-usage: 9social/Delete
+usage: 9social/Post/Delete
 ```
 
 and exit with `usage`.
@@ -56,10 +56,10 @@ A typical workflow is:
 2. The post window tag includes:
 
 ```text
-9social/Reply 9social/Update 9social/Delete
+9social/Post/Reply 9social/Post/Update 9social/Post/Delete
 ```
 
-3. User middle-clicks `9social/Delete`.
+3. User middle-clicks `9social/Post/Delete`.
 4. `Delete` removes the backing post file from `self/posts/`.
 5. `Delete` commits the removal locally.
 6. The user later runs `9social/push` when ready.
@@ -112,18 +112,18 @@ posts/2026-04-29-test-post
 
 ## Tag Placement
 
-`9social/OpenPost` should add `9social/Delete` only when opening a post from the user's own self repository.
+`9social/OpenPost` should add `9social/Post/Delete` only when opening a post from the user's own self repository.
 
 For self posts:
 
 ```text
- | 9social/Reply 9social/Update 9social/Delete
+ | 9social/Post/Reply 9social/Post/Update 9social/Post/Delete
 ```
 
 For followed-feed posts:
 
 ```text
- | 9social/Reply
+ | 9social/Post/Reply
 ```
 
 This keeps delete available where it is valid without presenting it for posts the user does not own.

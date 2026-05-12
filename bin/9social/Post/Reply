@@ -8,7 +8,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/Reply' >[1=2]
+	echo 'usage: 9social/Post/Reply' >[1=2]
 	exit usage
 }
 

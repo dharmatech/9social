@@ -73,7 +73,7 @@ fakecurrent 'open this '^$post
 runopen
 if(! ~ $st '') fail currentlinepath-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail currentlinepath-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail currentlinepath-tag `{cat $testhome/tag}
+grep '^ | 9social/Post/Reply 9social/Post/Like$' $testhome/tag >/dev/null || fail currentlinepath-tag `{cat $testhome/tag}
 
 setup currentlineid
 fakeopen
@@ -84,7 +84,7 @@ echo $post >$home/lib/9social/index/posts/$encoded
 runopen
 if(! ~ $st '') fail currentlineid-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail currentlineid-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail currentlineid-tag `{cat $testhome/tag}
+grep '^ | 9social/Post/Reply 9social/Post/Like$' $testhome/tag >/dev/null || fail currentlineid-tag `{cat $testhome/tag}
 
 setup feedreply
 >$post {
@@ -102,7 +102,7 @@ fakecurrent 'open this '^$post
 runopen
 if(! ~ $st '') fail feedreply-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail feedreply-opened `{cat $testhome/opened}
-grep '^ | 9social/OpenPost 9social/Reply 9social/Like$' $testhome/tag >/dev/null || fail feedreply-tag `{cat $testhome/tag}
+grep '^ | 9social/OpenPost 9social/Post/Reply 9social/Post/Like$' $testhome/tag >/dev/null || fail feedreply-tag `{cat $testhome/tag}
 
 setup alreadyliked
 fakeopen
@@ -126,7 +126,7 @@ likeid=9social:post:$useruuid:$targetuuid
 echo $likepost >$home/lib/9social/index/targets/9social_post_$useruuid^_$postuuid/likes/9social_post_$useruuid^_$targetuuid
 runopen
 if(! ~ $st '') fail alreadyliked-status $st `{cat $testhome/err}
-grep '^ | 9social/Reply$' $testhome/tag >/dev/null || fail alreadyliked-tag `{cat $testhome/tag}
+grep '^ | 9social/Post/Reply$' $testhome/tag >/dev/null || fail alreadyliked-tag `{cat $testhome/tag}
 
 setup selfpath
 selfdir=$testhome/lib/9social/self/posts
@@ -145,7 +145,7 @@ fakecurrent 'open this '^$post
 runopen
 if(! ~ $st '') fail selfpath-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail selfpath-opened `{cat $testhome/opened}
-grep '^ | 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
+grep '^ | 9social/Post/Reply 9social/Post/Update 9social/Post/Delete$' $testhome/tag >/dev/null || fail selfpath-tag `{cat $testhome/tag}
 
 setup selfreply
 selfdir=$testhome/lib/9social/self/posts
@@ -166,7 +166,7 @@ fakecurrent 'open this '^$post
 runopen
 if(! ~ $st '') fail selfreply-status $st `{cat $testhome/err}
 if(! ~ `{cat $testhome/opened} $post) fail selfreply-opened `{cat $testhome/opened}
-grep '^ | 9social/OpenPost 9social/Reply 9social/Update 9social/Delete$' $testhome/tag >/dev/null || fail selfreply-tag `{cat $testhome/tag}
+grep '^ | 9social/OpenPost 9social/Post/Reply 9social/Post/Update 9social/Post/Delete$' $testhome/tag >/dev/null || fail selfreply-tag `{cat $testhome/tag}
 
 setup noref
 fakeopen

@@ -244,15 +244,15 @@ When `OpenPost` opens a post in Acme, it should populate the tag with actions ap
 
 Base tags:
 
-* feed post: `| 9social/Reply`
-* self post: `| 9social/Reply 9social/Update 9social/Delete`
+* feed post: `| 9social/Post/Reply`
+* self post: `| 9social/Post/Reply 9social/Post/Update 9social/Post/Delete`
 
 If the opened post has a syntactically valid `target:` field, `OpenPost` should also add `9social/OpenPost` to the tag. This lets the user place the cursor on the `target:` value and middle-click `9social/OpenPost` to open the target post through the local index.
 
 Examples:
 
-* feed reply: `| 9social/OpenPost 9social/Reply`
-* self reply: `| 9social/OpenPost 9social/Reply 9social/Update 9social/Delete`
+* feed reply: `| 9social/OpenPost 9social/Post/Reply`
+* self reply: `| 9social/OpenPost 9social/Post/Reply 9social/Post/Update 9social/Post/Delete`
 
 This lets timeline, thread, and relationship views use either full paths or canonical post IDs while keeping the user-facing `OpenPost` workflow stable.
 
@@ -536,7 +536,7 @@ Duplicate relationship targets are normal. Many replies may target the same post
 
 Historical duplicate likes from the same author to the same target may exist. `reindex` should tolerate them and index the raw records. Higher-level commands that display counts should deduplicate likes by `(author, target)`.
 
-Once the index exists, `9social/Like` should avoid creating new duplicate likes by checking the indexed likes for the target before writing a new like record.
+Once the index exists, `9social/Post/Like` should avoid creating new duplicate likes by checking the indexed likes for the target before writing a new like record.
 
 ---
 
@@ -552,7 +552,7 @@ Recommended order:
 4. `9social/lib/post-path`
 5. update `9social/OpenPost` to accept canonical post IDs
 6. update `9social/refresh` to run `9social/reindex`
-7. later: update `9social/Like` to use the index for idempotency
+7. later: update `9social/Post/Like` to use the index for idempotency
 
 `Like` idempotency should wait until the core index primitives are working and tested.
 

@@ -29,12 +29,12 @@ if(! ~ $#post 1)
 opened_id=`{9social/lib/post/id.awk $post} || fail 'bad post id: '^$post
 if(! ~ $#opened_id 1)
 	fail 'bad post id: '^$post
-actions='9social/Reply 9social/Like'
+actions='9social/Post/Reply 9social/Post/Like'
 if(~ $post $home/lib/9social/self/posts/^*)
-	actions='9social/Reply 9social/Update 9social/Delete'
+	actions='9social/Post/Reply 9social/Post/Update 9social/Post/Delete'
 if not {
 	if(9social/lib/liked-post $opened_id >/dev/null >[2]/dev/null)
-		actions='9social/Reply'
+		actions='9social/Post/Reply'
 }
 target=`{9social/lib/post-target $post} || fail 'cannot read post target'
 if(! ~ $#target 0){

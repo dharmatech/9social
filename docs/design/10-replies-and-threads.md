@@ -259,19 +259,19 @@ The primary Level 1 reply workflow should be Acme-native.
 A post opened in Acme may include this tag command:
 
 ```text
-9social/Reply
+9social/Post/Reply
 ```
 
-Level 1 does not require automatic insertion of `9social/Reply` into post window tags. `Reply` should work when invoked from any Acme window whose `$%` names a readable 9social post file. The user may type `9social/Reply` into the tag or body of that window and middle-click it.
+Level 1 does not require automatic insertion of `9social/Post/Reply` into post window tags. `Reply` should work when invoked from any Acme window whose `$%` names a readable 9social post file. The user may type `9social/Post/Reply` into the tag or body of that window and middle-click it.
 
-Later post-opening or post-view commands may add `9social/Reply` to post window tags automatically.
+Later post-opening or post-view commands may add `9social/Post/Reply` to post window tags automatically.
 
-When the user middle-clicks `9social/Reply`, the command should infer the reply target from the current Acme window. The user should not have to select or type the target post ID.
+When the user middle-clicks `9social/Post/Reply`, the command should infer the reply target from the current Acme window. The user should not have to select or type the target post ID.
 
 Expected flow:
 
 1. user opens a post file in Acme
-2. user invokes `9social/Reply` from that post window
+2. user invokes `9social/Post/Reply` from that post window
 3. `Reply` reads the current window path from Acme's `$%` environment variable
 4. `Reply` parses the post file's `id:` field
 5. `Reply` opens a new Acme draft window using the shared `bin/9social/lib/open-draft-window` helper defined by the Acme `NewPost` design
@@ -340,7 +340,7 @@ The command-line reply core is:
 
 If the target post has a title, `reply` uses `Title: Re: <target title>` as the draft title. If the target title already starts with `Re:`, it does not add another prefix. If the target post has no title, `reply` writes a blank `Title:` line and lets publication preserve that blank title.
 
-This gives automated tests and terminal workflows a non-Acme way to create reply posts. The Acme `9social/Reply` command uses the same `reply-draft` helper, then opens the draft in an editable Acme window instead of publishing immediately.
+This gives automated tests and terminal workflows a non-Acme way to create reply posts. The Acme `9social/Post/Reply` command uses the same `reply-draft` helper, then opens the draft in an editable Acme window instead of publishing immediately.
 
 ## Draft Experience
 
