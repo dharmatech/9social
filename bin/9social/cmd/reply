@@ -23,5 +23,5 @@ if(! ~ $st '')
 
 cat >>$draft || fail 'cannot read stdin'
 
-9social/lib/publish-draft $draft
+9social/lib/draft/publish $draft
 exit $status

@@ -59,7 +59,7 @@ Publish
 or a more explicit command such as:
 
 ```text
-9social/publish-draft <draft-path>
+9social/lib/draft/publish <draft-path>
 ```
 
 ## Acme Window Control
@@ -167,7 +167,7 @@ A practical rc-based design can be:
 * the draft window/tag includes explicit commands such as:
 
   ```rc
-  9social/publish-draft /usr/glenda/tmp/9social-new-post.<pid>
+  9social/lib/draft/publish /usr/glenda/tmp/9social-new-post.<pid>
   9social/cancel-draft /usr/glenda/tmp/9social-new-post.<pid>
   ```
 
@@ -214,6 +214,6 @@ The current recommended path is:
 
 1. Keep `9social/cmd/new-post` as the synchronous shell command
 2. Add `9social/NewPost` for Acme draft creation
-3. Add `9social/publish-draft <draft-path>`
+3. Add `9social/lib/draft/publish <draft-path>`
 4. Add `9social/cancel-draft <draft-path>`
 5. Defer full Acme event-loop integration until there is a strong reason

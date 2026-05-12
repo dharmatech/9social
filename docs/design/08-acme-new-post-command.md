@@ -305,7 +305,7 @@ If `$winid` is set, `Publish` should try to save the Acme window before reading 
 The shared publish path should live in an internal helper script:
 
 ```text
-bin/9social/lib/publish-draft
+bin/9social/lib/draft/publish
 ```
 
 The helper publishes one draft file passed by path. It owns the common behavior: profile validation, draft parsing, post ID generation, timestamp generation, filename selection, final post writing, Git add/commit, success output, draft cleanup on success, and draft preservation on failure.
@@ -461,7 +461,7 @@ Automated tests should focus on the filesystem and publishing pieces that do not
 * `9social/Draft/Publish` preserves the draft on validation, write, or Git failure
 * `9social/Draft/Cancel` removes the draft named by `$%`
 * `9social/Draft/Cancel` rejects invalid `$%` paths
-* `bin/9social/lib/publish-draft` is exercised through both `9social/cmd/new-post -` and `9social/Draft/Publish`
+* `bin/9social/lib/draft/publish` is exercised through both `9social/cmd/new-post -` and `9social/Draft/Publish`
 * invalid arguments print usage
 
 Automated tests may also cover `$winid` save behavior when a real Acme window control file is available, but Level 1 should not depend on a mock of `/mnt/wsys`. The Acme filesystem behavior is specific enough that a mock can give false confidence.

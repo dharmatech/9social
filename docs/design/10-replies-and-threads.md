@@ -336,7 +336,7 @@ The command-line reply core is:
 9social/cmd/reply <post-file>
 ```
 
-`reply` reads reply body text from standard input. It uses `9social/lib/reply-draft` to extract the target post ID from `<post-file>`, create a temporary draft, and write reply metadata in a sidecar file. It then appends the standard input body and delegates publication to `9social/lib/publish-draft`.
+`reply` reads reply body text from standard input. It uses `9social/lib/reply-draft` to extract the target post ID from `<post-file>`, create a temporary draft, and write reply metadata in a sidecar file. It then appends the standard input body and delegates publication to `9social/lib/draft/publish`.
 
 If the target post has a title, `reply` uses `Title: Re: <target title>` as the draft title. If the target title already starts with `Re:`, it does not add another prefix. If the target post has no title, `reply` writes a blank `Title:` line and lets publication preserve that blank title.
 

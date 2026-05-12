@@ -1,6 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/Draft/Publish
 useruuid=550e8400-e29b-41d4-a716-446655440000
 

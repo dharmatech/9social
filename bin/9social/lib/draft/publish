@@ -1,4 +1,9 @@
 #!/bin/rc
+# Publish a draft file as a committed post in `$home/lib/9social/self`.
+#
+# Reads a draft created by 9social, optional sidecar metadata from
+# `<draft>.meta`, writes a post file under `self/posts`, stages and commits
+# it with git, then removes the draft and sidecar on success.
 
 fn cleanup {
 	if(! ~ $#titlefile 0)
@@ -14,7 +19,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/publish-draft <draft>' >[1=2]
+	echo 'usage: 9social/lib/draft/publish <draft>' >[1=2]
 	exit usage
 }
 
