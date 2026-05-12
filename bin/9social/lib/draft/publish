@@ -133,22 +133,7 @@ if(test -s $titlefile)
 if not
 	awk '$0 !~ /^[ \t]*$/ { print; exit }' $bodyfile >$slugsource
 
-slug=`{awk '
-	{
-		s=tolower($0)
-		gsub(/[ \t]+/, "-", s)
-		gsub(/[^a-z0-9-]/, "", s)
-		gsub(/-+/, "-", s)
-		gsub(/^-+/, "", s)
-		gsub(/-+$/, "", s)
-		s=substr(s, 1, 48)
-		gsub(/-+$/, "", s)
-		if(s == "")
-			s="post"
-		print s
-		exit
-	}
-' $slugsource}
+slug=`{9social/lib/draft/slug.awk $slugsource}
 if(! ~ $#slug 1)
 	slug=post
 if(~ $slug '')

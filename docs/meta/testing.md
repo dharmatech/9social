@@ -47,6 +47,7 @@ Helper tests generally follow helper names:
 ```text
 bin/9social/lib/check-self         tests/check-self.rc
 bin/9social/lib/draft/valid.awk        tests/valid-draft.rc
+bin/9social/lib/draft/slug.awk         tests/draft-slug.rc
 bin/9social/lib/valid-profile.awk  tests/valid-profile.rc
 bin/9social/lib/encode-id          tests/encode-id.rc
 bin/9social/lib/mk-temp-file       tests/mk-temp-file.rc

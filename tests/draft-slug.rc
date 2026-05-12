@@ -1,0 +1,51 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/lib/draft/slug.awk
+base=/tmp/9social-draft-slug-test.$pid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn check {
+	name=$1
+	input=$2
+	expected=$3
+	file=$base.$name
+	echo $input >$file
+	out=`{$cmd $file}
+	st=$status
+	if(! ~ $st '') fail $name status $st
+	if(! ~ $#out 1) fail $name output-count $#out
+	if(! ~ $out $expected) fail $name output $out expected $expected
+}
+
+rm -f $base.*
+
+check spaces 'Free Software and Emacs' free-software-and-emacs
+check uppercase 'GNU EMACS Lisp Machines' gnu-emacs-lisp-machines
+check punctuation 'Hello, world! #1' hello-world-1
+check repeated 'hello --- there' hello-there
+check edge-dashes ' --- hello there --- ' hello-there
+check blank '' post
+check symbols '--- !!! ---' post
+check truncate 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbb' aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+empty=$base.empty
+>$empty
+out=`{$cmd $empty}
+st=$status
+if(! ~ $st '') fail empty-file-status $st
+if(! ~ $#out 1 || ! ~ $out post) fail empty-file-output $out
+
+$cmd >$base.out >[2]$base.err
+st=$status
+if(~ $st '') fail usage-status
+if(test -s $base.out) fail usage-output
+
+rm -f $base.*
+echo ok
+exit ''
