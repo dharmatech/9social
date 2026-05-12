@@ -8,7 +8,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/open-file-window <file> <tag-text>' >[1=2]
+	echo 'usage: 9social/lib/acme/open-file-window <file> <tag-text>' >[1=2]
 	exit usage
 }
 

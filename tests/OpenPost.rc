@@ -42,7 +42,7 @@ fn bindfake {
 
 fn fakeopen {
 	bindfake
-	open_file_window=$testhome/bin/9social/lib/open-file-window
+	open_file_window=$testhome/bin/9social/lib/acme/open-file-window
 	>$open_file_window {
 		echo '#!/bin/rc'
 		echo 'echo $1 >'^$testhome^'/opened'

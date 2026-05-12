@@ -43,6 +43,6 @@ if(! ~ $#target 0){
 		actions='9social/OpenPost '^$actions
 }
 tag=' | '^$actions
-9social/lib/open-file-window $post $tag || fail 'cannot open post'
+9social/lib/acme/open-file-window $post $tag || fail 'cannot open post'
 
 exit ''

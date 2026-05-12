@@ -29,7 +29,7 @@ timelinefile=`{9social/lib/mk-temp-file timeline} ||
 if(! test -f $timelinefile)
 	fail 'cannot create timeline'
 
-if(! 9social/lib/open-file-window $timelinefile ' | 9social/OpenPost')
+if(! 9social/lib/acme/open-file-window $timelinefile ' | 9social/OpenPost')
 	exit $status
 
 exit ''

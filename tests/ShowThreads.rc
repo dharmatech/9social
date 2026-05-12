@@ -11,7 +11,7 @@ fn fail {
 home=$base.home
 bindir=$base/bin
 rm -rf $base.* $bindir
-mkdir -p $home/tmp $bindir/9social/lib $bindir/9social/cmd || fail mkdir
+mkdir -p $home/tmp $bindir/9social/lib/acme $bindir/9social/cmd || fail mkdir
 
 cp $repo/bin/9social/ShowThreads $bindir/9social/ShowThreads || fail copy-command
 chmod +x $bindir/9social/ShowThreads
@@ -24,13 +24,13 @@ chmod +x $bindir/9social/lib/mk-temp-file
 }
 chmod +x $bindir/9social/cmd/show-threads
 
->$bindir/9social/lib/open-file-window {
+>$bindir/9social/lib/acme/open-file-window {
 	echo '#!/bin/rc'
 	echo 'echo $1 >$home/opened'
 	echo 'echo $2 >$home/tag'
 	echo 'cat $1 >$home/body'
 }
-chmod +x $bindir/9social/lib/open-file-window
+chmod +x $bindir/9social/lib/acme/open-file-window
 
 bind -b $bindir /bin || fail bind
 9social/ShowThreads >$home/out >[2]$home/err

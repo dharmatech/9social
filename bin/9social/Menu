@@ -33,7 +33,7 @@ menufile=`{9social/lib/mk-temp-file menu} ||
 	echo '9social/cmd/push'
 }
 
-if(! 9social/lib/open-file-window $menufile '')
+if(! 9social/lib/acme/open-file-window $menufile '')
 	exit $status
 
 exit ''
