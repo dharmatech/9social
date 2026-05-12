@@ -1,7 +1,9 @@
 #!/bin/awk -f
 
-# Convert one feed profile and one post into one tab-separated timeline record.
-# Like posts exit successfully without emitting a record.
+# Emit one sortable tab-separated timeline record for a post file.
+#
+# Reads the feed profile and post file. Like posts exit successfully
+# without emitting a record.
 
 function trim(s){
 	gsub(/^[ \t]+/, "", s)

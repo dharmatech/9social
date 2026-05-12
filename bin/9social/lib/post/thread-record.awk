@@ -1,5 +1,5 @@
 #!/bin/awk -f /bin/9social/lib/id.awk -f
-# Read one post file and emit one normalized thread record.
+# Emit one tab-separated thread record for a post file.
 
 BEGIN {
 	postpath = ARGV[1]

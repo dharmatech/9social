@@ -28,7 +28,7 @@ if(! test -d $index/posts)
 for(entry in `{ls -p $index/posts >[2]/dev/null | sort}){
 	post=`{cat $index/posts/$entry}
 	if(test -f $post)
-		9social/lib/post-thread-record.awk $post >>$records
+		9social/lib/post/thread-record.awk $post >>$records
 }
 
 9social/lib/render-thread-records.awk $records

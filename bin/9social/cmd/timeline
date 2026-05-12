@@ -43,7 +43,7 @@ for(feed in $feedlist){
 						postbase=`{basename $post}
 						if(! ~ $postbase .*){
 							if(test -f $post){
-								if(! 9social/lib/post-timeline-record.awk $feed/profile $post >>$tmp){
+								if(! 9social/lib/post/timeline-record.awk $feed/profile $post >>$tmp){
 									echo $0^': skip post (bad format): '^$post >[1=2]
 								}
 							}
