@@ -2,7 +2,7 @@
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
-cmd=$repo/bin/9social/new-post
+cmd=$repo/bin/9social/cmd/new-post
 testhome=/tmp/9social-new-post-editor.$pid
 rm -rf $testhome
 mkdir -p $testhome/lib/9social/self

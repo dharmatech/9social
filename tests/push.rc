@@ -1,7 +1,8 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/push
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/cmd/push
 useruuid=550e8400-e29b-41d4-a716-446655440000
 
 fn fail {
@@ -66,7 +67,7 @@ setup usage
 $cmd extra >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/push' $testhome/err >/dev/null || fail usage-error
+grep 'usage: 9social/cmd/push' $testhome/err >/dev/null || fail usage-error
 
 echo ok
 exit ''

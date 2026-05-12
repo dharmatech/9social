@@ -30,7 +30,7 @@ For fast commands, 9social should distinguish the durable action from derived vi
 
 ## Candidate: Commit Now, Index Later
 
-In this model, `9social/like` creates and commits the like record immediately, but does not rebuild the index synchronously.
+In this model, `9social/cmd/like` creates and commits the like record immediately, but does not rebuild the index synchronously.
 
 Flow:
 
@@ -41,13 +41,13 @@ Flow:
 5. Commit the new like post.
 6. Return without running `9social/lib/index/rebuild`.
 
-A later `9social/lib/index/rebuild`, `9social/refresh`, or other maintenance command updates the derived index and makes the like visible to count and tag logic.
+A later `9social/lib/index/rebuild`, `9social/cmd/refresh`, or other maintenance command updates the derived index and makes the like visible to count and tag logic.
 
 ### Benefits
 
 * Simple mental model: a successful like is immediately a real feed record.
 * No local intent queue to manage.
-* `9social/push` can publish the like normally.
+* `9social/cmd/push` can publish the like normally.
 * The expensive index rebuild is moved out of the interaction path.
 
 ### Costs
@@ -101,7 +101,7 @@ A later ingestion step converts queued intents into real immutable feed records 
 
 The exact command is intentionally undecided. Candidates include:
 
-* `9social/push` ingests queued actions before pushing
+* `9social/cmd/push` ingests queued actions before pushing
 * `9social/sync` ingests, reindexes, and perhaps pushes
 * `9social/flush-outbox` only turns queued actions into committed posts
 

@@ -14,7 +14,7 @@ This includes:
 ## Usage
 
 ```sh
-9social/refresh
+9social/cmd/refresh
 ```
 
 ---
@@ -177,12 +177,12 @@ Suggested Level 1 progress messages:
 
 Suggested Level 1 error messages:
 
-* `9social/refresh: cannot create $home/lib/9social/feeds`
-* `9social/refresh: cannot read $home/lib/9social/self/following`
-* `9social/refresh: clone failed: <url>`
-* `9social/refresh: update failed: <name>`
-* `9social/refresh: not a git repository: <path>`
-* `9social/refresh: name collision: <name>`
+* `9social/cmd/refresh: cannot create $home/lib/9social/feeds`
+* `9social/cmd/refresh: cannot read $home/lib/9social/self/following`
+* `9social/cmd/refresh: clone failed: <url>`
+* `9social/cmd/refresh: update failed: <name>`
+* `9social/cmd/refresh: not a git repository: <path>`
+* `9social/cmd/refresh: name collision: <name>`
 
 ---
 
@@ -198,7 +198,7 @@ https://github.com/dharmatech/9social-user-joe.git
 ### After running
 
 ```sh
-9social/refresh
+9social/cmd/refresh
 ```
 
 ### Resulting directories
@@ -230,9 +230,9 @@ The `refresh` command separates **data transport** from other concerns.
 
 | Command            | Responsibility               |
 | ------------------ | ---------------------------- |
-| `9social/follow`   | Record which feeds to follow |
-| `9social/refresh`  | Fetch/update feed data       |
-| `9social/timeline` | Read and display data        |
+| `9social/cmd/follow`   | Record which feeds to follow |
+| `9social/cmd/refresh`  | Fetch/update feed data       |
+| `9social/cmd/timeline` | Read and display data        |
 
 This separation ensures:
 

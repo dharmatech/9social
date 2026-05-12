@@ -8,7 +8,7 @@ fn usage {
 if(! ~ $#* 1)
 	usage
 
-9social/lib/post-meta $1 >[2]/dev/null |
+9social/lib/post/meta.awk $1 >[2]/dev/null |
 	awk '$1=="target" && target=="" { target=$2 }
 		END { if(target != "") print target }'
 exit $status

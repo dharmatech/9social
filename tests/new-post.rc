@@ -2,7 +2,7 @@
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
-cmd=$repo/bin/9social/new-post
+cmd=$repo/bin/9social/cmd/new-post
 useruuid=550e8400-e29b-41d4-a716-446655440000
 
 fn fail {
@@ -113,7 +113,7 @@ setup invalid
 $cmd bad >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail invalid-status
-grep 'usage: 9social/new-post \[-\]' $testhome/err >/dev/null || fail invalid-usage
+grep 'usage: 9social/cmd/new-post \[-\]' $testhome/err >/dev/null || fail invalid-usage
 
 echo ok
 exit ''

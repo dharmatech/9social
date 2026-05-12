@@ -1,7 +1,11 @@
 #!/bin/awk -f
+# Extract the metadata header from a post file.
+#
+# Reads key-value lines before the first blank line and prints them as
+# tab-separated key and value pairs, leaving the post body untouched.
 BEGIN {
 	if(ARGC != 2){
-		print "usage: post-meta <post-file>" > "/fd/2"
+		print "usage: 9social/lib/post/meta.awk <post-file>" > "/fd/2"
 		failed = 1
 		exit 1
 	}

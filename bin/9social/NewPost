@@ -16,7 +16,7 @@ if(! ~ $#* 0) usage
 
 if(! test -f /mnt/wsys/index){
 	echo 'NewPost: acme window system not available' >[1=2]
-	echo 'NewPost: run from acme, or use 9social/new-post' >[1=2]
+	echo 'NewPost: run from acme, or use 9social/cmd/new-post' >[1=2]
 	exit 'no acme'
 }
 

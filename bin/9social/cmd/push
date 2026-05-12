@@ -6,18 +6,14 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/push' >[1=2]
+	echo 'usage: 9social/cmd/push' >[1=2]
 	exit usage
 }
 
 if(! ~ $#* 0)
 	usage
 
-check_self=9social/lib/check-self
-if(~ $0 */push)
-	check_self=`{echo $0 | sed 's;/push$;/lib/check-self;'}
-
-$check_self
+9social/lib/check-self
 st=$status
 if(! ~ $st '')
 	exit $st

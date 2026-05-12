@@ -8,7 +8,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/new-post [-]' >[1=2]
+	echo 'usage: 9social/cmd/new-post [-]' >[1=2]
 	exit usage
 }
 

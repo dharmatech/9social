@@ -91,7 +91,7 @@ $home/lib/9social/index/
 
 Each leaf file contains exactly one absolute local filesystem path followed by a newline.
 
-Level 1 index leaf files should not copy metadata such as author, date, title, type, or target. Commands that need metadata should read the post file through `9social/lib/post-meta`.
+Level 1 index leaf files should not copy metadata such as author, date, title, type, or target. Commands that need metadata should read the post file through `9social/lib/post/meta.awk`.
 
 For example:
 
@@ -263,7 +263,7 @@ This lets timeline, thread, and relationship views use either full paths or cano
 Before implementing `reindex`, add a small metadata helper:
 
 ```rc
-9social/lib/post-meta path
+9social/lib/post/meta.awk path
 ```
 
 `post-meta` reads only the metadata header of a post file and prints normalized tab-separated fields.
@@ -419,7 +419,7 @@ Level 1 should keep `reindex` as a standalone command:
 9social/lib/index/rebuild
 ```
 
-`9social/refresh` should run `9social/lib/index/rebuild` automatically after it finishes updating followed feeds.
+`9social/cmd/refresh` should run `9social/lib/index/rebuild` automatically after it finishes updating followed feeds.
 
 `refresh` should run `reindex` even if there is no `following` file, or if the following list is empty. This keeps the user's own `self/posts` indexed.
 
@@ -470,7 +470,7 @@ The first index implementation should not include count or display helpers.
 Implement the core primitives first:
 
 * `9social/lib/encode-id`
-* `9social/lib/post-meta`
+* `9social/lib/post/meta.awk`
 * `9social/lib/index/rebuild`
 * `9social/lib/post-path`
 * refresh integration
@@ -547,11 +547,11 @@ Implement the index branch from smallest primitives to larger command integratio
 Recommended order:
 
 1. `9social/lib/encode-id`
-2. `9social/lib/post-meta`
+2. `9social/lib/post/meta.awk`
 3. `9social/lib/index/rebuild`
 4. `9social/lib/post-path`
 5. update `9social/OpenPost` to accept canonical post IDs
-6. update `9social/refresh` to run `9social/lib/index/rebuild`
+6. update `9social/cmd/refresh` to run `9social/lib/index/rebuild`
 7. later: update `9social/Post/Like` to use the index for idempotency
 
 `Like` idempotency should wait until the core index primitives are working and tested.
@@ -571,7 +571,7 @@ Minimum tests:
 * encodes `9social:post:<user-uuid>:<post-uuid>` as `9social_post_<user-uuid>_<post-uuid>`
 * rejects malformed post IDs
 
-### `9social/lib/post-meta`
+### `9social/lib/post/meta.awk`
 
 * parses ordinary post headers
 * preserves empty values such as `title:`
@@ -607,7 +607,7 @@ Minimum tests:
 * keeps existing Acme current-line path behavior
 * can resolve a current-line post ID through `post-path`
 
-### `9social/refresh`
+### `9social/cmd/refresh`
 
 * runs `reindex` after feed processing
 * still rebuilds the index when no `following` file exists

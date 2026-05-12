@@ -162,7 +162,7 @@ https://github.com/.../9social-user-joe.git
 ### Following a user
 
 ```
-9social/follow <url>
+9social/cmd/follow <url>
 ```
 
 Adds the URL to `self/following`.
@@ -172,7 +172,7 @@ Adds the URL to `self/following`.
 ### Refreshing feeds
 
 ```
-9social/refresh
+9social/cmd/refresh
 ```
 
 For each URL:
@@ -206,8 +206,8 @@ The system is designed for ACME.
 Lowercase hyphenated command names are used for shell/terminal workflows, for example:
 
 ```text
-9social/new-post
-9social/init-self
+9social/cmd/new-post
+9social/cmd/init-self
 ```
 
 Capitalized command names are used for Acme tag workflows, for example:
@@ -258,7 +258,7 @@ Level 1 keeps these command families distinct and does not define case aliases.
 User creates posts via:
 
 ```
-9social/new-post
+9social/cmd/new-post
 ```
 
 ---
@@ -312,10 +312,10 @@ date: 1971-05-14T22:43:00Z
 Commands are namespaced:
 
 ```
-9social/follow
-9social/refresh
-9social/timeline
-9social/new-post
+9social/cmd/follow
+9social/cmd/refresh
+9social/cmd/timeline
+9social/cmd/new-post
 ```
 
 ---

@@ -10,7 +10,7 @@ self=$social^/self
 following=$self^/following
 
 if(! ~ $#* 1){
-	echo 'usage: 9social/follow <url>' >[1=2]
+	echo 'usage: 9social/cmd/follow <url>' >[1=2]
 	exit usage
 }
 

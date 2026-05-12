@@ -11,7 +11,7 @@ This command connects a locally stored 9social identity to a Git repository that
 ## Usage
 
 ```rc
-9social/init-self <git-url>
+9social/cmd/init-self <git-url>
 ```
 
 ---
@@ -62,7 +62,7 @@ $home/lib/9social/self/
 If the command is not given exactly one argument, print:
 
 ```text
-usage: 9social/init-self <git-url>
+usage: 9social/cmd/init-self <git-url>
 ```
 
 and exit with failure.
@@ -105,7 +105,7 @@ When auto-migrating, save `following` aside, replace the pre-init `self/` with t
 The saved file should live outside `self/`, for example:
 
 ```text
-$home/lib/9social/following.<pid>.tmp
+$home/lib/9social/cmd/following.<pid>.tmp
 ```
 
 Remove the temporary file after a successful restore or merge. If migration fails, leave diagnostics clear enough that the user can recover the saved follow list manually.
@@ -359,6 +359,6 @@ This should be opt-in because following oneself is a social graph choice, while 
 
 ## Summary
 
-`9social/init-self` prepares the user's own feed for publishing.
+`9social/cmd/init-self` prepares the user's own feed for publishing.
 
 It clones a user-controlled remote repository into `$home/lib/9social/self`, creates the Level 1 feed structure, generates the canonical 9social user ID if needed, and commits the initial local state without pushing.

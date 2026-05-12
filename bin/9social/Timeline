@@ -17,14 +17,14 @@ if(! ~ $#* 0)
 
 if(! test -f /mnt/wsys/index){
 	echo 'Timeline: acme window system not available' >[1=2]
-	echo 'Timeline: run from acme, or use 9social/timeline' >[1=2]
+	echo 'Timeline: run from acme, or use 9social/cmd/timeline' >[1=2]
 	exit 'no acme'
 }
 
 timelinefile=`{9social/lib/mk-temp-file timeline} ||
 	fail 'cannot create timeline temp file'
 
-9social/timeline >$timelinefile ||
+9social/cmd/timeline >$timelinefile ||
 	fail 'cannot create timeline'
 if(! test -f $timelinefile)
 	fail 'cannot create timeline'

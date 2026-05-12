@@ -18,7 +18,7 @@ All commands and tools rely on these paths.
 ```
 
 * Contains all 9social source code
-* Includes command implementations (e.g. `9social/follow`, `9social/refresh`)
+* Includes command implementations (e.g. `9social/cmd/follow`, `9social/cmd/refresh`)
 * Includes design documents
 
 ---
@@ -57,7 +57,7 @@ $home/lib/9social/self/
 
 Stores the user's own publishing feed repository.
 
-This repository is where `9social/new-post` writes new posts and where `9social/follow` records the public follow list.
+This repository is where `9social/cmd/new-post` writes new posts and where `9social/cmd/follow` records the public follow list.
 
 ---
 
@@ -161,20 +161,20 @@ https://github.com/dharmatech/9social-user-joe.git
 
 ## Command Interaction
 
-### 9social/follow
+### 9social/cmd/follow
 
 * Adds URLs to `self/following`, deduplicates, and sorts it
 
 ---
 
-### 9social/refresh
+### 9social/cmd/refresh
 
 * Reads `self/following`; missing `following` means no feeds are configured
 * Clones or updates repositories into `feeds/`
 
 ---
 
-### 9social/new-post
+### 9social/cmd/new-post
 
 * Writes new posts into `self/posts/`
 * Commits new posts locally in `self/`
@@ -182,7 +182,7 @@ https://github.com/dharmatech/9social-user-joe.git
 
 ---
 
-### 9social/timeline (future)
+### 9social/cmd/timeline (future)
 
 * Reads posts from all directories under `feeds/`
 

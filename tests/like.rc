@@ -34,7 +34,7 @@ fn setup {
 }
 
 fn runlike {
-	9social/like $source >$home/out >[2]$home/err
+	9social/cmd/like $source >$home/out >[2]$home/err
 	st=$status
 }
 
@@ -97,10 +97,10 @@ if(~ $st '') fail missing-status
 grep 'cannot resolve post' $home/err >/dev/null || fail missing-error `{cat $home/err}
 
 setup usage
-9social/like >$home/out >[2]$home/err
+9social/cmd/like >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/like <post-ref>' $home/err >/dev/null || fail usage-error `{cat $home/err}
+grep 'usage: 9social/cmd/like <post-ref>' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
 rm -rf /tmp/9social-like-test.$pid.*
 echo ok

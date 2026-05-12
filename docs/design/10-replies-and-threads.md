@@ -333,7 +333,7 @@ A small helper such as `bin/9social/lib/post/id.awk` should do this parsing and 
 The command-line reply core is:
 
 ```text
-9social/reply <post-file>
+9social/cmd/reply <post-file>
 ```
 
 `reply` reads reply body text from standard input. It uses `9social/lib/reply-draft` to extract the target post ID from `<post-file>`, create a temporary draft, and write reply metadata in a sidecar file. It then appends the standard input body and delegates publication to `9social/lib/publish-draft`.

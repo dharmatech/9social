@@ -62,7 +62,7 @@ A typical workflow is:
 3. User middle-clicks `9social/Post/Delete`.
 4. `Delete` removes the backing post file from `self/posts/`.
 5. `Delete` commits the removal locally.
-6. The user later runs `9social/push` when ready.
+6. The user later runs `9social/cmd/push` when ready.
 
 `Delete` does not push.
 

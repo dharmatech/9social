@@ -212,7 +212,7 @@ docs/design/08-acme-new-post-command.md
 
 The current recommended path is:
 
-1. Keep `9social/new-post` as the synchronous shell command
+1. Keep `9social/cmd/new-post` as the synchronous shell command
 2. Add `9social/NewPost` for Acme draft creation
 3. Add `9social/publish-draft <draft-path>`
 4. Add `9social/cancel-draft <draft-path>`

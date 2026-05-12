@@ -132,7 +132,7 @@ Copy your clone address that starts with `git`.
 Run `init-self`:
 
 ```
-9social/init-self git@github.com:dharmatech/9social-user-dharmatech.git
+9social/cmd/init-self git@github.com:dharmatech/9social-user-dharmatech.git
 ```
 
 ### 9social Tutorial
@@ -146,9 +146,9 @@ Run `9social/Timeline`
 The timeline is empty. So let’s follow some people:
 
 ```
-9social/follow https://github.com/dharmatech/9social-user-dennis.git
-9social/follow https://github.com/dharmatech/9social-user-joe.git
-9social/follow https://github.com/dharmatech/9social-user-dharmatech.git
+9social/cmd/follow https://github.com/dharmatech/9social-user-dennis.git
+9social/cmd/follow https://github.com/dharmatech/9social-user-joe.git
+9social/cmd/follow https://github.com/dharmatech/9social-user-dharmatech.git
 ```
 
 `dennis` and `joe` are accounts I'm using for testing.
@@ -157,7 +157,7 @@ Run `9social/Timeline`
 
 The timeline is still empty. Let’s refresh.
 
-Run `9social/refresh`
+Run `9social/cmd/refresh`
 
 Now run `9social/Timeline` again.
 

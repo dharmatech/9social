@@ -28,9 +28,9 @@ menufile=`{9social/lib/mk-temp-file menu} ||
 	echo '9social/Timeline'
 	echo '9social/ShowThreads'
 	echo '9social/NewPost'
-	echo '9social/follow'
-	echo '9social/refresh'
-	echo '9social/push'
+	echo '9social/cmd/follow'
+	echo '9social/cmd/refresh'
+	echo '9social/cmd/push'
 }
 
 if(! 9social/lib/open-file-window $menufile '')

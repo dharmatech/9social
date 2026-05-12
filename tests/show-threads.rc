@@ -11,9 +11,9 @@ fn setup {
 	home=$base.$1.home
 	bindir=$base.$1.bin
 	rm -rf $home $bindir
-	mkdir -p $home/lib/9social $bindir/9social/lib/index || fail mkdir
-	cp /usr/glenda/src/9social/bin/9social/show-threads $bindir/9social/show-threads || fail copy-show-threads
-	chmod +x $bindir/9social/show-threads
+	mkdir -p $home/lib/9social $bindir/9social/lib/index $bindir/9social/cmd || fail mkdir
+	cp /usr/glenda/src/9social/bin/9social/cmd/show-threads $bindir/9social/cmd/show-threads || fail copy-show-threads
+	chmod +x $bindir/9social/cmd/show-threads
 	bind -b $bindir /bin || fail bind
 }
 
@@ -29,7 +29,7 @@ chmod +x $bindir/9social/lib/index/rebuild
 	echo 'echo thread body'
 }
 chmod +x $bindir/9social/lib/render-threads
-9social/show-threads >$home/out >[2]$home/err
+9social/cmd/show-threads >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail missing-index-status $st `{cat $home/err}
 if(! test -f $home/reindexed) fail did-not-reindex
@@ -48,7 +48,7 @@ chmod +x $bindir/9social/lib/index/rebuild
 	echo 'echo existing thread body'
 }
 chmod +x $bindir/9social/lib/render-threads
-9social/show-threads >$home/out >[2]$home/err
+9social/cmd/show-threads >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail existing-index-status $st `{cat $home/err}
 if(test -f $home/reindexed) fail reindexed-existing
@@ -65,17 +65,17 @@ chmod +x $bindir/9social/lib/index/rebuild
 	echo 'echo should-not-render'
 }
 chmod +x $bindir/9social/lib/render-threads
-9social/show-threads >$home/out >[2]$home/err
+9social/cmd/show-threads >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail reindex-fails-status
 grep 'cannot build index' $home/err >/dev/null || fail reindex-fails-error `{cat $home/err}
 if(grep 'should-not-render' $home/out >/dev/null) fail rendered-after-reindex-fail
 
 setup usage
-9social/show-threads extra >$home/out >[2]$home/err
+9social/cmd/show-threads extra >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/show-threads' $home/err >/dev/null || fail usage-error `{cat $home/err}
+grep 'usage: 9social/cmd/show-threads' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
 rm -rf $base.*
 echo ok

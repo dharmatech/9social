@@ -23,7 +23,7 @@ for(n in home user path editor wsysdir service objtype git_clone git_pull git_pu
 }
 
 section '9social and git command resolution'
-for(c in git/clone git/pull git/push git/init git/add git/commit git/query git/log 9social/refresh 9social/lib/index/rebuild 9social/timeline 9social/workflow){
+for(c in git/clone git/pull git/push git/init git/add git/commit git/query git/log 9social/cmd/refresh 9social/lib/index/rebuild 9social/cmd/timeline 9social/workflow){
 	echo '$ whatis '^$c
 	whatis $c
 }

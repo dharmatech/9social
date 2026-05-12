@@ -23,5 +23,5 @@ source=$%
 if(~ $#source 0 || ~ $source '')
 	fail 'missing post path'
 
-9social/like $source
+9social/cmd/like $source
 exit $status

@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/like <post-ref>' >[1=2]
+	echo 'usage: 9social/cmd/like <post-ref>' >[1=2]
 	exit usage
 }
 

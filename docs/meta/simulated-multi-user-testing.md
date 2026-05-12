@@ -44,14 +44,14 @@ Each simulated home has its own 9social runtime tree:
 Tests run commands with `home` set to the simulated user's home:
 
 ```rc
-home=$root/homes/alice 9social/new-post -t 'hello' < $body
-home=$root/homes/bob 9social/refresh
+home=$root/homes/alice 9social/cmd/new-post -t 'hello' < $body
+home=$root/homes/bob 9social/cmd/refresh
 ```
 
 Setting `user` as well can make test output clearer:
 
 ```rc
-home=$root/homes/alice user=alice 9social/new-post -t 'hello' < $body
+home=$root/homes/alice user=alice 9social/cmd/new-post -t 'hello' < $body
 ```
 
 However, 9social identity should come from `$home/lib/9social/self/profile`, not from `$user`.
@@ -81,12 +81,12 @@ fn asuser {
 Then the test can read like a user story:
 
 ```rc
-asuser alice 9social/new-post -t 'hello' < $body
-asuser alice 9social/push
+asuser alice 9social/cmd/new-post -t 'hello' < $body
+asuser alice 9social/cmd/push
 
-asuser bob 9social/follow $root/remotes/alice
-asuser bob 9social/refresh
-asuser bob 9social/timeline
+asuser bob 9social/cmd/follow $root/remotes/alice
+asuser bob 9social/cmd/refresh
+asuser bob 9social/cmd/timeline
 ```
 
 ## Verbose Walkthrough
@@ -140,8 +140,8 @@ Those belong in optional integration tests or manual smoke tests.
 For later, a separate optional test can use real Plan 9 users with `auth/as`:
 
 ```rc
-auth/as socialtest1 rc -c '9social/new-post ...'
-auth/as socialtest2 rc -c '9social/refresh'
+auth/as socialtest1 rc -c '9social/cmd/new-post ...'
+auth/as socialtest2 rc -c '9social/cmd/refresh'
 ```
 
 This should not be part of the default test suite because it depends on pre-created users and hostowner privileges.

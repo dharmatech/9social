@@ -17,7 +17,7 @@ The threaded view should prioritize structure over body preview text.
 ### Command-line core
 
 ```rc
-9social/show-threads
+9social/cmd/show-threads
 ```
 
 `show-threads` is the non-interactive core command. It writes the threaded view to standard output.
@@ -27,7 +27,7 @@ It does not require Acme. This command is suitable for terminal workflows, autom
 Invalid arguments print:
 
 ```text
-usage: 9social/show-threads
+usage: 9social/cmd/show-threads
 ```
 
 and exit with `usage`.
@@ -45,7 +45,7 @@ If local indexing cannot be prepared, `show-threads` should print a command-pref
 It creates a temporary file, runs:
 
 ```rc
-9social/show-threads > <temp-file>
+9social/cmd/show-threads > <temp-file>
 ```
 
 and opens that file in a new Acme window.
@@ -77,7 +77,7 @@ If `reindex` fails, or if `$home/lib/9social/index/posts` still does not exist a
 
 Level 1 should not perform network access.
 
-The user should run `9social/refresh` to update feeds and rebuild the index.
+The user should run `9social/cmd/refresh` to update feeds and rebuild the index.
 
 ---
 
@@ -186,7 +186,7 @@ There is no artificial maximum reply depth in Level 1.
 
 `ShowThreads` should contain only the Acme-specific behavior.
 
-It should create a temporary file, run `9social/show-threads` into that file, and open a new Acme window using the same Acme file interface style as `Timeline` and `NewPost`.
+It should create a temporary file, run `9social/cmd/show-threads` into that file, and open a new Acme window using the same Acme file interface style as `Timeline` and `NewPost`.
 
 The window body contains the generated threaded view.
 
@@ -249,7 +249,7 @@ Level 1 thread views do not support:
 
 Useful helpers:
 
-* `9social/lib/post-meta`
+* `9social/lib/post/meta.awk`
 * `9social/lib/post-path`
 * `9social/lib/encode-id`
 * `9social/lib/index/rebuild`
@@ -270,7 +270,7 @@ A straightforward `show-threads` implementation can:
 A straightforward `ShowThreads` implementation can:
 
 1. create a temporary file
-2. run `9social/show-threads > <temp-file>`
+2. run `9social/cmd/show-threads > <temp-file>`
 3. open that file in Acme with `9social/OpenPost` in the tag
 
 For Level 1, count calculation can live inside `render-threads`. A separate count helper can be extracted later if other views need the same data.

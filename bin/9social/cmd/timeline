@@ -7,7 +7,7 @@ tmp=/tmp/9social.timeline.$pid
 sorted=$tmp^.sorted
 
 if(! ~ $#* 0){
-	echo 'usage: 9social/timeline' >[1=2]
+	echo 'usage: 9social/cmd/timeline' >[1=2]
 	exit usage
 }
 

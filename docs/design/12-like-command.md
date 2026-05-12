@@ -13,7 +13,7 @@ Define how a user likes another user's post from the command line and from Acme.
 ### Command-line core
 
 ```rc
-9social/like <post-file>
+9social/cmd/like <post-ref>
 ```
 
 `like` is the non-interactive core command. It accepts an explicit local post file path, creates a like record in the current user's `self/posts/`, commits it locally, and rebuilds the local index.
@@ -23,7 +23,7 @@ It does not require Acme. This command is suitable for terminal workflows and au
 Invalid arguments print:
 
 ```text
-usage: 9social/like <post-file>
+usage: 9social/cmd/like <post-ref>
 ```
 
 and exit with `usage`.
@@ -37,7 +37,7 @@ and exit with `usage`.
 `Like` is an Acme tag command and thin wrapper around `like`. It accepts no arguments, reads the current Acme window path from `$%`, and delegates to:
 
 ```rc
-9social/like $%
+9social/cmd/like $%
 ```
 
 Invalid arguments print:
@@ -127,11 +127,11 @@ A typical workflow is:
 ```
 
 3. User middle-clicks `9social/Post/Like`.
-4. `Like` delegates to `9social/like $%`.
+4. `Like` delegates to `9social/cmd/like $%`.
 5. `like` reads the target post ID from the current post file.
 6. `like` writes a `type: like` record into the user's `self/posts/` directory.
 7. `like` commits the new like record locally.
-8. The user later runs `9social/push` when ready.
+8. The user later runs `9social/cmd/push` when ready.
 
 `like` does not push. `Like` also does not push because it delegates to `like`.
 

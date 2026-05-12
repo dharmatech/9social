@@ -1,7 +1,7 @@
 # Learning `rc` for 9social
 
 This project is expected to use idiomatic Plan 9 / 9front shell style.
-For small client commands such as `9social/follow`, start by learning `rc` from original 9front materials rather than from POSIX shell habits.
+For small client commands such as `9social/cmd/follow`, start by learning `rc` from original 9front materials rather than from POSIX shell habits.
 
 ## Read First
 

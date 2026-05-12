@@ -62,11 +62,11 @@ The fake helper directory should be bound before the real repo bin, so fake help
 
 Start with scripts where helper calls are straightforward:
 
-* `bin/9social/refresh`
-* `bin/9social/init-self`
-* `bin/9social/new-post`
+* `bin/9social/cmd/refresh`
+* `bin/9social/cmd/init-self`
+* `bin/9social/cmd/new-post`
 * `bin/9social/Draft/Cancel`
-* `bin/9social/push`
+* `bin/9social/cmd/push`
 * `bin/9social/Timeline`
 * `bin/9social/Menu`
 * `bin/9social/lib/publish-draft`

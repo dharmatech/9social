@@ -18,7 +18,7 @@ threadfile=()
 threadfile=`{9social/lib/mk-temp-file threads} ||
 	fail 'cannot create threads temp file'
 
-9social/show-threads >$threadfile ||
+9social/cmd/show-threads >$threadfile ||
 	fail 'cannot create threads view'
 if(! test -f $threadfile) fail 'cannot create threads view'
 

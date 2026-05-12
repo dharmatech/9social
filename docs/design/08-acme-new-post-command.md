@@ -27,13 +27,13 @@ This document covers the Acme command:
 * Make the draft a normal editable Acme file
 * Make publishing an explicit user action
 * Keep publishing local-first: commit locally, do not push
-* Reuse the same post format and validation rules as `9social/new-post`
+* Reuse the same post format and validation rules as `9social/cmd/new-post`
 
 ---
 
 ## 3. Relationship To `new-post`
 
-`9social/new-post` is synchronous:
+`9social/cmd/new-post` is synchronous:
 
 ```text
 create draft -> edit -> publish -> commit -> exit
@@ -77,13 +77,13 @@ and exit with `usage`.
 
 `NewPost` should check for `/mnt/wsys/index`, not `/mnt/wsys/new/ctl`. In Acme, accessing files under `/mnt/wsys/new` creates a new window, while `index` is a non-creating availability check.
 
-If `/mnt/wsys/index` is missing or inaccessible, `NewPost` should fail before creating a draft. It should not silently fall back to `9social/new-post`, because the synchronous editor workflow is a separate command.
+If `/mnt/wsys/index` is missing or inaccessible, `NewPost` should fail before creating a draft. It should not silently fall back to `9social/cmd/new-post`, because the synchronous editor workflow is a separate command.
 
 Recommended error text:
 
 ```text
 NewPost: acme window system not available
-NewPost: run from acme, or use 9social/new-post
+NewPost: run from acme, or use 9social/cmd/new-post
 ```
 
 ---
@@ -92,7 +92,7 @@ NewPost: run from acme, or use 9social/new-post
 
 9social uses command names to distinguish shell workflows from Acme tag workflows:
 
-* lowercase hyphenated names are shell/terminal commands, such as `9social/new-post` and `9social/init-self`
+* lowercase hyphenated names are shell/terminal commands, such as `9social/cmd/new-post` and `9social/cmd/init-self`
 * capitalized names are Acme tag commands, such as `9social/NewPost`, `9social/Draft/Publish`, and `9social/Draft/Cancel`
 
 Level 1 does not provide lowercase aliases for Acme commands or uppercase aliases for shell commands.
@@ -310,7 +310,7 @@ bin/9social/lib/publish-draft
 
 The helper publishes one draft file passed by path. It owns the common behavior: profile validation, draft parsing, post ID generation, timestamp generation, filename selection, final post writing, Git add/commit, success output, draft cleanup on success, and draft preservation on failure.
 
-`9social/new-post` and `9social/Draft/Publish` should both call this helper instead of duplicating publish logic. `new-post` is responsible for creating/editing or reading the draft before calling the helper. `Publish` is responsible for discovering `$%` from Acme, validating that it is a `NewPost` draft path, and saving the Acme window before calling the helper.
+`9social/cmd/new-post` and `9social/Draft/Publish` should both call this helper instead of duplicating publish logic. `new-post` is responsible for creating/editing or reading the draft before calling the helper. `Publish` is responsible for discovering `$%` from Acme, validating that it is a `NewPost` draft path, and saving the Acme window before calling the helper.
 
 The helper is internal implementation detail, not a Level 1 user command.
 
@@ -369,7 +369,7 @@ Publish: draft file not found: /usr/glenda/tmp/9social-new-post.<pid>
 If the Acme window system is unavailable:
 
 * abort before creating a draft
-* print a clear message suggesting `9social/new-post` for the synchronous workflow
+* print a clear message suggesting `9social/cmd/new-post` for the synchronous workflow
 
 If preflight validation fails:
 
@@ -414,7 +414,7 @@ Level 1 does not require:
 * Bare non-namespaced `Publish` / `Cancel` commands handled by an event loop
 * Rewriting the Acme tag after successful publish
 * Decorative tag labels or status markers such as `draft`
-* Fallback to `9social/new-post` when Acme is unavailable
+* Fallback to `9social/cmd/new-post` when Acme is unavailable
 * Remote push after publishing
 * Editing existing posts
 * Replies or reactions
@@ -461,7 +461,7 @@ Automated tests should focus on the filesystem and publishing pieces that do not
 * `9social/Draft/Publish` preserves the draft on validation, write, or Git failure
 * `9social/Draft/Cancel` removes the draft named by `$%`
 * `9social/Draft/Cancel` rejects invalid `$%` paths
-* `bin/9social/lib/publish-draft` is exercised through both `9social/new-post -` and `9social/Draft/Publish`
+* `bin/9social/lib/publish-draft` is exercised through both `9social/cmd/new-post -` and `9social/Draft/Publish`
 * invalid arguments print usage
 
 Automated tests may also cover `$winid` save behavior when a real Acme window control file is available, but Level 1 should not depend on a mock of `/mnt/wsys`. The Acme filesystem behavior is specific enough that a mock can give false confidence.

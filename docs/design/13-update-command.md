@@ -64,7 +64,7 @@ A typical workflow is:
 5. `Update` saves the Acme buffer to the backing file.
 6. `Update` validates the saved post file.
 7. `Update` commits only that post file locally.
-8. The user later runs `9social/push` when ready.
+8. The user later runs `9social/cmd/push` when ready.
 
 `Update` does not push.
 

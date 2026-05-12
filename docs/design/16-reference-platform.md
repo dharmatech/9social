@@ -77,10 +77,10 @@ The system must not require:
 Core functionality is exposed through simple commands:
 
 ```sh
-9social/follow
-9social/refresh
-9social/timeline
-9social/new-post
+9social/cmd/follow
+9social/cmd/refresh
+9social/cmd/timeline
+9social/cmd/new-post
 ```
 
 These commands operate directly on files and directories.

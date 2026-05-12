@@ -12,7 +12,7 @@ This is the primary read interface for 9social.
 ## Usage
 
 ```sh
-9social/timeline
+9social/cmd/timeline
 ```
 
 ---
@@ -328,7 +328,7 @@ This means timeline output can continue to show full paths for transparency, whi
 
 ## Summary
 
-`9social/timeline`:
+`9social/cmd/timeline`:
 
 * reads all local feeds
 * merges posts

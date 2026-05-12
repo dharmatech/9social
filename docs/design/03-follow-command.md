@@ -6,20 +6,20 @@
 Add a remote feed to the user's following list.
 
 This command **does not** clone or fetch the repository.  
-That is handled by `9social/refresh`.
+That is handled by `9social/cmd/refresh`.
 
 ---
 
 ## Usage
 
 ```sh
-9social/follow <url>
+9social/cmd/follow <url>
 ```
 
 ### Example
 
 ```sh
-9social/follow https://github.com/dharmatech/9social-user-dennis.git
+9social/cmd/follow https://github.com/dharmatech/9social-user-dennis.git
 ```
 
 ---
@@ -115,11 +115,11 @@ That is handled by `9social/refresh`.
 
 Suggested Level 1 error messages:
 
-* `usage: 9social/follow <url>`
-* `9social/follow: empty url`
-* `9social/follow: cannot create $home/lib/9social`
-* `9social/follow: cannot create $home/lib/9social/self/following`
-* `9social/follow: cannot update $home/lib/9social/self/following`
+* `usage: 9social/cmd/follow <url>`
+* `9social/cmd/follow: empty url`
+* `9social/cmd/follow: cannot create $home/lib/9social`
+* `9social/cmd/follow: cannot create $home/lib/9social/self/following`
+* `9social/cmd/follow: cannot update $home/lib/9social/self/following`
 
 ---
 
@@ -128,7 +128,7 @@ Suggested Level 1 error messages:
 After running:
 
 ```sh
-9social/follow https://github.com/dharmatech/9social-user-dennis.git
+9social/cmd/follow https://github.com/dharmatech/9social-user-dennis.git
 ```
 
 The file:
@@ -167,9 +167,9 @@ Responsibilities are separated:
 
 | Command            | Responsibility          |
 | ------------------ | ----------------------- |
-| `9social/follow`   | Record intent to follow |
-| `9social/refresh`  | Fetch and update feeds  |
-| `9social/timeline` | Display posts           |
+| `9social/cmd/follow`   | Record intent to follow |
+| `9social/cmd/refresh`  | Fetch and update feeds  |
+| `9social/cmd/timeline` | Display posts           |
 
 This keeps each command:
 

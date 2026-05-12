@@ -41,8 +41,8 @@ This design prioritizes simplicity, human readability, and alignment with Plan 9
 Primary commands:
 
 ```rc
-9social/new-post      # open an editor
-9social/new-post -    # read draft content from stdin
+9social/cmd/new-post      # open an editor
+9social/cmd/new-post -    # read draft content from stdin
 ```
 
 With no arguments, this command creates a new post interactively. With `-`, it reads draft content from stdin.
@@ -52,7 +52,7 @@ Level 1 accepts only these two forms. Any other argument form is invalid.
 Usage on invalid arguments:
 
 ```text
-usage: 9social/new-post [-]
+usage: 9social/cmd/new-post [-]
 ```
 
 Invalid arguments exit with `usage`. `--help` is not a special success path in Level 1.
@@ -60,9 +60,9 @@ Invalid arguments exit with `usage`. `--help` is not a special success path in L
 ### Future Extensions (not required for initial implementation)
 
 ```rc
-9social/new-post -r <post_id>   # reply
-9social/new-post -t <type>      # post type (link, note, etc.)
-9social/new-post -e <post_id>   # edit existing post
+9social/cmd/new-post -r <post_id>   # reply
+9social/cmd/new-post -t <type>      # post type (link, note, etc.)
+9social/cmd/new-post -e <post_id>   # edit existing post
 ```
 
 ---
@@ -76,12 +76,12 @@ The lifecycle of a post:
 1. User runs:
 
    ```rc
-   9social/new-post
+   9social/cmd/new-post
    ```
 
-2. If the command is `9social/new-post -`, system reads stdin into a temporary draft file and skips opening an editor.
+2. If the command is `9social/cmd/new-post -`, system reads stdin into a temporary draft file and skips opening an editor.
 
-3. If the command is `9social/new-post`, system creates a temporary draft file and opens it in an editor:
+3. If the command is `9social/cmd/new-post`, system creates a temporary draft file and opens it in an editor:
 
    * `$editor` if set
    * fallback: `sam`
@@ -107,22 +107,22 @@ The lifecycle of a post:
 
 ### Acme
 
-Acme remains the preferred long-term interface, but Level 1 does not require an Acme event loop or tag-based publish command. A user may still run `9social/new-post` from an Acme window or rio shell, but publishing happens when the editor exits.
+Acme remains the preferred long-term interface, but Level 1 does not require an Acme event loop or tag-based publish command. A user may still run `9social/cmd/new-post` from an Acme window or rio shell, but publishing happens when the editor exits.
 
 Future Acme integration may open the draft as editable text and provide a tag command to publish it.
 
 ### Stdin Input
 
-`9social/new-post -` receives draft content on stdin:
+`9social/cmd/new-post -` receives draft content on stdin:
 
 ```rc
-echo Hello from 9social | 9social/new-post -
-cat draft | 9social/new-post -
+echo Hello from 9social | 9social/cmd/new-post -
+cat draft | 9social/cmd/new-post -
 ```
 
 When `-` is used:
 
-* `9social/new-post -` reads stdin into the temporary draft file
+* `9social/cmd/new-post -` reads stdin into the temporary draft file
 * no editor is opened
 * the same draft parsing, validation, metadata generation, file writing, and Git commit rules apply
 * this mode exists to support testing, scripts, and ordinary Plan 9 pipelines
@@ -147,7 +147,7 @@ Rules:
 * If writing the final post fails, leave the draft file in place and print its path
 * If `git/add` or `git/commit` fails, leave the draft file in place and print its path
 
-Implementation note: the common draft-to-post publishing behavior should live in `bin/9social/lib/publish-draft` so `9social/new-post` and the Acme `9social/Draft/Publish` command use the same validation, metadata generation, filename selection, final write, Git commit, success cleanup, and failure preservation rules. `new-post` is responsible for creating the draft and either opening the editor or reading stdin before invoking the helper.
+Implementation note: the common draft-to-post publishing behavior should live in `bin/9social/lib/publish-draft` so `9social/cmd/new-post` and the Acme `9social/Draft/Publish` command use the same validation, metadata generation, filename selection, final write, Git commit, success cleanup, and failure preservation rules. `new-post` is responsible for creating the draft and either opening the editor or reading stdin before invoking the helper.
 
 ---
 
@@ -310,7 +310,7 @@ Level 1 does not support placing the publishing feed at another path.
 
 ### Profile Requirements
 
-`9social/new-post` reads identity from:
+`9social/cmd/new-post` reads identity from:
 
 ```text
 $home/lib/9social/self/profile
@@ -350,7 +350,7 @@ $home/lib/9social/self/posts/2026-04-25-first-post
 ### Design Notes
 
 * Level 1 uses a flat `posts/` directory
-* `9social/new-post` creates `posts/` if it does not already exist
+* `9social/cmd/new-post` creates `posts/` if it does not already exist
 * Filenames should be human-readable and sortable
 * The post `id:` field, not the filename, is the canonical identifier
 
@@ -358,7 +358,7 @@ $home/lib/9social/self/posts/2026-04-25-first-post
 
 Rules:
 
-* `9social/new-post` writes exactly one final post file
+* `9social/cmd/new-post` writes exactly one final post file
 * The final post path must not already exist
 * If the selected path exists before writing, choose the next filename suffix
 * If the selected path exists at write time, abort rather than overwrite
@@ -375,8 +375,8 @@ Each post is committed to the user’s repository.
 
 * **One post = one commit**
 * Commits are local only
-* `9social/new-post` does not push to the remote repository
-* `9social/new-post` writes exactly one new post file
+* `9social/cmd/new-post` does not push to the remote repository
+* `9social/cmd/new-post` writes exactly one new post file
 * If the target post file already exists at write time, abort rather than overwrite it
 * A clean Git worktree is not required
 * Only the new post file is added to Git
@@ -403,11 +403,11 @@ post: 9social:post:f9259502-4dde-484c-94b2-1f226226ba70:8b5f9c8c-98cc-4f5a-8ac4-
 * Supports distributed replication
 * Allows the user to create multiple posts while offline and push later
 
-Remote repository creation is outside the scope of `9social/new-post`.
+Remote repository creation is outside the scope of `9social/cmd/new-post`.
 The initial setup of `$home/lib/9social/self` should be handled by a separate command, such as:
 
 ```rc
-9social/init-self <git-url>
+9social/cmd/init-self <git-url>
 ```
 
 That setup command is responsible for cloning the user's remote repository into `$home/lib/9social/self`.
@@ -424,13 +424,13 @@ If `git/add` or `git/commit` fails:
 
 ### Output
 
-On success, `9social/new-post` prints the final post path relative to `$home/lib/9social/self`:
+On success, `9social/cmd/new-post` prints the final post path relative to `$home/lib/9social/self`:
 
 ```text
 posted: posts/2026-04-27-my-first-post
 ```
 
-If `git/commit` also prints a commit line, that output may appear as well. `9social/new-post` should still print the `posted:` line in a stable format.
+If `git/commit` also prints a commit line, that output may appear as well. `9social/cmd/new-post` should still print the `posted:` line in a stable format.
 
 If the editor exits and the draft has no meaningful body content, treat the operation as cancelled and print:
 
@@ -494,7 +494,7 @@ Test setup:
 
 Core stdin test:
 
-* Run `9social/new-post -` with a titled draft on stdin
+* Run `9social/cmd/new-post -` with a titled draft on stdin
 * Assert the post file exists under `posts/YYYY-MM-DD-slug`
 * Assert `id:` has the form `9social:post:<user-uuid>:<post-uuid>`
 * Assert `author:` comes from profile `name:`
@@ -511,7 +511,7 @@ Edge tests:
 * Bad profile fails
 * Filename collision creates `-2`, then `-3`, and so on
 * Unrelated dirty files are not committed
-* Invalid arguments print `usage: 9social/new-post [-]` and exit with `usage`
+* Invalid arguments print `usage: 9social/cmd/new-post [-]` and exit with `usage`
 
 Editor-mode testing can be a manual smoke test for Level 1.
 
@@ -540,7 +540,7 @@ This design enables future features:
 * `type:` field for replies, reactions, links, or other post-like records
 * Reactions/upvotes
 * Search and indexing
-* A setup command such as `9social/init-self <git-url>`
+* A setup command such as `9social/cmd/init-self <git-url>`
 * A push command for publishing local commits
 * A sync command that may combine refreshing followed feeds with pushing the user's self feed
 * Nested or archive post storage if flat directories become too large
@@ -549,7 +549,7 @@ This design enables future features:
 
 ## 15. Summary
 
-The `9social/new-post` command defines the write-path of the system:
+The `9social/cmd/new-post` command defines the write-path of the system:
 
 * Simple text authoring
 * Automatic metadata handling

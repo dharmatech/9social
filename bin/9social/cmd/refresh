@@ -6,7 +6,7 @@ feeds=$social^/feeds
 failed=()
 seen=()
 if(! ~ $#* 0){
-	echo 'usage: 9social/refresh' >[1=2]
+	echo 'usage: 9social/cmd/refresh' >[1=2]
 	exit usage
 }
 

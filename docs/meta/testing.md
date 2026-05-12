@@ -21,23 +21,23 @@ From Linux/Codex, use drawterm:
 When changing one script, run the closest focused test first. Then run the full suite before considering the change complete.
 
 ```text
-bin/9social/follow                 tests/follow.rc
-bin/9social/refresh                tests/refresh.rc
-bin/9social/init-self              tests/init-self.rc
-bin/9social/new-post               tests/new-post.rc, tests/new-post-editor.rc
+bin/9social/cmd/follow                 tests/follow.rc
+bin/9social/cmd/refresh                tests/refresh.rc
+bin/9social/cmd/init-self              tests/init-self.rc
+bin/9social/cmd/new-post               tests/new-post.rc, tests/new-post-editor.rc
 bin/9social/NewPost                manual Acme smoke test; related automated tests cover helpers and publishing
 bin/9social/Draft/Publish                tests/publish.rc
-bin/9social/reply                  tests/reply.rc
+bin/9social/cmd/reply                  tests/reply.rc
 bin/9social/Draft/Cancel                 tests/cancel.rc
 bin/9social/Post/Reply                  manual Acme smoke test; related helpers have focused tests
-bin/9social/like                   tests/like.rc
+bin/9social/cmd/like                   tests/like.rc
 bin/9social/Post/Like                   tests/Like.rc
 bin/9social/Post/Delete                 tests/delete.rc
 bin/9social/Post/Update                 tests/update.rc
-bin/9social/push                   tests/push.rc
-bin/9social/timeline               tests/timeline.rc
+bin/9social/cmd/push                   tests/push.rc
+bin/9social/cmd/timeline               tests/timeline.rc
 bin/9social/Timeline               tests/Timeline.rc
-bin/9social/show-threads            tests/show-threads.rc, tests/render-threads.rc
+bin/9social/cmd/show-threads            tests/show-threads.rc, tests/render-threads.rc
 bin/9social/ShowThreads            tests/ShowThreads.rc
 bin/9social/OpenPost              tests/OpenPost.rc
 ```
@@ -50,7 +50,7 @@ bin/9social/lib/valid-draft        tests/valid-draft.rc
 bin/9social/lib/valid-profile.awk  tests/valid-profile.rc
 bin/9social/lib/encode-id          tests/encode-id.rc
 bin/9social/lib/mk-temp-file       tests/mk-temp-file.rc
-bin/9social/lib/post-meta          tests/post-meta.rc
+bin/9social/lib/post/meta.awk          tests/post-meta.rc
 bin/9social/lib/post-path          tests/post-path.rc
 bin/9social/lib/post/id.awk            tests/post-id.rc
 bin/9social/lib/post-title         tests/post-title.rc
