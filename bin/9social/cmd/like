@@ -13,7 +13,7 @@ fn usage {
 if(! ~ $#* 1)
 	usage
 
-source=`{9social/lib/resolve-post $1} || fail 'cannot resolve post: '^$1
+source=`{9social/lib/post/resolve $1} || fail 'cannot resolve post: '^$1
 if(! ~ $#source 1)
 	fail 'cannot resolve post: '^$1
 

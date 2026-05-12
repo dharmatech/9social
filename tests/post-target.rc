@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/lib/post-target
+cmd=$repo/bin/9social/lib/post/target
 base=/tmp/9social-post-target-test.$pid
 target=9social:post:550e8400-e29b-41d4-a716-446655440000:22222222-2222-4222-8222-222222222222
 
@@ -81,7 +81,7 @@ if(~ $st '') fail malformed-status
 $cmd >$base.out >[2]$base.err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/lib/post-target' $base.err >/dev/null || fail usage-error `{cat $base.err}
+grep 'usage: 9social/lib/post/target' $base.err >/dev/null || fail usage-error `{cat $base.err}
 
 rm -f $base.*
 echo ok

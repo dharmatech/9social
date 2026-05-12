@@ -22,7 +22,7 @@ self=$home/lib/9social/self
 if(! 9social/lib/check-self)
 	fail 'self repository is not ready'
 
-relpost=`{9social/lib/self-post-path $post}
+relpost=`{9social/lib/post/self-path $post}
 if(! ~ $status '' || ! ~ $#relpost 1)
 	fail 'not a self post: '^$post
 

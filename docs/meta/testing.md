@@ -51,9 +51,9 @@ bin/9social/lib/valid-profile.awk  tests/valid-profile.rc
 bin/9social/lib/encode-id          tests/encode-id.rc
 bin/9social/lib/mk-temp-file       tests/mk-temp-file.rc
 bin/9social/lib/post/meta.awk          tests/post-meta.rc
-bin/9social/lib/post-path          tests/post-path.rc
+bin/9social/lib/post/path          tests/post-path.rc
 bin/9social/lib/post/id.awk            tests/post-id.rc
-bin/9social/lib/post-title         tests/post-title.rc
+bin/9social/lib/post/title         tests/post-title.rc
 bin/9social/lib/post/check.awk         tests/check-post.rc
 bin/9social/lib/liked-post         tests/liked-post.rc
 bin/9social/lib/render-threads     tests/render-threads.rc

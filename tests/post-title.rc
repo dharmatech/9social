@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/lib/post-title
+cmd=$repo/bin/9social/lib/post/title
 base=/tmp/9social-post-title-test.$pid
 
 fn fail {

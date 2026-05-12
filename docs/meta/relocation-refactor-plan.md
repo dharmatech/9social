@@ -71,7 +71,7 @@ Start with scripts where helper calls are straightforward:
 * `bin/9social/Menu`
 * `bin/9social/lib/publish-draft`
 * `bin/9social/lib/acme/current-line`
-* `bin/9social/lib/post-path`
+* `bin/9social/lib/post/path`
 * `bin/9social/lib/liked-post`
 * `bin/9social/lib/index/rebuild`
 

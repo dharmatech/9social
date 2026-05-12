@@ -2,7 +2,7 @@
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
-cmd=$repo/bin/9social/lib/resolve-post
+cmd=$repo/bin/9social/lib/post/resolve
 useruuid=550e8400-e29b-41d4-a716-446655440000
 postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
@@ -96,7 +96,7 @@ setup usage
 $cmd >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/lib/resolve-post' $testhome/err >/dev/null || fail usage-error `{cat $testhome/err}
+grep 'usage: 9social/lib/post/resolve' $testhome/err >/dev/null || fail usage-error `{cat $testhome/err}
 
 echo ok
 exit ''

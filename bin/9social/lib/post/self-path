@@ -1,7 +1,13 @@
 #!/bin/rc
+# Convert an absolute self post path to a path relative to
+# `$home/lib/9social/self`.
+#
+# Accepts only files below `$home/lib/9social/self/posts/`, rejects empty
+# or parent-directory path components, and prints values such as
+# `posts/2026-05-02-example`.
 
 fn usage {
-	echo 'usage: 9social/lib/self-post-path <post-path>' >[1=2]
+	echo 'usage: 9social/lib/post/self-path <post-path>' >[1=2]
 	exit usage
 }
 

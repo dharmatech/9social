@@ -1,7 +1,7 @@
 #!/bin/rc
 
 fn usage {
-	echo 'usage: 9social/lib/post-target <post-file>' >[1=2]
+	echo 'usage: 9social/lib/post/target <post-file>' >[1=2]
 	exit usage
 }
 

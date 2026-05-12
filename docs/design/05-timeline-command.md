@@ -278,7 +278,7 @@ The Acme-oriented `9social/OpenPost` command should support opening posts from e
 
 This means timeline output can continue to show full paths for transparency, while future timeline variants may show canonical post IDs and still use the same `OpenPost` command.
 
-`timeline` itself should not perform index lookup in Level 1. Opening by ID is handled by `OpenPost` through `9social/lib/post-path`.
+`timeline` itself should not perform index lookup in Level 1. Opening by ID is handled by `OpenPost` through `9social/lib/post/path`.
 
 ---
 

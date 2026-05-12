@@ -198,7 +198,7 @@ should own this encoding so all commands use the same rule.
 Add an index-backed helper for resolving a canonical post ID to a local path:
 
 ```rc
-9social/lib/post-path <post-id>
+9social/lib/post/path <post-id>
 ```
 
 Behavior:
@@ -234,7 +234,7 @@ Supported explicit forms:
 Behavior:
 
 * if the argument starts with `/`, treat it as a local path and open it directly
-* if the argument starts with `9social:post:`, resolve it through `9social/lib/post-path`
+* if the argument starts with `9social:post:`, resolve it through `9social/lib/post/path`
 * if no argument is given, keep the existing Acme current-line behavior
 * if the current line contains a full path, open that path
 * if the current line contains a post ID, resolve it through `post-path` and open it
@@ -472,7 +472,7 @@ Implement the core primitives first:
 * `9social/lib/encode-id`
 * `9social/lib/post/meta.awk`
 * `9social/lib/index/rebuild`
-* `9social/lib/post-path`
+* `9social/lib/post/path`
 * refresh integration
 * `OpenPost` ID support
 
@@ -549,7 +549,7 @@ Recommended order:
 1. `9social/lib/encode-id`
 2. `9social/lib/post/meta.awk`
 3. `9social/lib/index/rebuild`
-4. `9social/lib/post-path`
+4. `9social/lib/post/path`
 5. update `9social/OpenPost` to accept canonical post IDs
 6. update `9social/cmd/refresh` to run `9social/lib/index/rebuild`
 7. later: update `9social/Post/Like` to use the index for idempotency
@@ -593,7 +593,7 @@ Minimum tests:
 * uses deterministic scan order, with `self/posts` before `feeds/*/posts`
 * preserves the old complete index if a structural rebuild failure can be tested cleanly
 
-### `9social/lib/post-path`
+### `9social/lib/post/path`
 
 * resolves a valid indexed post ID to an absolute local path
 * fails when the index entry is missing

@@ -15,14 +15,14 @@ if(! ~ $#* 0) usage
 
 line=`{9social/lib/acme/current-line} || fail 'cannot read current line'
 
-ref=`{echo $line | 9social/lib/first-post-path.awk}
+ref=`{echo $line | 9social/lib/post/first-path.awk}
 if(! ~ $status '' || ! ~ $#ref 1){
-	ref=`{echo $line | 9social/lib/first-post-id.awk}
+	ref=`{echo $line | 9social/lib/post/first-id.awk}
 	if(! ~ $status '' || ! ~ $#ref 1)
 		fail 'no post path on current line'
 }
 
-post=`{9social/lib/resolve-post $ref} || fail 'cannot resolve post: '^$ref
+post=`{9social/lib/post/resolve $ref} || fail 'cannot resolve post: '^$ref
 if(! ~ $#post 1)
 	fail 'cannot resolve post: '^$ref
 
@@ -36,7 +36,7 @@ if not {
 	if(9social/lib/liked-post $opened_id >/dev/null >[2]/dev/null)
 		actions='9social/Post/Reply'
 }
-target=`{9social/lib/post-target $post} || fail 'cannot read post target'
+target=`{9social/lib/post/target $post} || fail 'cannot read post target'
 if(! ~ $#target 0){
 	9social/lib/encode-id $target >/dev/null >[2]/dev/null
 	if(~ $status '')

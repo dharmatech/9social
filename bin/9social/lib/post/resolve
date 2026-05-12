@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/resolve-post <post-file | post-id | 9social:post:<feed-relative-post-path>>' >[1=2]
+	echo 'usage: 9social/lib/post/resolve <post-file | post-id | 9social:post:<feed-relative-post-path>>' >[1=2]
 	exit usage
 }
 
@@ -42,7 +42,7 @@ if(! ~ $#* 1)
 arg=$1
 if(~ $arg 9social:post:*){
 	if(9social/lib/encode-id $arg >/dev/null >[2]/dev/null){
-		post=`{9social/lib/post-path $arg}
+		post=`{9social/lib/post/path $arg}
 		if(! ~ $status '')
 			fail 'post file not found: '^$arg
 	}

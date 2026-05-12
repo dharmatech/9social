@@ -200,7 +200,7 @@ To open a post:
 
 1. place the cursor on the canonical post ID line
 2. middle-click `9social/OpenPost` in the tag
-3. `OpenPost` resolves the ID through `9social/lib/post-path`
+3. `OpenPost` resolves the ID through `9social/lib/post/path`
 
 ---
 
@@ -250,7 +250,7 @@ Level 1 thread views do not support:
 Useful helpers:
 
 * `9social/lib/post/meta.awk`
-* `9social/lib/post-path`
+* `9social/lib/post/path`
 * `9social/lib/encode-id`
 * `9social/lib/index/rebuild`
 

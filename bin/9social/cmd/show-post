@@ -8,7 +8,7 @@ fn usage {
 if(! ~ $#* 1)
 	usage
 
-post=`{9social/lib/resolve-post $1}
+post=`{9social/lib/post/resolve $1}
 if(! ~ $status '')
 	exit $status
 

@@ -26,7 +26,7 @@ if(! ~ $status '')
 if(! ~ $#target 1)
 	fail 'bad post id: '^$source
 
-title=`{9social/lib/post-title $source}
+title=`{9social/lib/post/title $source}
 if(! ~ $status '')
 	fail 'bad post title: '^$source
 

@@ -1,5 +1,11 @@
 #!/bin/awk -f
-# Print the first 9social post file path found in the input fields.
+# Read text from stdin and print the first 9social post file path
+# found as a whitespace-delimited field.
+#
+# Output:
+#   the first matching local post file path
+#
+# Exits nonzero and prints nothing if no post path is found.
 
 function is_post_path(s,    in_feeds, in_self, in_posts)
 {

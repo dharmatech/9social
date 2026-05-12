@@ -1,16 +1,17 @@
 #!/bin/rc
+# Resolve a canonical post ID to a local post file path.
+#
+# Looks up the encoded post ID in `$home/lib/9social/index/posts`,
+# reads the indexed file path, verifies that the post file still exists,
+# and prints that path.
 
 if(! ~ $#* 1){
-	echo 'usage: post-path <post-id>' >[1=2]
+	echo 'usage: 9social/lib/post/path <post-id>' >[1=2]
 	exit usage
 }
 
 postid=$1
-encodeid=9social/lib/encode-id
-if(~ $0 */lib/post-path)
-	encodeid=`{echo $0 | sed 's;/lib/post-path$;/lib/encode-id;'}
-
-encoded=`{$encodeid $postid >[2]/dev/null}
+encoded=`{9social/lib/encode-id $postid >[2]/dev/null}
 if(! ~ $status ''){
 	echo 'post-path: malformed post id' >[1=2]
 	exit 'malformed post id'
