@@ -30,10 +30,6 @@ if(~ $#git_add 0)
 	git_add=git/add
 if(~ $#git_commit 0)
 	git_commit=git/commit
-uuidcmd=9social/uuid
-if(~ $0 */init-self)
-	uuidcmd=`{echo $0 | sed 's;/init-self$;/uuid;'}
-
 if(! ~ $#* 1){
 	echo 'usage: 9social/init-self <git-url>' >[1=2]
 	exit usage
@@ -110,7 +106,7 @@ if(test -e $profile >[2]/dev/null){
 		fail 'bad profile: '^$profile
 }
 if not {
-	uuid=`{$uuidcmd}
+	uuid=`{9social/lib/uuid}
 	if(! ~ $#uuid 1)
 		fail 'cannot generate uuid'
 	if(! echo 'id: 9social:user:'^$uuid >$profile)

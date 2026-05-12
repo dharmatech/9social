@@ -33,10 +33,6 @@ social=$home^/lib/9social
 self=$social^/self
 profile=$self^/profile
 posts=$self^/posts
-uuidcmd=9social/uuid
-if(~ $0 */lib/publish-draft)
-	uuidcmd=`{echo $0 | sed 's;/lib/publish-draft$;/uuid;'}
-
 titlefile=$draft^.title
 rawbody=$draft^.body
 bodyfile=$draft^.body.trim
@@ -160,7 +156,7 @@ day=`{echo $date | sed 's/T.*//'}
 if(! ~ $#day 1)
 	fail 'cannot generate filename'
 
-postuuid=`{$uuidcmd}
+postuuid=`{9social/lib/uuid}
 if(! ~ $#postuuid 1)
 	fail 'cannot generate uuid'
 postid=9social:post:^$useruuid^:^$postuuid

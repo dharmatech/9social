@@ -175,7 +175,7 @@ The UUID should be generated randomly.
 Level 1 uses a script helper:
 
 ```rc
-9social/uuid
+9social/lib/uuid
 ```
 
 That helper prints one UUID v4. It may be implemented in `rc` using `/dev/random`, `dd`, `xd`, and `awk`.

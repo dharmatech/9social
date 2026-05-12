@@ -53,7 +53,7 @@ day=`{echo $date | sed 's/T.*//'}
 if(! ~ $#day 1)
 	fail 'cannot generate filename'
 
-postuuid=`{9social/uuid}
+postuuid=`{9social/lib/uuid}
 if(! ~ $#postuuid 1)
 	fail 'cannot generate uuid'
 likeid=9social:post:^$useruuid^:^$postuuid
