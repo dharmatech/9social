@@ -39,9 +39,9 @@ Flow:
 3. Check local self posts for an existing like by this user targeting the same post.
 4. Create a real `type: like` post under `$home/lib/9social/self/posts/`.
 5. Commit the new like post.
-6. Return without running `9social/reindex`.
+6. Return without running `9social/lib/index/rebuild`.
 
-A later `9social/reindex`, `9social/refresh`, or other maintenance command updates the derived index and makes the like visible to count and tag logic.
+A later `9social/lib/index/rebuild`, `9social/refresh`, or other maintenance command updates the derived index and makes the like visible to count and tag logic.
 
 ### Benefits
 

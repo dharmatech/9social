@@ -5,10 +5,6 @@ following=$social^/self/following
 feeds=$social^/feeds
 failed=()
 seen=()
-reindex=9social/reindex
-if(~ $0 */refresh)
-	reindex=`{echo $0 | sed 's;/refresh$;/reindex;'}
-
 if(! ~ $#* 0){
 	echo 'usage: 9social/refresh' >[1=2]
 	exit usage
@@ -71,7 +67,7 @@ if(test -e $following){
 	}
 }
 
-if(! $reindex){
+if(! 9social/lib/index/rebuild){
 	echo $0^': reindex failed' >[1=2]
 	failed=1
 }

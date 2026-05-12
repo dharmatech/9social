@@ -10,7 +10,7 @@ Use explicit command paths throughout production scripts:
 
 ```rc
 9social/lib/check-self
-9social/reindex
+9social/lib/index/rebuild
 9social/lib/uuid
 ```
 
@@ -73,7 +73,7 @@ Start with scripts where helper calls are straightforward:
 * `bin/9social/lib/acme/current-line`
 * `bin/9social/lib/post-path`
 * `bin/9social/lib/liked-post`
-* `bin/9social/reindex`
+* `bin/9social/lib/index/rebuild`
 
 Run the closest focused tests after each small group.
 

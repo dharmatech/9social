@@ -11,19 +11,19 @@ fn setup {
 	home=$base.$1.home
 	bindir=$base.$1.bin
 	rm -rf $home $bindir
-	mkdir -p $home/lib/9social $bindir/9social/lib || fail mkdir
+	mkdir -p $home/lib/9social $bindir/9social/lib/index || fail mkdir
 	cp /usr/glenda/src/9social/bin/9social/show-threads $bindir/9social/show-threads || fail copy-show-threads
 	chmod +x $bindir/9social/show-threads
 	bind -b $bindir /bin || fail bind
 }
 
 setup missing-index
->$bindir/9social/reindex {
+>$bindir/9social/lib/index/rebuild {
 	echo '#!/bin/rc'
 	echo 'mkdir -p $home/lib/9social/index/posts'
 	echo 'echo reindexed >$home/reindexed'
 }
-chmod +x $bindir/9social/reindex
+chmod +x $bindir/9social/lib/index/rebuild
 >$bindir/9social/lib/render-threads {
 	echo '#!/bin/rc'
 	echo 'echo thread body'
@@ -38,11 +38,11 @@ if(! ~ `{cat $home/err} '') fail stderr `{cat $home/err}
 
 setup existing-index
 mkdir -p $home/lib/9social/index/posts || fail existing-index-mkdir
->$bindir/9social/reindex {
+>$bindir/9social/lib/index/rebuild {
 	echo '#!/bin/rc'
 	echo 'echo should-not-reindex >$home/reindexed'
 }
-chmod +x $bindir/9social/reindex
+chmod +x $bindir/9social/lib/index/rebuild
 >$bindir/9social/lib/render-threads {
 	echo '#!/bin/rc'
 	echo 'echo existing thread body'
@@ -55,11 +55,11 @@ if(test -f $home/reindexed) fail reindexed-existing
 grep '^existing thread body$' $home/out >/dev/null || fail existing-stdout `{cat $home/out}
 
 setup reindex-fails
->$bindir/9social/reindex {
+>$bindir/9social/lib/index/rebuild {
 	echo '#!/bin/rc'
 	echo 'exit fail'
 }
-chmod +x $bindir/9social/reindex
+chmod +x $bindir/9social/lib/index/rebuild
 >$bindir/9social/lib/render-threads {
 	echo '#!/bin/rc'
 	echo 'echo should-not-render'

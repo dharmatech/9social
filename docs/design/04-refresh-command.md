@@ -138,7 +138,7 @@ This includes:
    After feed processing, run:
 
    ```sh
-   9social/reindex
+   9social/lib/index/rebuild
    ```
 
    `refresh` should run `reindex` even if there is no `following` file or the following list is empty. This keeps the user's own `self/posts` indexed.

@@ -14,7 +14,7 @@ if(! ~ $#* 0) usage
 
 index=$home^/lib/9social/index
 if(! test -d $index/posts)
-	9social/reindex || fail 'cannot build index'
+	9social/lib/index/rebuild || fail 'cannot build index'
 
 if(! test -d $index/posts) fail 'index not found'
 

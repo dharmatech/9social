@@ -71,7 +71,7 @@ $home/lib/9social/index/posts
 $home/lib/9social/index/targets
 ```
 
-`show-threads` may run `9social/reindex` first if the index is missing.
+`show-threads` may run `9social/lib/index/rebuild` first if the index is missing.
 
 If `reindex` fails, or if `$home/lib/9social/index/posts` still does not exist after reindexing, `show-threads` should fail clearly rather than rendering a partial view.
 
@@ -252,13 +252,13 @@ Useful helpers:
 * `9social/lib/post-meta`
 * `9social/lib/post-path`
 * `9social/lib/encode-id`
-* `9social/reindex`
+* `9social/lib/index/rebuild`
 
 The index already maps a post ID to local path and target IDs to reply records.
 
 A straightforward `show-threads` implementation can:
 
-1. ensure `index/posts` exists, running `9social/reindex` if needed
+1. ensure `index/posts` exists, running `9social/lib/index/rebuild` if needed
 2. scan `index/posts` to collect locally available posts
 3. parse each post header with `post-meta`
 4. identify roots and replies

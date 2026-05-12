@@ -33,7 +33,7 @@ if(! ~ $status '' || ! ~ $#target 1)
 	fail 'bad post id: '^$source
 
 # Rebuild before checking so duplicate detection is based on current local files.
-9social/reindex >/dev/null || fail 'cannot reindex'
+9social/lib/index/rebuild >/dev/null || fail 'cannot reindex'
 
 if(9social/lib/liked-post $target >[2]/dev/null){
 	echo 'already liked'
@@ -86,7 +86,7 @@ if(! @{cd $self && git/add $relpost})
 if(! @{cd $self && git/commit -m 'like: '^$target $relpost})
 	fail 'git commit failed'
 
-9social/reindex >/dev/null || fail 'cannot reindex'
+9social/lib/index/rebuild >/dev/null || fail 'cannot reindex'
 
 echo 'liked: '^$target
 echo 'posted: '^$relpost

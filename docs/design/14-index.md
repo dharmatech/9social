@@ -60,7 +60,7 @@ The index does not replace either of these directories.
 A command such as:
 
 ```rc
-9social/reindex
+9social/lib/index/rebuild
 ```
 
 may rebuild the entire index by scanning the local post files under `self/` and `feeds/`.
@@ -216,7 +216,7 @@ post not found locally: <post-id>
 
 Level 1 `post-path` should not scan `self/` or `feeds/` as a fallback when the index misses.
 
-This keeps ID-to-path lookup predictable and makes stale or missing index state visible. Callers can run `9social/reindex` before retrying if needed.
+This keeps ID-to-path lookup predictable and makes stale or missing index state visible. Callers can run `9social/lib/index/rebuild` before retrying if needed.
 
 ---
 
@@ -341,7 +341,7 @@ Deterministic order also makes warnings, tests, and rebuild output repeatable.
 
 ## Rebuild Algorithm
 
-`9social/reindex` should rebuild the index from scratch:
+`9social/lib/index/rebuild` should rebuild the index from scratch:
 
 1. Create a temporary index directory such as `$home/lib/9social/index.tmp.<pid>`.
 2. Create `posts` and `targets` inside the temporary index directory.
@@ -416,10 +416,10 @@ Warnings about malformed individual posts do not count as structural failures an
 Level 1 should keep `reindex` as a standalone command:
 
 ```rc
-9social/reindex
+9social/lib/index/rebuild
 ```
 
-`9social/refresh` should run `9social/reindex` automatically after it finishes updating followed feeds.
+`9social/refresh` should run `9social/lib/index/rebuild` automatically after it finishes updating followed feeds.
 
 `refresh` should run `reindex` even if there is no `following` file, or if the following list is empty. This keeps the user's own `self/posts` indexed.
 
@@ -435,7 +435,7 @@ This makes the index naturally track local feed updates without making indexing 
 
 ## Malformed Data Policy
 
-`9social/reindex` should be tolerant of malformed post files.
+`9social/lib/index/rebuild` should be tolerant of malformed post files.
 
 A malformed post file should not prevent the rest of the index from being rebuilt.
 
@@ -471,7 +471,7 @@ Implement the core primitives first:
 
 * `9social/lib/encode-id`
 * `9social/lib/post-meta`
-* `9social/reindex`
+* `9social/lib/index/rebuild`
 * `9social/lib/post-path`
 * refresh integration
 * `OpenPost` ID support
@@ -548,10 +548,10 @@ Recommended order:
 
 1. `9social/lib/encode-id`
 2. `9social/lib/post-meta`
-3. `9social/reindex`
+3. `9social/lib/index/rebuild`
 4. `9social/lib/post-path`
 5. update `9social/OpenPost` to accept canonical post IDs
-6. update `9social/refresh` to run `9social/reindex`
+6. update `9social/refresh` to run `9social/lib/index/rebuild`
 7. later: update `9social/Post/Like` to use the index for idempotency
 
 `Like` idempotency should wait until the core index primitives are working and tested.
@@ -580,7 +580,7 @@ Minimum tests:
 * fails on malformed header lines
 * fails on unreadable or missing files
 
-### `9social/reindex`
+### `9social/lib/index/rebuild`
 
 * creates `index/posts/<encoded-id>` for self posts
 * creates `index/posts/<encoded-id>` for feed posts

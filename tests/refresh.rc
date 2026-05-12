@@ -7,11 +7,11 @@ fn maketestcmd {
 	testcmd=$testhome/refresh
 	cp $cmd $testcmd || fail cp-refresh
 	chmod +x $testcmd || fail chmod-refresh
-	>$testhome/reindex {
+	>$testhome/bin/9social/lib/index/rebuild {
 		echo '#!/bin/rc'
 		echo 'echo reindex >>'^$testhome^'/reindex-log'
 	}
-	chmod +x $testhome/reindex || fail chmod-reindex
+	chmod +x $testhome/bin/9social/lib/index/rebuild || fail chmod-reindex
 }
 
 fn fail {
@@ -22,7 +22,7 @@ fn fail {
 fn setup {
 	testhome=/tmp/9social-refresh-test.$pid.$1
 	rm -rf $testhome
-	mkdir -p $testhome/bin/git || fail mkdir-bin
+	mkdir -p $testhome/bin/git $testhome/bin/9social/lib/index || fail mkdir-bin
 	home=$testhome
 	path=($testhome/bin $path)
 }
@@ -86,11 +86,11 @@ if(! ~ `{cat $home/reindex-log} reindex) fail empty-reindex
 
 setup reindexfail
 maketestcmd
->$home/reindex {
+>$home/bin/9social/lib/index/rebuild {
 	echo '#!/bin/rc'
 	echo 'exit fail'
 }
-chmod +x $home/reindex || fail reindexfail-chmod
+chmod +x $home/bin/9social/lib/index/rebuild || fail reindexfail-chmod
 $testcmd >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail reindexfail-status

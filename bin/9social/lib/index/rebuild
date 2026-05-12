@@ -1,7 +1,7 @@
 #!/bin/rc
 
 if(! ~ $#* 0){
-	echo 'usage: 9social/reindex' >[1=2]
+	echo 'usage: 9social/lib/index/rebuild' >[1=2]
 	exit usage
 }
 
@@ -10,13 +10,6 @@ index=$social^/index
 tmp=$social^/index.tmp.^$pid
 meta=/tmp/9social-reindex-meta.^$pid
 metaerr=/tmp/9social-reindex-metaerr.^$pid
-postmeta=9social/lib/post-meta
-encodeid=9social/lib/encode-id
-if(~ $0 */reindex){
-	postmeta=`{echo $0 | sed 's;/reindex$;/lib/post-meta;'}
-	encodeid=`{echo $0 | sed 's;/reindex$;/lib/encode-id;'}
-}
-
 fn cleanup {
 	rm -f $meta $metaerr
 }
@@ -39,7 +32,7 @@ fn field {
 fn indexpost {
 	post=$1
 	skip=0
-	if(! $postmeta $post >$meta >[2]$metaerr){
+	if(! 9social/lib/post-meta $post >$meta >[2]$metaerr){
 		warn 'skip post (bad format): '^$post
 		rm -f $meta $metaerr
 		skip=1
@@ -53,7 +46,7 @@ fn indexpost {
 		}
 	}
 	if(~ $skip 0){
-		encoded_id=`{$encodeid $id >[2]/dev/null}
+		encoded_id=`{9social/lib/encode-id $id >[2]/dev/null}
 		if(! ~ $status ''){
 			warn 'skip post (malformed id): '^$post
 			skip=1
@@ -79,7 +72,7 @@ fn indexpost {
 			}
 			if(! ~ $#target 0){
 				target_ok=1
-				encoded_target=`{$encodeid $target >[2]/dev/null}
+				encoded_target=`{9social/lib/encode-id $target >[2]/dev/null}
 				if(! ~ $status ''){
 					warn 'skip relationship (malformed target): '^$post
 					target_ok=0
