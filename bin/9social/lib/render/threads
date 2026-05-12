@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/render-threads' >[1=2]
+	echo 'usage: 9social/lib/render/threads' >[1=2]
 	exit usage
 }
 
@@ -31,7 +31,7 @@ for(entry in `{ls -p $index/posts >[2]/dev/null | sort}){
 		9social/lib/post/thread-record.awk $post >>$records
 }
 
-9social/lib/render-thread-records.awk $records
+9social/lib/render/thread-records.awk $records
 st=$status
 cleanup
 exit $st

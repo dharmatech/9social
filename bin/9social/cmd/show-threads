@@ -18,5 +18,5 @@ if(! test -d $index/posts)
 
 if(! test -d $index/posts) fail 'index not found'
 
-9social/lib/render-threads
+9social/lib/render/threads
 exit $status

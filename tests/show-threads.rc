@@ -11,7 +11,7 @@ fn setup {
 	home=$base.$1.home
 	bindir=$base.$1.bin
 	rm -rf $home $bindir
-	mkdir -p $home/lib/9social $bindir/9social/lib/index $bindir/9social/cmd || fail mkdir
+	mkdir -p $home/lib/9social $bindir/9social/lib/index $bindir/9social/lib/render $bindir/9social/cmd || fail mkdir
 	cp /usr/glenda/src/9social/bin/9social/cmd/show-threads $bindir/9social/cmd/show-threads || fail copy-show-threads
 	chmod +x $bindir/9social/cmd/show-threads
 	bind -b $bindir /bin || fail bind
@@ -24,11 +24,11 @@ setup missing-index
 	echo 'echo reindexed >$home/reindexed'
 }
 chmod +x $bindir/9social/lib/index/rebuild
->$bindir/9social/lib/render-threads {
+>$bindir/9social/lib/render/threads {
 	echo '#!/bin/rc'
 	echo 'echo thread body'
 }
-chmod +x $bindir/9social/lib/render-threads
+chmod +x $bindir/9social/lib/render/threads
 9social/cmd/show-threads >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail missing-index-status $st `{cat $home/err}
@@ -43,11 +43,11 @@ mkdir -p $home/lib/9social/index/posts || fail existing-index-mkdir
 	echo 'echo should-not-reindex >$home/reindexed'
 }
 chmod +x $bindir/9social/lib/index/rebuild
->$bindir/9social/lib/render-threads {
+>$bindir/9social/lib/render/threads {
 	echo '#!/bin/rc'
 	echo 'echo existing thread body'
 }
-chmod +x $bindir/9social/lib/render-threads
+chmod +x $bindir/9social/lib/render/threads
 9social/cmd/show-threads >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail existing-index-status $st `{cat $home/err}
@@ -60,11 +60,11 @@ setup reindex-fails
 	echo 'exit fail'
 }
 chmod +x $bindir/9social/lib/index/rebuild
->$bindir/9social/lib/render-threads {
+>$bindir/9social/lib/render/threads {
 	echo '#!/bin/rc'
 	echo 'echo should-not-render'
 }
-chmod +x $bindir/9social/lib/render-threads
+chmod +x $bindir/9social/lib/render/threads
 9social/cmd/show-threads >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail reindex-fails-status

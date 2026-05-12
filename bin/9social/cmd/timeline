@@ -67,6 +67,6 @@ if(! ~ $status ''){
 	exit 'cannot sort timeline'
 }
 
-9social/lib/render-timeline-records.awk $sorted
+9social/lib/render/timeline-records.awk $sorted
 
 rm -f $tmp $sorted
