@@ -15,7 +15,7 @@ if(! ~ $#* 0) usage
 draft=$%
 if(~ $#draft 0 || ~ $draft '')
 	fail 'missing draft path'
-if(! 9social/lib/valid-draft $draft)
+if(! 9social/lib/draft/valid.awk $draft)
 	fail 'invalid draft path: '^$draft
 if(! test -f $draft)
 	fail 'draft file not found: '^$draft

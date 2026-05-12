@@ -24,7 +24,7 @@ fn usage {
 }
 
 fn validmeta {
-	/bin/9social/lib/valid-draft-meta.awk $1
+	9social/lib/draft/valid-meta.awk $1
 }
 
 if(! ~ $#* 1)

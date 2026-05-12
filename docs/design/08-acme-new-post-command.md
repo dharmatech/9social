@@ -243,7 +243,7 @@ When run from Acme, `Publish` discovers the draft from Acme-provided environment
 
 Level 1 `Publish` should use `$%` as the draft path.
 
-Before saving or publishing, `Publish` should validate that `$%` names a 9social draft path created by `NewPost`, using `bin/9social/lib/valid-draft`. If it does not, it should fail with a clear message and leave the file untouched.
+Before saving or publishing, `Publish` should validate that `$%` names a 9social draft path created by `NewPost`, using `bin/9social/lib/draft/valid.awk`. If it does not, it should fail with a clear message and leave the file untouched.
 
 If `$winid` is available and `/mnt/acme/$winid/ctl` exists, `Publish` should first save the current Acme window by writing `put` to:
 
@@ -263,7 +263,7 @@ Then it reads the draft from `$%` on disk and publishes it. After a successful p
 
 When run from Acme, `Cancel` discovers the draft from `$%`.
 
-Before removing anything, `Cancel` should validate that `$%` names a 9social draft path created by `NewPost`, using `bin/9social/lib/valid-draft`. If it does not, it should fail with a clear message and leave the file untouched.
+Before removing anything, `Cancel` should validate that `$%` names a 9social draft path created by `NewPost`, using `bin/9social/lib/draft/valid.awk`. If it does not, it should fail with a clear message and leave the file untouched.
 
 Level 1 `Cancel` removes the backing draft file and prints a confirmation. It does not close the Acme window automatically. The user closes the draft window with Acme's `Del` command.
 
@@ -454,7 +454,7 @@ Run them from 9front with:
 Automated tests should focus on the filesystem and publishing pieces that do not require a live Acme session:
 
 * `bin/9social/lib/check-self` validates the self feed and creates `posts/` when missing
-* `bin/9social/lib/valid-draft` accepts valid draft paths and rejects invalid ones
+* `bin/9social/lib/draft/valid.awk` accepts valid draft paths and rejects invalid ones
 * `9social/Draft/Publish` publishes the draft named by `$%` when `$winid` is unset
 * `9social/Draft/Publish` rejects invalid `$%` paths
 * `9social/Draft/Publish` fails clearly when `$%` names a missing draft file
