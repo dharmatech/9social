@@ -1,0 +1,58 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=$repo/bin/9social/lib/acme/line-at-position.awk
+file=/tmp/9social-line-at-position.^$pid
+out=/tmp/9social-line-at-position-out.^$pid
+err=/tmp/9social-line-at-position-err.^$pid
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	rm -f $file $out $err
+	exit fail
+}
+
+{
+	echo alpha
+	echo beta
+	echo gamma
+} >$file
+
+fn expect {
+	$cmd $1 $file >$out >[2]$err
+	if(! ~ $status '')
+		fail status $1 `{cat $err}
+	if(! ~ `{cat $out} $2)
+		fail output $1 `{cat $out}
+}
+
+expect 0 alpha
+expect 5 alpha
+expect 6 beta
+expect 10 beta
+expect 11 gamma
+expect 16 gamma
+
+$cmd 17 $file >$out >[2]$err
+if(~ $status '')
+	fail out-of-range-status
+
+$cmd bad $file >$out >[2]$err
+if(~ $status '')
+	fail bad-position-status
+grep 'bad position' $err >/dev/null || fail bad-position-error
+
+$cmd >$out >[2]$err
+if(~ $status '')
+	fail usage-status
+grep 'usage: 9social/lib/acme/line-at-position.awk' $err >/dev/null || fail usage-error
+
+{echo one; echo two} | $cmd 4 >$out >[2]$err
+if(! ~ $status '')
+	fail stdin-status `{cat $err}
+if(! ~ `{cat $out} two)
+	fail stdin-output `{cat $out}
+
+rm -f $file $out $err
+echo ok
+exit ''

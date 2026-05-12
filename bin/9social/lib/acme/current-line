@@ -24,22 +24,7 @@ if(! ~ $st '' || ! ~ $#pos 1)
 
 @{
 	cd /mnt/acme/$winid || exit 'no window'
-	awk -v 'pos='$pos '
-		BEGIN { start = 0 }
-		{
-			end = start + length($0)
-			if(pos >= start && pos <= end){
-				print
-				found = 1
-				exit
-			}
-			start = end + 1
-		}
-		END {
-			if(!found)
-				exit 1
-		}
-	' body
+	9social/lib/acme/line-at-position.awk $pos body
 }
 st=$status
 if(! ~ $st '')
