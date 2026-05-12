@@ -29,7 +29,7 @@ if(~ $#source 0 || ~ $source '')
 if(! 9social/lib/check-self)
 	exit $status
 
-draft=`{9social/lib/reply-draft $source}
+draft=`{9social/lib/draft/reply $source}
 st=$status
 if(! ~ $st '')
 	exit $st

@@ -57,7 +57,7 @@ bin/9social/lib/post/title         tests/post-title.rc
 bin/9social/lib/post/check.awk         tests/check-post.rc
 bin/9social/lib/liked-post         tests/liked-post.rc
 bin/9social/lib/render-threads     tests/render-threads.rc
-bin/9social/lib/reply-draft        tests/reply-draft.rc
+bin/9social/lib/draft/reply        tests/reply-draft.rc
 ```
 
 ## Rule of thumb

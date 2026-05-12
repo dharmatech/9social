@@ -8,7 +8,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/new-post-draft' >[1=2]
+	echo 'usage: 9social/lib/draft/new' >[1=2]
 	exit usage
 }
 

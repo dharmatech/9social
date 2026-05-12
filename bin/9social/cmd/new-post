@@ -28,7 +28,7 @@ if(~ $mode stdin){
 	cat >$draft || fail 'cannot read stdin'
 }
 if not {
-	draft=`{9social/lib/new-post-draft} ||
+	draft=`{9social/lib/draft/new} ||
 		fail 'cannot create draft'
 	if(~ $#editor 0)
 		editor=sam

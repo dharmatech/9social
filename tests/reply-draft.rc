@@ -2,7 +2,7 @@
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
-cmd=$repo/bin/9social/lib/reply-draft
+cmd=$repo/bin/9social/lib/draft/reply
 targetid=9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222
 
 fn fail {
@@ -60,7 +60,7 @@ grep 'bad post id' $base/err >/dev/null || fail bad-error `{cat $base/err}
 $cmd >$base/out >[2]$base/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/lib/reply-draft <post-file>' $base/err >/dev/null || fail usage-error `{cat $base/err}
+grep 'usage: 9social/lib/draft/reply <post-file>' $base/err >/dev/null || fail usage-error `{cat $base/err}
 
 rm -rf $base
 echo ok

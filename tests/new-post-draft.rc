@@ -2,7 +2,7 @@
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
-cmd=$repo/bin/9social/lib/new-post-draft
+cmd=$repo/bin/9social/lib/draft/new
 
 fn fail {
 	echo FAIL: $* >[1=2]
@@ -28,7 +28,7 @@ if(! grep '^Title: $' $draft >/dev/null) fail title-line `{sed -n '1p' $draft}
 $cmd extra >$tmp/out >[2]$tmp/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/lib/new-post-draft' $tmp/err >/dev/null || fail usage-error `{cat $tmp/err}
+grep 'usage: 9social/lib/draft/new' $tmp/err >/dev/null || fail usage-error `{cat $tmp/err}
 
 echo ok
 exit ''
