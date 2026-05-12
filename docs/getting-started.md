@@ -97,21 +97,6 @@ rio
 At this point, log out and log back in
 in order to have these `profile` lines take effect.
 
-#### Permissions
-
-The scripts should all be executable
-when you clone the repository from github.\
-However, in case they aren't, you can set the mode on them as follows:
-
-```
-cd
-cd src/9social/bin/9social
-chmod 755 * lib/*
-cd
-cd src/9social
-chmod 755 tests/*
-```
-
 #### Tests
 
 At this point, you can run the unit tests if you'd like:
