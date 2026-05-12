@@ -31,7 +31,7 @@ fn validatepost {
 		fail 'bad post path: '^$post
 	if(! test -f $post)
 		fail 'post file not found: '^$post
-	if(! 9social/lib/check-post $post)
+	if(! 9social/lib/post/check.awk $post)
 		fail 'bad post: '^$post
 	echo $post
 }

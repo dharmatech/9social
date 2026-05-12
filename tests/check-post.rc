@@ -1,7 +1,7 @@
 #!/bin/rc
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-cmd=$repo/bin/9social/lib/check-post
+cmd=$repo/bin/9social/lib/post/check.awk
 useruuid=550e8400-e29b-41d4-a716-446655440000
 postuuid=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 targetuuid=22222222-2222-4222-8222-222222222222
@@ -104,6 +104,7 @@ if(~ $status '') fail badtarget-status
 setup usage
 $cmd >$testhome/out >[2]$testhome/err
 if(~ $status '') fail usage-status
+grep 'usage: check.awk <post-file>' $testhome/err >/dev/null || fail usage-error
 
 echo ok
 exit ''

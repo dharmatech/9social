@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/cursor-position' >[1=2]
+	echo 'usage: 9social/lib/acme/cursor-position' >[1=2]
 	exit usage
 }
 

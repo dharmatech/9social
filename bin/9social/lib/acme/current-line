@@ -6,7 +6,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/current-line' >[1=2]
+	echo 'usage: 9social/lib/acme/current-line' >[1=2]
 	exit usage
 }
 
@@ -17,11 +17,7 @@ if(~ $#winid 0 || ~ $winid '')
 if(! test -d /mnt/acme/$winid)
 	fail 'acme window not found: '^$winid
 
-cursor_position=9social/lib/cursor-position
-if(~ $0 */lib/current-line)
-	cursor_position=`{echo $0 | sed 's;/current-line$;/cursor-position;'}
-
-pos=`{$cursor_position}
+pos=`{9social/lib/acme/cursor-position}
 st=$status
 if(! ~ $st '' || ! ~ $#pos 1)
 	fail 'cannot read cursor position'

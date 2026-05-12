@@ -1,5 +1,8 @@
 #!/bin/awk -f /bin/9social/lib/id.awk -f
 
+# Validate the file-level structure and required metadata for a post.
+# This accepts ordinary posts, replies, and likes.
+
 function fail(){ exit 1 }
 function trim(s){
 	gsub(/^[ \t]+/, "", s)
@@ -7,8 +10,10 @@ function trim(s){
 	return s
 }
 BEGIN {
-	if(ARGC != 2)
+	if(ARGC != 2){
+		print "usage: check.awk <post-file>" > "/fd/2"
 		fail()
+	}
 	datepat = "^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z$"
 }
 

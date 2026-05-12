@@ -104,13 +104,13 @@ A future version may enforce stronger identity rules, such as rejecting changes 
 The post validation logic should live in a helper, for example:
 
 ```text
-bin/9social/lib/check-post
+bin/9social/lib/post/check.awk
 ```
 
 Expected helper interface:
 
 ```rc
-9social/lib/check-post <post-file>
+9social/lib/post/check.awk <post-file>
 ```
 
 The helper should validate ordinary posts and post-like records at the file-format level. `Update` can then combine `check-post` with its own self-post path restriction.

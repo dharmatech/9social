@@ -13,7 +13,7 @@ fn usage {
 
 if(! ~ $#* 0) usage
 
-line=`{9social/lib/current-line} || fail 'cannot read current line'
+line=`{9social/lib/acme/current-line} || fail 'cannot read current line'
 
 ref=`{echo $line | 9social/lib/first-post-path.awk}
 if(! ~ $status '' || ! ~ $#ref 1){

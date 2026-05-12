@@ -1,4 +1,10 @@
 #!/bin/awk -f /bin/9social/lib/id.awk -f
+
+# Print the canonical post id from a post file,
+# validating that
+# exactly one valid id field
+# appears before the post body.
+
 BEGIN {
 	if(ARGC != 2){
 		print "usage: post-id <post-file>" > "/fd/2"

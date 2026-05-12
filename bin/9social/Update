@@ -37,7 +37,7 @@ if(! ~ $#winid 0 && ! ~ $winid ''){
 	}
 }
 
-if(! 9social/lib/check-post $post)
+if(! 9social/lib/post/check.awk $post)
 	fail 'bad post: '^$post
 
 postid=`{9social/lib/post/id.awk $post}
