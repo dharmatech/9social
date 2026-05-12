@@ -106,7 +106,7 @@ if(test -e $profile >[2]/dev/null){
 		fail 'bad profile: '^$profile
 }
 if not {
-	uuid=`{9social/lib/uuid}
+	uuid=`{9social/lib/id/uuid}
 	if(! ~ $#uuid 1)
 		fail 'cannot generate uuid'
 	if(! echo 'id: 9social:user:'^$uuid >$profile)

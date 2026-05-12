@@ -1,7 +1,7 @@
 # Shared 9social ID validation helpers.
 #
 # This file is loaded by executable awk scripts with:
-#   #!/bin/awk -f /bin/9social/lib/id.awk -f
+#   #!/bin/awk -f /bin/9social/lib/id/common.awk -f
 #
 # It intentionally contains only functions.
 

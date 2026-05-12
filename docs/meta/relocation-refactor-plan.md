@@ -11,7 +11,7 @@ Use explicit command paths throughout production scripts:
 ```rc
 9social/lib/check-self
 9social/lib/index/rebuild
-9social/lib/uuid
+9social/lib/id/uuid
 ```
 
 Avoid this pattern in production scripts:

@@ -236,7 +236,7 @@ if(! ~ $st '') fail rms refresh-alan $st `{cat $root/rms.refresh-alan.err}
 showfile $root/rms.refresh-alan.out
 showfile $root/rms.refresh-alan.err
 
-encoded_rms_target=`{asuser rms 9social/lib/encode-id $rms_target}
+encoded_rms_target=`{asuser rms 9social/lib/id/encode.awk $rms_target}
 if(! ~ $#encoded_rms_target 1)
 	fail rms-encode-like-target $#encoded_rms_target
 likes=$root/homes/rms/lib/9social/index/targets/$encoded_rms_target/likes

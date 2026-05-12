@@ -33,7 +33,7 @@ author=`{profilename $profile >[2]/dev/null}
 if(! ~ $status '' || ! ~ $#author 1)
 	exit 'not liked'
 
-encoded=`{9social/lib/encode-id $target >[2]/dev/null}
+encoded=`{9social/lib/id/encode.awk $target >[2]/dev/null}
 if(! ~ $status '' || ! ~ $#encoded 1)
 	fail 'malformed post id: '^$target
 likes=$home^/lib/9social/index/targets/^$encoded^/likes

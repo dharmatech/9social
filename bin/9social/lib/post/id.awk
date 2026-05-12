@@ -1,4 +1,4 @@
-#!/bin/awk -f /bin/9social/lib/id.awk -f
+#!/bin/awk -f /bin/9social/lib/id/common.awk -f
 
 # Print the canonical post id from a post file,
 # validating that

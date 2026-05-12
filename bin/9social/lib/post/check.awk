@@ -1,4 +1,4 @@
-#!/bin/awk -f /bin/9social/lib/id.awk -f
+#!/bin/awk -f /bin/9social/lib/id/common.awk -f
 
 # Validate the file-level structure and required metadata for a post.
 # This accepts ordinary posts, replies, and likes.

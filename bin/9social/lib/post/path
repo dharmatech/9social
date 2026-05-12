@@ -11,7 +11,7 @@ if(! ~ $#* 1){
 }
 
 postid=$1
-encoded=`{9social/lib/encode-id $postid >[2]/dev/null}
+encoded=`{9social/lib/id/encode.awk $postid >[2]/dev/null}
 if(! ~ $status ''){
 	echo 'post-path: malformed post id' >[1=2]
 	exit 'malformed post id'

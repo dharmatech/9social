@@ -41,7 +41,7 @@ if(! ~ $#* 1)
 
 arg=$1
 if(~ $arg 9social:post:*){
-	if(9social/lib/encode-id $arg >/dev/null >[2]/dev/null){
+	if(9social/lib/id/encode.awk $arg >/dev/null >[2]/dev/null){
 		post=`{9social/lib/post/path $arg}
 		if(! ~ $status '')
 			fail 'post file not found: '^$arg

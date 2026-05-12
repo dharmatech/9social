@@ -1,4 +1,4 @@
-#!/bin/awk -f /bin/9social/lib/id.awk -f
+#!/bin/awk -f /bin/9social/lib/id/common.awk -f
 # Validate draft sidecar metadata and print type and target.
 
 function trim(s){

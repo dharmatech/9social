@@ -1,4 +1,4 @@
-#!/bin/awk -f /bin/9social/lib/id.awk -f
+#!/bin/awk -f /bin/9social/lib/id/common.awk -f
 # Emit one tab-separated thread record for a post file.
 
 BEGIN {

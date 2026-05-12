@@ -186,7 +186,7 @@ This keeps canonical IDs readable while avoiding `:` in filenames.
 A helper such as:
 
 ```rc
-9social/lib/encode-id
+9social/lib/id/encode.awk
 ```
 
 should own this encoding so all commands use the same rule.
@@ -469,7 +469,7 @@ The first index implementation should not include count or display helpers.
 
 Implement the core primitives first:
 
-* `9social/lib/encode-id`
+* `9social/lib/id/encode.awk`
 * `9social/lib/post/meta.awk`
 * `9social/lib/index/rebuild`
 * `9social/lib/post/path`
@@ -546,7 +546,7 @@ Implement the index branch from smallest primitives to larger command integratio
 
 Recommended order:
 
-1. `9social/lib/encode-id`
+1. `9social/lib/id/encode.awk`
 2. `9social/lib/post/meta.awk`
 3. `9social/lib/index/rebuild`
 4. `9social/lib/post/path`
@@ -566,7 +566,7 @@ Index work should be implemented with focused tests for each small helper and co
 
 Minimum tests:
 
-### `9social/lib/encode-id`
+### `9social/lib/id/encode.awk`
 
 * encodes `9social:post:<user-uuid>:<post-uuid>` as `9social_post_<user-uuid>_<post-uuid>`
 * rejects malformed post IDs

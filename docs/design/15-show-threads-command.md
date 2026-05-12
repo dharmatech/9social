@@ -251,7 +251,7 @@ Useful helpers:
 
 * `9social/lib/post/meta.awk`
 * `9social/lib/post/path`
-* `9social/lib/encode-id`
+* `9social/lib/id/encode.awk`
 * `9social/lib/index/rebuild`
 
 The index already maps a post ID to local path and target IDs to reply records.

@@ -1,4 +1,4 @@
-#!/bin/awk -f /bin/9social/lib/id.awk -f
+#!/bin/awk -f /bin/9social/lib/id/common.awk -f
 # Validate a 9social profile file.
 #
 # Requires:

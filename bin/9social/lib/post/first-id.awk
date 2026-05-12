@@ -1,4 +1,4 @@
-#!/bin/awk -f /bin/9social/lib/id.awk -f
+#!/bin/awk -f /bin/9social/lib/id/common.awk -f
 # Read text from stdin and print the first canonical 9social post ID
 # found as a whitespace-delimited field.
 #
