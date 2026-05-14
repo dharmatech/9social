@@ -15,7 +15,6 @@ fn usage {
 if(! ~ $#* 1)
 	usage
 
-draft=()
 draft=`{9social/lib/draft/reply $1}
 st=$status
 if(! ~ $st '')
