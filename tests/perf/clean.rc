@@ -1,0 +1,37 @@
+#!/bin/rc
+rfork en
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: tests/perf/clean.rc <root>' >[1=2]
+	exit usage
+}
+
+fn checkroot {
+	root=$1
+	if(~ $root /tmp/9social/perf /tmp/9social/perf/)
+		fail 'refusing perf root: '^$root
+	if(! ~ $root /tmp/9social/perf/*)
+		fail 'perf root must be under /tmp/9social/perf: '^$root
+	if(~ $root */../* */.. ../* ..)
+		fail 'perf root must not contain ..: '^$root
+}
+
+if(! ~ $#* 1)
+	usage
+
+root=$1
+checkroot $root
+
+if(! test -d $root)
+	fail 'perf root not found: '^$root
+if(! test -f $root/.9social-perf-root)
+	fail 'missing perf root marker: '^$root^'/.9social-perf-root'
+
+rm -rf $root || fail 'cannot remove perf root: '^$root
+echo 'removed: '^$root
+exit ''

@@ -51,6 +51,7 @@ bin/9social/lib/draft/slug.awk         tests/draft-slug.rc
 bin/9social/lib/valid-profile.awk  tests/valid-profile.rc
 bin/9social/lib/id/encode.awk          tests/encode-id.rc
 bin/9social/lib/mk-temp-file       tests/mk-temp-file.rc
+bin/9social/lib/index/add-post       tests/index-add-post.rc
 bin/9social/lib/post/meta.awk          tests/post-meta.rc
 bin/9social/lib/post/path          tests/post-path.rc
 bin/9social/lib/post/id.awk            tests/post-id.rc

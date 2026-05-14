@@ -220,7 +220,9 @@ and exit successfully without creating a new like record or Git commit.
 
 If no current-user like exists, `like` creates one `type: like` record and commits it locally.
 
-After a successful commit, `like` should run `9social/lib/index/rebuild` so subsequent `OpenPost` calls can immediately omit `9social/Post/Like` for that target.
+The current implementation runs `9social/lib/index/rebuild` after a successful commit so subsequent `OpenPost` calls can immediately omit `9social/Post/Like` for that target.
+
+The preferred future performance direction is to replace that full rebuild with an incremental index update for only the newly created like post. That keeps the index current enough for duplicate detection and counts without scanning unrelated posts.
 
 On success, `like` should print:
 
@@ -231,7 +233,7 @@ posted: posts/<like-file>
 
 `like` does not push. `Like` also does not push because it delegates to `like`.
 
-If the index is missing or stale, `like` may run `9social/lib/index/rebuild` first and then check again. Future latency improvements are discussed in `17-local-action-latency.md`, including commit-now-index-later and local outbox approaches.
+If the index is missing or stale, the current implementation may run `9social/lib/index/rebuild` first and then check again. Future latency improvements are discussed in `17-local-action-latency.md`, especially incremental index maintenance, with commit-now-index-later and local outbox approaches kept as alternatives.
 
 Historical duplicate like records may still exist. `reindex` should tolerate them. When calculating counts, clients should treat likes as a current-state signal by author and target:
 

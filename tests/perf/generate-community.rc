@@ -1,0 +1,223 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/perf/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+root=/tmp/9social/perf/$pid
+users=(rms linus alan)
+size=small
+postsper=5
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	echo root: $root >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: tests/perf/generate-community.rc [small|medium|large]' >[1=2]
+	exit usage
+}
+
+fn asuser {
+	u=$1
+	shift
+	home=$root/homes/$u user=$u $*
+}
+
+fn mkremote {
+	u=$1
+	remote=$root/remotes/$u
+	seed=$root/seeds/$u
+	mkdir -p $remote $seed || fail $u^': cannot create remote seed'
+	@{cd $remote && git/init . >/dev/null >[2]/dev/null} || fail $u^': remote git init failed'
+	@{cd $seed && git/init . >/dev/null >[2]/dev/null} || fail $u^': seed git init failed'
+	echo $u >$seed/README.md || fail $u^': cannot create seed README'
+	@{cd $seed && git/add README.md && git/commit -m init README.md >/dev/null >[2]/dev/null} || fail $u^': seed commit failed'
+	@{cd $seed && git/push -u $remote >/dev/null >[2]/dev/null} || fail $u^': seed push failed'
+}
+
+fn inituser {
+	u=$1
+	mkdir -p $root/homes/$u || fail $u^': cannot create home'
+	asuser $u 9social/cmd/init-self $root/remotes/$u >$root/logs/$u.init.out >[2]$root/logs/$u.init.err
+	st=$status
+	if(! ~ $st '')
+		fail $u^': init-self failed: '^$st^' '^`{cat $root/logs/$u.init.err}
+}
+
+fn title {
+	u=$1
+	n=$2
+	if(~ $u rms)
+		echo 'GNU Emacs and user freedom '^$n
+	if not if(~ $u linus)
+		echo 'Linux kernel notes '^$n
+	if not if(~ $u alan)
+		echo 'Smalltalk objects and messages '^$n
+	if not
+		echo '9social perf post '^$n
+}
+
+fn body {
+	u=$1
+	n=$2
+	if(~ $u rms){
+		echo 'Free software is a social question as much as a technical one.'
+		echo 'Experiment '^$n^' looks at tools that help users control their computing.'
+	}
+	if not if(~ $u linus){
+		echo 'A useful system needs practical interfaces and a reliable kernel.'
+		echo 'Experiment '^$n^' keeps the workflow concrete and measurable.'
+	}
+	if not if(~ $u alan){
+		echo 'Objects can model ideas by exchanging messages.'
+		echo 'Experiment '^$n^' explores systems that invite learning by doing.'
+	}
+	if not {
+		echo 'A generated 9social performance post.'
+		echo 'Experiment '^$n^'.'
+	}
+}
+
+fn makeposts {
+	u=$1
+	n=1
+	last=`{echo $postsper | awk '{print $1+1}'}
+	while(! ~ $n $last){
+		{
+			echo -n 'Title: '
+			title $u $n
+			echo
+			body $u $n
+		} | asuser $u 9social/cmd/new-post - >$root/logs/$u.new-post.$n.out >[2]$root/logs/$u.new-post.$n.err
+		st=$status
+		if(! ~ $st '')
+			fail $u^': new-post '^$n^' failed: '^$st^' '^`{cat $root/logs/$u.new-post.$n.err}
+		n=`{echo $n | awk '{print $1+1}'}
+	}
+}
+
+fn pushuser {
+	u=$1
+	asuser $u 9social/cmd/push >$root/logs/$u.push.out >[2]$root/logs/$u.push.err
+	st=$status
+	if(! ~ $st '')
+		fail $u^': push failed: '^$st^' '^`{cat $root/logs/$u.push.err}
+}
+
+fn followothers {
+	u=$1
+	for(v in $users){
+		if(! ~ $u $v){
+			asuser $u 9social/cmd/follow $root/remotes/$v >$root/logs/$u.follow.$v.out >[2]$root/logs/$u.follow.$v.err
+			st=$status
+			if(! ~ $st '')
+				fail $u^': follow '^$v^' failed: '^$st^' '^`{cat $root/logs/$u.follow.$v.err}
+		}
+	}
+}
+
+fn refreshuser {
+	u=$1
+	asuser $u 9social/cmd/refresh >$root/logs/$u.refresh.out >[2]$root/logs/$u.refresh.err
+	st=$status
+	if(! ~ $st '')
+		fail $u^': refresh failed: '^$st^' '^`{cat $root/logs/$u.refresh.err}
+}
+
+fn countposttree {
+	dir=$1
+	if(test -d $dir)
+		walk $dir >[2]/dev/null | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$' | wc -l
+	if not
+		echo 0
+}
+
+fn countindexposts {
+	dir=$1
+	if(test -d $dir)
+		ls -p $dir >[2]/dev/null | wc -l
+	if not
+		echo 0
+}
+
+fn validateuser {
+	u=$1
+	social=$root/homes/$u/lib/9social
+	test -f $social/self/profile || fail $u^': missing profile'
+	test -d $social/self/posts || fail $u^': missing self posts'
+	test -d $social/feeds || fail $u^': missing feeds'
+	test -d $social/index || fail $u^': missing index'
+	selfcount=`{countposttree $social/self/posts}
+	feedcount=`{countposttree $social/feeds}
+	indexcount=`{countindexposts $social/index/posts}
+	echo $u^' self posts: '^$selfcount
+	echo $u^' feed posts: '^$feedcount
+	echo $u^' indexed posts: '^$indexcount
+}
+
+if(~ $#* 0)
+	size=small
+if not if(~ $#* 1)
+	size=$1
+if not
+	usage
+
+if(~ $size small)
+	postsper=5
+if not if(~ $size medium)
+	postsper=25
+if not if(~ $size large)
+	postsper=100
+if not
+	usage
+
+if(test -e $root)
+	fail 'perf root already exists: '^$root
+
+mkdir -p $root/remotes $root/seeds $root/homes $root/logs || fail 'cannot create perf root'
+touch $root/.9social-perf-root || fail 'cannot create perf root marker'
+bind -b $repo/bin /bin || fail 'cannot bind repo bin'
+
+created=`{date -u -f 'YYYY-MM-DDThh:mm:ss[Z]'}
+{
+	echo 'created: '^$created
+	echo 'size: '^$size
+	echo 'posts-per-user: '^$postsper
+	echo 'users: '^$"users
+} >$root/config || fail 'cannot write config'
+
+echo 'root: '^$root
+echo 'size: '^$size
+echo 'posts per user: '^$postsper
+
+echo 'creating local repositories'
+for(u in $users)
+	mkremote $u
+
+echo 'initializing users'
+for(u in $users)
+	inituser $u
+
+echo 'generating posts'
+for(u in $users)
+	makeposts $u
+
+echo 'pushing users'
+for(u in $users)
+	pushuser $u
+
+echo 'following peers'
+for(u in $users)
+	followothers $u
+
+echo 'refreshing users'
+for(u in $users)
+	refreshuser $u
+
+echo 'validation counts'
+for(u in $users)
+	validateuser $u
+
+echo 'root: '^$root
+exit ''

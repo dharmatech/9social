@@ -28,6 +28,44 @@ For fast commands, 9social should distinguish the durable action from derived vi
 
 ---
 
+## Candidate: Incremental Index Maintenance
+
+In this model, 9social keeps the durable feed action synchronous but replaces full index rebuilds with small index updates.
+
+For a local action such as `like`:
+
+1. Resolve the target post.
+2. Create and commit one `type: like` post under `self/posts/`.
+3. Add only that new like post to the local index.
+4. Return without rebuilding unrelated feed posts.
+
+For `refresh`, Git already reports which followed repositories changed. Future `refresh` implementations can use that change information to index only added or changed feed posts and remove entries for deleted feed posts.
+
+Full rebuild remains available as the repair path:
+
+```rc
+9social/lib/index/rebuild
+```
+
+### Benefits
+
+* Keeps accepted actions as real feed records immediately.
+* Keeps derived views current enough for duplicate detection and counts.
+* Avoids scanning every followed feed after small local actions.
+* Preserves full rebuild as a simple correctness fallback.
+
+### Costs
+
+* Requires tested single-post index primitives.
+* Removal and update handling must avoid stale relationship entries.
+* The design relies on structural post fields staying stable after publication.
+
+### Stability Assumption
+
+Published posts should treat `id`, `type`, `target`, and local path as structural values. If a reaction or reply points at the wrong target, the user should delete it and create a new one rather than retargeting it in place.
+
+---
+
 ## Candidate: Commit Now, Index Later
 
 In this model, `9social/cmd/like` creates and commits the like record immediately, but does not rebuild the index synchronously.
@@ -124,11 +162,17 @@ The exact command is intentionally undecided. Candidates include:
 
 ## Comparison
 
+### Incremental Index Maintenance
+
+This is the preferred direction if the single-post index primitives stay small and reliable.
+
+It preserves the existing feed model: accepted actions become real posts immediately, and the derived index is updated without scanning unrelated posts.
+
 ### Commit Now, Index Later
 
-This is likely the simpler near-term approach.
+This is simpler to implement than incremental indexing, but it allows derived views and duplicate-detection state to lag.
 
-It preserves the existing feed model: accepted actions become real posts immediately. Only derived views lag.
+It remains a reasonable fallback if incremental indexing needs more design work than expected.
 
 ### Local Outbox
 
@@ -140,8 +184,8 @@ It may be useful if 9social grows more lightweight actions that should be batche
 
 ## Current Leaning
 
-For `Like`, first consider **commit now, index later**.
+For `Like`, first consider **incremental index maintenance**.
 
-It directly addresses the latency problem while keeping the social data model simple.
+It directly addresses the latency problem while keeping the social data model simple and keeping the local index current after accepted actions.
 
-Keep the local outbox model as a candidate for future batching and deferred-publication workflows.
+If incremental indexing proves too complex for the first optimization pass, **commit now, index later** remains a simpler fallback. Keep the local outbox model as a candidate for future batching and deferred-publication workflows.

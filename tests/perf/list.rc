@@ -1,0 +1,66 @@
+#!/bin/rc
+rfork en
+rootdir=/tmp/9social/perf
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: tests/perf/list.rc' >[1=2]
+	exit usage
+}
+
+fn field {
+	awk -F': ' -v 'key='$1 '
+		$1 == key && value == "" { value = substr($0, index($0, ": ")+2) }
+		END { if(value != "") print value; else exit 1 }
+	' $2
+}
+
+fn showroot {
+	root=$1
+	if(test -f $root/.9social-perf-root){
+		if(! test -f $root/config)
+			echo $root^'  broken: missing config'
+		if not {
+			ok=1
+			size=`{field size $root/config >[2]/dev/null}
+			if(! ~ $status ''){
+				echo $root^'  broken: missing size'
+				ok=0
+			}
+			if(~ $ok 1){
+				postsper=`{field posts-per-user $root/config >[2]/dev/null}
+				if(! ~ $status ''){
+					echo $root^'  broken: missing posts-per-user'
+					ok=0
+				}
+			}
+			if(~ $ok 1){
+				users=`{field users $root/config >[2]/dev/null}
+				if(! ~ $status ''){
+					echo $root^'  broken: missing users'
+					ok=0
+				}
+			}
+			if(~ $ok 1)
+				echo $root^'  size='^$size^'  posts-per-user='^$postsper^'  users='^$"users
+		}
+	}
+}
+
+if(! ~ $#* 0)
+	usage
+
+if(! test -d $rootdir)
+	exit ''
+
+for(name in `{ls -p $rootdir >[2]/dev/null | sort}){
+	root=$rootdir^/$name
+	if(test -d $root)
+		showroot $root
+}
+
+exit ''

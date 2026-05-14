@@ -1,0 +1,183 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=9social/lib/index/add-post
+base=/tmp/9social-index-add-post-test.$pid
+u1=550e8400-e29b-41d4-a716-446655440000
+u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
+p1=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+p2=d74aacda-68ee-4d1c-9f83-35e89a956676
+p3=ae1dc6c1-b26c-4a27-b343-8f8e62796623
+id1=9social:post:$u1:$p1
+id2=9social:post:$u2:$p2
+id3=9social:post:$u1:$p3
+eid1=9social_post_$u1^_$p1
+eid2=9social_post_$u2^_$p2
+eid3=9social_post_$u1^_$p3
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	testhome=$base.$1
+	rm -rf $testhome
+	mkdir -p $testhome/posts || fail mkdir
+	home=$testhome
+	indexroot=$home/lib/9social/index
+}
+
+fn assertfile {
+	if(! test -f $1) fail missing-file $1
+}
+
+fn assertcontent {
+	if(! ~ `{cat $1} $2) fail bad-content $1 `{cat $1} expected $2
+}
+
+fn runadd {
+	$cmd $1 >$home/out >[2]$home/err
+	st=$status
+}
+
+bind -b $repo/bin /bin || fail bind
+
+setup basic
+post=$home/posts/post
+>$post {
+	echo 'id: '^$id1
+	echo 'author: glenda'
+	echo 'date: 2026-05-02T01:00:00Z'
+	echo 'title: Hello'
+	echo
+	echo body
+}
+runadd $post
+if(! ~ $st '') fail basic-status $st `{cat $home/err}
+assertfile $indexroot/posts/$eid1
+assertcontent $indexroot/posts/$eid1 $post
+
+setup custom-index
+post=$home/posts/post
+custom=$home/custom-index
+>$post {
+	echo 'id: '^$id1
+	echo
+}
+indexroot=$custom $cmd $post >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail custom-status $st `{cat $home/err}
+assertfile $custom/posts/$eid1
+assertcontent $custom/posts/$eid1 $post
+
+setup reply
+post=$home/posts/reply
+>$post {
+	echo 'id: '^$id1
+	echo 'type: reply'
+	echo 'target: '^$id2
+	echo
+}
+runadd $post
+if(! ~ $st '') fail reply-status $st `{cat $home/err}
+assertfile $indexroot/posts/$eid1
+assertfile $indexroot/targets/$eid2/replies/$eid1
+assertcontent $indexroot/targets/$eid2/replies/$eid1 $post
+
+setup like
+post=$home/posts/like
+>$post {
+	echo 'id: '^$id1
+	echo 'type: like'
+	echo 'target: '^$id2
+	echo
+}
+runadd $post
+if(! ~ $st '') fail like-status $st `{cat $home/err}
+assertfile $indexroot/targets/$eid2/likes/$eid1
+assertcontent $indexroot/targets/$eid2/likes/$eid1 $post
+
+setup missing-target
+post=$home/posts/reply
+>$post {
+	echo 'id: '^$id1
+	echo 'type: reply'
+	echo
+}
+warn=1 $cmd $post >$home/out >[2]$home/err
+st=$status
+if(! ~ $st *skipped) fail missing-target-status $st `{cat $home/err}
+assertfile $indexroot/posts/$eid1
+grep 'skip relationship .*missing target' $home/err >/dev/null || fail missing-target-warning `{cat $home/err}
+
+setup malformed-target
+post=$home/posts/reply
+>$post {
+	echo 'id: '^$id1
+	echo 'type: reply'
+	echo 'target: nope'
+	echo
+}
+warn=1 $cmd $post >$home/out >[2]$home/err
+st=$status
+if(! ~ $st *skipped) fail malformed-target-status $st `{cat $home/err}
+assertfile $indexroot/posts/$eid1
+grep 'skip relationship .*malformed target' $home/err >/dev/null || fail malformed-target-warning `{cat $home/err}
+
+setup bad-format
+post=$home/posts/bad
+>$post {
+	echo 'id: '^$id1
+	echo 'bad header line'
+	echo
+}
+warn=1 $cmd $post >$home/out >[2]$home/err
+st=$status
+if(! ~ $st *skipped) fail bad-format-status $st `{cat $home/err}
+if(test -f $indexroot/posts/$eid1) fail bad-format-indexed
+grep 'skip post .*bad format' $home/err >/dev/null || fail bad-format-warning `{cat $home/err}
+
+setup duplicate
+post1=$home/posts/first
+post2=$home/posts/second
+>$post1 {
+	echo 'id: '^$id1
+	echo
+}
+>$post2 {
+	echo 'id: '^$id1
+	echo 'type: reply'
+	echo 'target: '^$id3
+	echo
+}
+runadd $post1
+if(! ~ $st '') fail duplicate-first-status $st `{cat $home/err}
+warn=1 $cmd $post2 >$home/out >[2]$home/err
+st=$status
+if(! ~ $st *skipped) fail duplicate-status $st `{cat $home/err}
+assertcontent $indexroot/posts/$eid1 $post1
+if(test -f $indexroot/targets/$eid3/replies/$eid1) fail duplicate-relation-indexed
+grep 'duplicate id' $home/err >/dev/null || fail duplicate-warning `{cat $home/err}
+
+setup structural
+post=$home/posts/post
+>$post {
+	echo 'id: '^$id1
+	echo
+}
+echo x >$home/notdir
+indexroot=$home/notdir $cmd $post >$home/out >[2]$home/err
+st=$status
+if(! ~ $st *failed) fail structural-status $st `{cat $home/err}
+grep 'cannot create' $home/err >/dev/null || fail structural-error `{cat $home/err}
+
+setup usage
+$cmd >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/index/add-post' $home/err >/dev/null || fail usage-error
+
+rm -rf $base.*
+echo ok
+exit ''

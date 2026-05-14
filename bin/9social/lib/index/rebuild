@@ -8,89 +8,20 @@ if(! ~ $#* 0){
 social=$home^/lib/9social
 index=$social^/index
 tmp=$social^/index.tmp.^$pid
-meta=/tmp/9social-reindex-meta.^$pid
-metaerr=/tmp/9social-reindex-metaerr.^$pid
-fn cleanup {
-	rm -f $meta $metaerr
-}
-
 fn failstruct {
 	echo $0^': '^$* >[1=2]
 	rm -rf $tmp
-	cleanup
 	exit 'reindex failed'
-}
-
-fn warn {
-	echo $0^': '^$* >[1=2]
-}
-
-fn field {
-	awk -F '	' -v 'k='$1 '$1==k && value=="" { value=$2 } END { if(value != "") print value }' $meta
 }
 
 fn indexpost {
 	post=$1
-	skip=0
-	if(! 9social/lib/post/meta.awk $post >$meta >[2]$metaerr){
-		warn 'skip post (bad format): '^$post
-		rm -f $meta $metaerr
-		skip=1
-	}
-
-	if(~ $skip 0){
-		id=`{field id}
-		if(~ $#id 0){
-			warn 'skip post (missing id): '^$post
-			skip=1
-		}
-	}
-	if(~ $skip 0){
-		encoded_id=`{9social/lib/id/encode.awk $id >[2]/dev/null}
-		if(! ~ $status ''){
-			warn 'skip post (malformed id): '^$post
-			skip=1
-		}
-	}
-	if(~ $skip 0){
-		post_index=$tmp^/posts/^$encoded_id
-		if(test -f $post_index){
-			old=`{cat $post_index}
-			warn 'skip post (duplicate id): '^$post^' already indexed: '^$old
-			skip=1
-		}
-	}
-	if(~ $skip 0){
-		if(! echo $post >$post_index)
-			failstruct 'cannot write '^$post_index
-
-		type=`{field type}
-		if(! ~ $#type 0 && ~ $type reply like){
-			target=`{field target}
-			if(~ $#target 0){
-				warn 'skip relationship (missing target): '^$post
-			}
-			if(! ~ $#target 0){
-				target_ok=1
-				encoded_target=`{9social/lib/id/encode.awk $target >[2]/dev/null}
-				if(! ~ $status ''){
-					warn 'skip relationship (malformed target): '^$post
-					target_ok=0
-				}
-				if(~ $target_ok 1){
-					if(~ $type reply)
-						reldir=$tmp^/targets/^$encoded_target^/replies
-					if(~ $type like)
-						reldir=$tmp^/targets/^$encoded_target^/likes
-					if(! mkdir -p $reldir)
-						failstruct 'cannot create '^$reldir
-					relfile=$reldir^/^$encoded_id
-					if(! echo $post >$relfile)
-						failstruct 'cannot write '^$relfile
-				}
-			}
-		}
-	}
+	indexroot=$tmp warn=1 9social/lib/index/add-post $post
+	st=$status
+	if(~ $st *failed)
+		failstruct 'cannot index '^$post
+	if not if(! ~ $st '' *skipped)
+		failstruct 'cannot index '^$post^': '^$st
 }
 
 fn scanposts {
@@ -123,5 +54,4 @@ if(test -d $index){
 if(! mv $tmp $index)
 	failstruct 'cannot install index'
 
-cleanup
 exit ''

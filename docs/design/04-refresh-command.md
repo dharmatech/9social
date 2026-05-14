@@ -253,9 +253,10 @@ This separation ensures:
 
   * assumes repo contains valid `profile` and `posts/`
 
-* No incremental indexing
+* Current implementation uses full index rebuilds
 
-  * this command only updates repositories
+  * future implementations may use Git change information to incrementally update the local index after refresh
+  * full rebuild should remain available as a repair fallback
 
 ---
 
@@ -267,6 +268,7 @@ This separation ensures:
   * URL → local path → feed ID
 * Partial or shallow clone
 * Archive feed support
+* Incremental index update from Git change information
 * Parallel fetching
 * Progress reporting
 * Error recovery and retry logic

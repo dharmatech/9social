@@ -34,7 +34,8 @@ Because the index is derived:
 * the index does not need to be committed to the user's self repository
 * stale index data is a cache/rebuild problem, not canonical data loss
 * deleted posts disappear from the index after a rebuild
-* changed post IDs or targets are reflected after a rebuild
+* full rebuilds can repair derived state when incremental indexing misses a change
+* published structural fields are not expected to change in place
 
 ---
 
@@ -65,9 +66,58 @@ A command such as:
 
 may rebuild the entire index by scanning the local post files under `self/` and `feeds/`.
 
-Level 1 should prefer full rebuilds over incremental updates because full rebuilds are simpler, deterministic, and naturally handle deletions and edits.
+The current implementation prefers full rebuilds because full rebuilds are simpler, deterministic, and naturally handle deletions and edits.
 
-Incremental indexing can be added later if full rebuilds become too slow.
+Performance tests show that full rebuilds become noticeable as the local community grows. The long-term design should keep full rebuilds as the authoritative repair operation while adding incremental indexing for ordinary refresh and local commit paths.
+
+---
+
+## Published Post Stability Contract
+
+Incremental indexing is much simpler if published posts have stable structural identity.
+
+The following fields and properties should be treated as structural after publication:
+
+* `id`
+* `type`
+* `target`, when present
+* local post path
+
+If a structural value is wrong, the preferred user-level operation is to delete the old post and create a new post. For example, a like or reply should not be retargeted by editing `target:` in place; the user should delete the old reaction or reply and publish a new one.
+
+Editable post content, such as `title:` and body text, may be updated in place by the author. Those edits should not require relationship index changes as long as `id`, `type`, `target`, and path remain stable.
+
+A full index rebuild should remain tolerant of historical or manually edited data. If duplicate IDs or unexpected structural changes are found, the indexer should warn and keep deterministic behavior rather than corrupting the index.
+
+---
+
+## Incremental Indexing Direction
+
+Full rebuilds remain the source-of-truth repair operation:
+
+```rc
+9social/lib/index/rebuild
+```
+
+Day-to-day commands should eventually avoid rebuilding the whole index when Git and local command behavior identify a small change set.
+
+The intended incremental model is:
+
+* after `9social/cmd/refresh`, index only posts added or changed by the last feed update and remove entries for deleted feed posts
+* after local commands such as `new-post`, `reply`, `like`, `update`, or `delete`, index only the post or posts affected by the local commit
+* keep `index/rebuild` available for manual repair, testing, and cases where incremental state is uncertain
+
+Candidate primitives:
+
+```rc
+9social/lib/index/add-post <post-file>
+9social/lib/index/remove-post <post-id-or-post-file>
+9social/lib/index/update-post <post-file>
+```
+
+A practical first step is `add-post`: validate one post, add `index/posts/<encoded-id>`, and add any relationship entry under `index/targets`. `index/rebuild` can then be refactored to use the same add-post logic internally before local commands depend on it.
+
+Removal and update handling need a reliable way to remove relationship entries created by an older version of a post. The stability contract above keeps the first incremental implementation small: ordinary local commands mostly add new posts or delete known posts, while structural retargeting is not a supported edit path.
 
 ---
 
@@ -427,9 +477,11 @@ Warnings from `reindex`, such as malformed skipped posts, may be printed directl
 
 If `reindex` fails structurally, `refresh` should exit nonzero after reporting that feed refresh completed but index rebuild failed.
 
-Level 1 should rebuild the full index every time `refresh` runs. This is simpler than detecting whether feeds changed, and it also catches local edits or deletes in `self/posts`.
+The current implementation rebuilds the full index every time `refresh` runs. This is simpler than detecting whether feeds changed, and it also catches local edits or deletes in `self/posts`.
 
-This makes the index naturally track local feed updates without making indexing part of the Git transport model.
+The intended future implementation should use Git change information from refresh to update only changed feed posts when that is reliable. If the change set cannot be trusted, `refresh` can fall back to a full rebuild.
+
+This makes the index naturally track local feed updates while still allowing a faster incremental path for ordinary refreshes.
 
 ---
 
@@ -557,6 +609,14 @@ Recommended order:
 `Like` idempotency should wait until the core index primitives are working and tested.
 
 This order keeps each step small and gives every larger command a tested helper to build on.
+
+Future incremental index work should proceed in the same style:
+
+1. add and test `9social/lib/index/add-post`
+2. refactor `index/rebuild` to use the same single-post indexing logic
+3. add and test removal for known indexed posts
+4. update local commands to index the posts they create or delete
+5. update `refresh` to use Git change information where reliable, with full rebuild fallback
 
 ---
 

@@ -1,0 +1,78 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/perf/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	exit $1
+}
+
+fn usage {
+	echo 'usage: tests/perf/like.rc <root> <user>' >[1=2]
+	exit usage
+}
+
+fn checkroot {
+	root=$1
+	if(~ $root /tmp/9social/perf /tmp/9social/perf/)
+		fail 'refusing perf root: '^$root
+	if(! ~ $root /tmp/9social/perf/*)
+		fail 'perf root must be under /tmp/9social/perf: '^$root
+	if(~ $root */../* */.. ../* ..)
+		fail 'perf root must not contain ..: '^$root
+}
+
+if(! ~ $#* 2)
+	usage
+
+root=$1
+simuser=$2
+checkroot $root
+
+if(! test -f $root/.9social-perf-root)
+	fail 'missing perf root marker: '^$root^'/.9social-perf-root'
+
+simhome=$root^/homes/^$simuser
+if(! test -d $simhome/lib/9social)
+	fail 'simulated 9social home not found: '^$simhome^'/lib/9social'
+
+bind -b $repo/bin /bin || fail 'cannot bind repo bin'
+home=$simhome
+user=$simuser
+cd $home || fail 'cannot cd to simulated home: '^$home
+
+target=()
+targetid=()
+feeds=$home/lib/9social/feeds
+if(! test -d $feeds)
+	fail 'feeds not found: '^$feeds
+
+for(post in `{walk $feeds >[2]/dev/null | grep '/posts/' | grep -v '/posts$' | grep -v '/\.keep$' | sort}){
+	if(~ $#target 0){
+		id=`{9social/lib/post/id.awk $post >[2]/dev/null}
+		if(~ $status '' && ~ $#id 1){
+			if(! 9social/lib/liked-post $id >[2]/dev/null){
+				target=$post
+				targetid=$id
+			}
+		}
+	}
+}
+
+if(~ $#target 0)
+	fail 'no unliked feed post found'
+
+echo 'root: '^$root
+echo 'user: '^$user
+echo 'home: '^$home
+echo 'target: '^$target
+echo 'target id: '^$targetid
+echo 'command: 9social/cmd/like '^$target
+echo 'time:'
+time 9social/cmd/like $target
+st=$status
+if(! ~ $st '')
+	fail 'like failed: '^$st
+
+exit ''
