@@ -87,6 +87,22 @@ deterministic reply body under the generated root's `logs` directory, prints the
 target path and ID, times the `reply` command, and leaves the generated root
 modified for inspection or follow-up measurements.
 
+
+## Measure Index Update
+
+`index-update.rc` measures several `9social/lib/index/update` paths for one simulated user:
+
+    tests/perf/index-update.rc /tmp/9social/perf/12345 rms
+
+It removes that simulated user's existing index, times the initial update, times an
+unchanged update after state exists, commits a small batch of self posts and times
+the add-only incremental path, then commits one modification and one deletion. The
+modification and deletion cases are labeled as fallback rebuilds in the output.
+
+The script mutates only the selected simulated user's home under the generated
+perf root. The generated root is left in place for inspection or follow-up
+measurements.
+
 ## Measure Reindex
 
 `reindex.rc` rebuilds the index for one simulated user and prints timing output:
