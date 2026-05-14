@@ -3,7 +3,8 @@
 #
 # Reads a draft created by 9social, optional sidecar metadata from
 # `<draft>.meta`, writes a post file under `self/posts`, stages and commits
-# it with git, then removes the draft and sidecar on success.
+# it with git, removes the draft and sidecar on success, then indexes the
+# committed post.
 
 fn cleanup {
 	if(! ~ $#titlefile 0)
@@ -188,7 +189,11 @@ if(! @{cd $self && git/commit -m 'post: '^$postid $relpost})
 	fail 'git commit failed'
 
 rm -f $draft $sidecar >[2]/dev/null
+draft=()
+sidecar=()
 cleanup
+
+indexroot=$home^/lib/9social/index 9social/lib/index/add-post $post || fail 'cannot index post'
 
 echo 'posted: '^$relpost
 exit ''

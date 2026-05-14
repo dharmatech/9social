@@ -7,6 +7,7 @@ useruuid=550e8400-e29b-41d4-a716-446655440000
 targetuser=11111111-1111-4111-8111-111111111111
 targetpostuuid=22222222-2222-4222-8222-222222222222
 targetid=9social:post:^$targetuser^:^$targetpostuuid
+encodedtarget=9social_post_$targetuser^_$targetpostuuid
 
 fn fail {
 	echo FAIL: $* >[1=2]
@@ -50,6 +51,19 @@ fn onepost {
 	post=$posts(1)
 }
 
+fn assertreplyindexed {
+	replyid=`{grep '^id: ' $post | sed 's/^id: //'}
+	if(! ~ $#replyid 1) fail $1-reply-id $replyid
+	encodedreply=`{9social/lib/id/encode.awk $replyid}
+	if(! ~ $#encodedreply 1) fail $1-encoded-reply $encodedreply
+	assertpath=$home/lib/9social/index/posts/$encodedreply
+	if(! test -f $assertpath) fail $1-index-post-missing $assertpath
+	if(! ~ `{cat $assertpath} $post) fail $1-index-post-content `{cat $assertpath} expected $post
+	assertpath=$home/lib/9social/index/targets/$encodedtarget/replies/$encodedreply
+	if(! test -f $assertpath) fail $1-index-reply-missing $assertpath
+	if(! ~ `{cat $assertpath} $post) fail $1-index-reply-content `{cat $assertpath} expected $post
+}
+
 setup ok
 {
 	echo 'Linux also needs freedom-respecting tools.'
@@ -61,6 +75,7 @@ grep '^target: '^$targetid^'$' $post >/dev/null || fail ok-target
 grep '^title: Re: Free Software and Emacs$' $post >/dev/null || fail ok-title
 grep '^Linux also needs freedom-respecting tools\.$' $post >/dev/null || fail ok-body
 grep '^posted: posts/' $testhome/out >/dev/null || fail ok-output
+assertreplyindexed ok
 
 setup re
 {
@@ -78,6 +93,7 @@ if(! ~ $st '') fail re-status $st `{cat $testhome/err}
 onepost re
 grep '^title: Re: Kernel Extensions$' $post >/dev/null || fail re-title
 if(grep '^title: Re: Re:' $post >/dev/null) fail re-duplicate
+assertreplyindexed re
 
 setup notitle
 {
@@ -94,6 +110,21 @@ if(! ~ $st '') fail notitle-status $st `{cat $testhome/err}
 onepost notitle
 grep '^title:$' $post >/dev/null || fail notitle-blank-title
 grep '^Reply without target title\.$' $post >/dev/null || fail notitle-body
+assertreplyindexed notitle
+
+setup postid
+targetfile=$target
+mkdir -p $home/lib/9social/index/posts || fail postid-index-mkdir
+echo $targetfile >$home/lib/9social/index/posts/$encodedtarget
+target=$targetid
+{
+	echo 'Reply through indexed post ID.'
+} | runreply
+if(! ~ $st '') fail postid-status $st `{cat $testhome/err}
+onepost postid
+grep '^target: '^$targetid^'$' $post >/dev/null || fail postid-target
+grep '^Reply through indexed post ID\.$' $post >/dev/null || fail postid-body
+assertreplyindexed postid
 
 setup badtarget
 {
@@ -121,7 +152,7 @@ setup usage
 $cmd >$testhome/out >[2]$testhome/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/cmd/reply <post-file>' $testhome/err >/dev/null || fail usage-error
+grep 'usage: 9social/cmd/reply <post-ref>' $testhome/err >/dev/null || fail usage-error
 
 echo ok
 exit ''

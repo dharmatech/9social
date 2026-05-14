@@ -8,7 +8,7 @@ fn fail {
 }
 
 fn usage {
-	echo 'usage: 9social/lib/draft/reply <post-file>' >[1=2]
+	echo 'usage: 9social/lib/draft/reply <post-ref>' >[1=2]
 	exit usage
 }
 
@@ -17,8 +17,11 @@ if(! ~ $#* 1)
 
 source=$1
 draft=()
-if(! test -f $source)
-	fail 'post file not found: '^$source
+if(! test -f $source){
+	source=`{9social/lib/post/resolve $source}
+	if(! ~ $status '' || ! ~ $#source 1)
+		fail 'post file not found: '^$1
+}
 
 target=`{9social/lib/post/id.awk $source}
 if(! ~ $status '')

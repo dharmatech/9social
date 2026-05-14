@@ -4,6 +4,7 @@ repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/lib/draft/reply
 targetid=9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222
+encodedtarget=9social_post_11111111-1111-4111-8111-111111111111_22222222-2222-4222-8222-222222222222
 
 fn fail {
 	echo FAIL: $* >[1=2]
@@ -14,7 +15,8 @@ bind -b $repo/bin /bin || fail bind
 
 base=/tmp/9social-reply-draft-test.$pid
 rm -rf $base
-mkdir -p $base || fail mkdir
+mkdir -p $base/lib/9social/index/posts || fail mkdir
+home=$base
 
 target=$base/target
 {
@@ -37,8 +39,11 @@ rm -f $draft $draft^.meta
 
 {
 	echo 'id: '^$targetid
+	echo 'author: rms'
+	echo 'date: 2026-05-06T12:00:00Z'
 	echo 'title: Re: Kernel Extensions'
 	echo
+	echo 'Original body.'
 } >$target
 
 draft=`{$cmd $target >[2]$base/err}
@@ -46,6 +51,14 @@ st=$status
 if(! ~ $st '') fail re-status $st `{cat $base/err}
 grep '^Title: Re: Kernel Extensions$' $draft >/dev/null || fail re-title `{cat $draft}
 if(grep '^Title: Re: Re:' $draft >/dev/null) fail re-duplicate
+rm -f $draft $draft^.meta
+
+echo $target >$base/lib/9social/index/posts/$encodedtarget
+draft=`{$cmd $targetid >[2]$base/err}
+st=$status
+if(! ~ $st '') fail postid-status $st `{cat $base/err}
+grep '^Title: Re: Kernel Extensions$' $draft >/dev/null || fail postid-title `{cat $draft}
+grep '^target: '^$targetid^'$' $draft^.meta >/dev/null || fail postid-meta-target `{cat $draft^.meta}
 rm -f $draft $draft^.meta
 
 {
@@ -60,7 +73,7 @@ grep 'bad post id' $base/err >/dev/null || fail bad-error `{cat $base/err}
 $cmd >$base/out >[2]$base/err
 st=$status
 if(~ $st '') fail usage-status
-grep 'usage: 9social/lib/draft/reply <post-file>' $base/err >/dev/null || fail usage-error `{cat $base/err}
+grep 'usage: 9social/lib/draft/reply <post-ref>' $base/err >/dev/null || fail usage-error `{cat $base/err}
 
 rm -rf $base
 echo ok

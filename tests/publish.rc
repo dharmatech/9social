@@ -39,6 +39,30 @@ fn onepost {
 	post=$posts(1)
 }
 
+fn postid {
+	grep '^id: ' $post | sed 's/^id: //'
+}
+
+fn assertpostindexed {
+	id=`{postid}
+	if(! ~ $#id 1) fail $1-post-id $id
+	encoded=`{9social/lib/id/encode.awk $id}
+	if(! ~ $#encoded 1) fail $1-encoded-post $encoded
+	assertpath=$home/lib/9social/index/posts/$encoded
+	if(! test -f $assertpath) fail $1-index-post-missing $assertpath
+	if(! ~ `{cat $assertpath} $post) fail $1-index-post-content `{cat $assertpath} expected $post
+}
+
+fn assertreplyindexed {
+	id=`{postid}
+	if(! ~ $#id 1) fail $1-reply-id $id
+	encoded=`{9social/lib/id/encode.awk $id}
+	if(! ~ $#encoded 1) fail $1-encoded-reply $encoded
+	assertpath=$home/lib/9social/index/targets/$encodedreplytarget/replies/$encoded
+	if(! test -f $assertpath) fail $1-index-reply-missing $assertpath
+	if(! ~ `{cat $assertpath} $post) fail $1-index-reply-content `{cat $assertpath} expected $post
+}
+
 setup ok
 draft=$home/tmp/9social-new-post.123
 {
@@ -53,6 +77,7 @@ if(! ~ $post */posts/????-??-??-publish-test) fail ok-filename $post
 if(test -e $draft) fail ok-draft-still-exists
 grep '^posted: posts/' $testhome/out >/dev/null || fail ok-posted-output
 grep '^draft removed; close the Acme window with Del$' $testhome/out >/dev/null || fail ok-reminder-output
+assertpostindexed ok
 
 setup invalid
 draft=$home/tmp/not-a-9social-draft
@@ -83,6 +108,7 @@ if(test -e $draft) fail suffix-draft-still-exists
 
 setup reply
 replytarget=9social:post:11111111-1111-4111-8111-111111111111:22222222-2222-4222-8222-222222222222
+encodedreplytarget=9social_post_11111111-1111-4111-8111-111111111111_22222222-2222-4222-8222-222222222222
 draft=$home/tmp/9social-new-post.900
 {
 	echo 'Title: Re: Reply Target'
@@ -107,6 +133,8 @@ awk '
 	/^title: / { title=NR }
 	END { if(!(date < type && type < target && target < title)) exit 1 }
 ' $post || fail reply-field-order
+assertpostindexed reply
+assertreplyindexed reply
 
 setup badmeta
 badtarget=9social:post:not-a-uuid:22222222-2222-4222-8222-222222222222
