@@ -1,0 +1,151 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+cmd=9social/lib/index/update
+base=/tmp/9social-index-update-test.$pid
+u1=550e8400-e29b-41d4-a716-446655440000
+u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
+p1=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+p2=d74aacda-68ee-4d1c-9f83-35e89a956676
+p3=ae1dc6c1-b26c-4a27-b343-8f8e62796623
+id1=9social:post:$u1:$p1
+id2=9social:post:$u2:$p2
+id3=9social:post:$u1:$p3
+eid1=9social_post_$u1^_$p1
+eid2=9social_post_$u2^_$p2
+eid3=9social_post_$u1^_$p3
+
+fn fail {
+	echo FAIL: $* >[1=2]
+	exit fail
+}
+
+fn setup {
+	home=$base.$1
+	rm -rf $home
+	mkdir -p $home/lib/9social/self/posts $home/lib/9social/feeds/rms/posts || fail mkdir
+}
+
+fn postfile {
+	file=$1
+	id=$2
+	author=$3
+	{
+		echo 'id: '^$id
+		echo 'author: '^$author
+		echo 'date: 2026-05-02T01:00:00Z'
+		echo 'title: Test Post'
+		echo
+		echo body
+	} >$file || fail write-post
+}
+
+fn replyfile {
+	file=$1
+	id=$2
+	target=$3
+	{
+		echo 'id: '^$id
+		echo 'author: glenda'
+		echo 'date: 2026-05-02T01:00:00Z'
+		echo 'type: reply'
+		echo 'target: '^$target
+		echo
+		echo body
+	} >$file || fail write-reply
+}
+
+fn runupdate {
+	$cmd >$home/out >[2]$home/err
+	st=$status
+}
+
+fn assertfile {
+	if(! test -f $1) fail missing-file $1
+}
+
+fn assertcontent {
+	if(! ~ `{cat $1} $2) fail bad-content $1 `{cat $1} expected $2
+}
+
+fn snapshot {
+	walk $home/lib/9social/index >[2]/dev/null | sort
+}
+
+bind -b $repo/bin /bin || fail bind
+
+setup missing-index
+selfpost=$home/lib/9social/self/posts/self
+feedpost=$home/lib/9social/feeds/rms/posts/feed
+postfile $selfpost $id1 glenda
+postfile $feedpost $id2 rms
+runupdate
+if(! ~ $st '') fail missing-index-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid1
+assertfile $home/lib/9social/index/posts/$eid2
+assertcontent $home/lib/9social/index/posts/$eid1 $selfpost
+assertcontent $home/lib/9social/index/posts/$eid2 $feedpost
+
+setup add-missing
+selfpost=$home/lib/9social/self/posts/self
+feedpost=$home/lib/9social/feeds/rms/posts/feed
+postfile $selfpost $id1 glenda
+postfile $feedpost $id2 rms
+mkdir -p $home/lib/9social/index/posts $home/lib/9social/index/targets || fail add-missing-index
+indexroot=$home/lib/9social/index 9social/lib/index/add-post $selfpost >$home/add.out >[2]$home/add.err || fail add-existing `{cat $home/add.err}
+runupdate
+if(! ~ $st '') fail add-missing-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid1
+assertfile $home/lib/9social/index/posts/$eid2
+assertcontent $home/lib/9social/index/posts/$eid2 $feedpost
+
+setup complete
+selfpost=$home/lib/9social/self/posts/self
+feedpost=$home/lib/9social/feeds/rms/posts/feed
+postfile $selfpost $id1 glenda
+postfile $feedpost $id2 rms
+mkdir -p $home/lib/9social/index/posts $home/lib/9social/index/targets || fail complete-index
+indexroot=$home/lib/9social/index 9social/lib/index/add-post $selfpost >$home/add1.out >[2]$home/add1.err || fail complete-add1 `{cat $home/add1.err}
+indexroot=$home/lib/9social/index 9social/lib/index/add-post $feedpost >$home/add2.out >[2]$home/add2.err || fail complete-add2 `{cat $home/add2.err}
+snapshot >$home/before
+runupdate
+if(! ~ $st '') fail complete-status $st `{cat $home/err}
+snapshot >$home/after
+cmp $home/before $home/after || fail complete-changed
+
+setup malformed
+selfpost=$home/lib/9social/self/posts/self
+badpost=$home/lib/9social/self/posts/bad
+postfile $selfpost $id1 glenda
+{
+	echo 'id: '^$id2
+	echo 'bad header line'
+	echo
+} >$badpost || fail write-bad
+mkdir -p $home/lib/9social/index/posts $home/lib/9social/index/targets || fail malformed-index
+warn=1 $cmd >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail malformed-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid1
+if(test -f $home/lib/9social/index/posts/$eid2) fail malformed-indexed
+if(! grep 'skip post .*bad format' $home/err >/dev/null) fail malformed-warning `{cat $home/err}
+
+setup reply
+selfpost=$home/lib/9social/self/posts/reply
+replyfile $selfpost $id3 $id2
+mkdir -p $home/lib/9social/index/posts $home/lib/9social/index/targets || fail reply-index
+runupdate
+if(! ~ $st '') fail reply-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid3
+assertfile $home/lib/9social/index/targets/$eid2/replies/$eid3
+assertcontent $home/lib/9social/index/targets/$eid2/replies/$eid3 $selfpost
+
+setup usage
+$cmd extra >$home/out >[2]$home/err
+st=$status
+if(~ $st '') fail usage-status
+grep 'usage: 9social/lib/index/update' $home/err >/dev/null || fail usage-error `{cat $home/err}
+
+rm -rf $base.*
+echo ok
+exit ''

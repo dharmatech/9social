@@ -1,0 +1,53 @@
+#!/bin/rc
+
+if(! ~ $#* 0){
+	echo 'usage: 9social/lib/index/update' >[1=2]
+	exit usage
+}
+
+social=$home^/lib/9social
+index=$social^/index
+
+fn failstruct {
+	echo $0^': '^$* >[1=2]
+	exit 'index update failed'
+}
+
+fn indexpost {
+	post=$1
+	if(~ $#warn 0)
+		indexroot=$index 9social/lib/index/add-post $post
+	if not
+		indexroot=$index warn=$warn 9social/lib/index/add-post $post
+	st=$status
+	if(~ $st *failed)
+		failstruct 'cannot index '^$post
+	if not if(! ~ $st '' *skipped)
+		failstruct 'cannot index '^$post^': '^$st
+}
+
+fn scanposts {
+	posts=$1
+	if(test -d $posts){
+		for(name in `{ls -p $posts >[2]/dev/null | sort}){
+			if(! ~ $name .* && test -f $posts^/^$name)
+				indexpost $posts^/^$name
+		}
+	}
+}
+
+if(! test -d $index){
+	9social/lib/index/rebuild
+	exit $status
+}
+
+scanposts $social^/self/posts
+
+if(test -d $social^/feeds){
+	for(feed in `{ls -p $social^/feeds >[2]/dev/null | sort}){
+		if(test -d $social^/feeds/^$feed)
+			scanposts $social^/feeds/^$feed^/posts
+	}
+}
+
+exit ''

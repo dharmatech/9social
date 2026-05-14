@@ -3,7 +3,7 @@ rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 
-for(t in follow.rc refresh.rc init-self.rc new-post.rc new-post-editor.rc new-post-draft.rc check-self.rc valid-draft.rc draft-slug.rc valid-profile.rc encode-id.rc line-at-position.rc mk-temp-file.rc post-meta.rc index-add-post.rc reindex.rc render-threads.rc show-threads.rc liked-post.rc post-path.rc post-id.rc post-title.rc post-target.rc self-post-path.rc check-post.rc resolve-post.rc show-post.rc publish.rc reply-draft.rc reply.rc like.rc Like.rc cancel.rc push.rc delete.rc update.rc timeline.rc workflow.rc OpenPost.rc Timeline.rc ShowThreads.rc Menu.rc){
+for(t in follow.rc refresh.rc init-self.rc new-post.rc new-post-editor.rc new-post-draft.rc check-self.rc valid-draft.rc draft-slug.rc valid-profile.rc encode-id.rc line-at-position.rc mk-temp-file.rc post-meta.rc index-add-post.rc index-update.rc reindex.rc render-threads.rc show-threads.rc liked-post.rc post-path.rc post-id.rc post-title.rc post-target.rc self-post-path.rc check-post.rc resolve-post.rc show-post.rc publish.rc reply-draft.rc reply.rc like.rc Like.rc cancel.rc push.rc delete.rc update.rc timeline.rc workflow.rc OpenPost.rc Timeline.rc ShowThreads.rc Menu.rc){
 	echo tests/$t
 	$repo/tests/$t || exit $status
 }
