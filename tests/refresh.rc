@@ -2,6 +2,7 @@
 rfork en
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/cmd/refresh
+basepath=$path
 
 fn maketestcmd {
 	testcmd=$testhome/refresh
@@ -24,7 +25,7 @@ fn setup {
 	rm -rf $testhome
 	mkdir -p $testhome/bin/git $testhome/bin/9social/lib/index || fail mkdir-bin
 	home=$testhome
-	path=($testhome/bin $path)
+	path=($testhome/bin $basepath)
 }
 
 setup missing
@@ -95,6 +96,47 @@ $testcmd >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail indexupdatefail-status
 grep 'index update failed' $home/err >/dev/null || fail indexupdatefail-error `{cat $home/err}
+
+
+setup localclone
+bind -b $repo/bin /bin || fail localclone-bind
+u1=550e8400-e29b-41d4-a716-446655440000
+p1=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
+id1=9social:post:$u1:$p1
+eid1=9social_post_$u1^_$p1
+remote=$home/remotes/linus
+seed=$home/seeds/linus
+mkdir -p $remote $seed/posts $home/lib/9social/self || fail localclone-mkdir
+@{cd $remote && git/init . >/dev/null >[2]/dev/null} || fail localclone-remote-init
+@{cd $seed && git/init . >/dev/null >[2]/dev/null} || fail localclone-seed-init
+{
+	echo 'id: 9social:user:'^$u1
+	echo 'name: linus'
+	echo 'display: Linus'
+} >$seed/profile || fail localclone-profile
+{
+	echo 'id: '^$id1
+	echo 'author: linus'
+	echo 'date: 2026-05-02T01:00:00Z'
+	echo 'title: Local Clone Test'
+	echo
+	echo body
+} >$seed/posts/hello || fail localclone-post
+@{cd $seed && git/add profile posts/hello && git/commit -m init profile posts/hello >/dev/null >[2]/dev/null} || fail localclone-seed-commit
+@{cd $seed && git/push -u $remote >/dev/null >[2]/dev/null} || fail localclone-seed-push
+>$home/lib/9social/self/following echo $remote
+$cmd >$home/out >[2]$home/err
+st=$status
+if(! ~ $st '') fail localclone-status $st `{cat $home/err}
+feed=$home/lib/9social/feeds/linus
+grep '^clone '^$remote^'$' $home/out >/dev/null || fail localclone-output `{cat $home/out}
+if(! test -f $feed/profile) fail localclone-profile-missing
+if(! test -f $feed/posts/hello) fail localclone-post-missing
+if(! test -f $home/lib/9social/index/posts/$eid1) fail localclone-index-missing
+if(! ~ `{cat $home/lib/9social/index/posts/$eid1} $feed/posts/hello) fail localclone-index-path `{cat $home/lib/9social/index/posts/$eid1}
+if(! test -f $home/lib/9social/index/state/feeds/linus) fail localclone-state-missing
+head=`{@{cd $feed && git/query HEAD} >[2]/dev/null}
+if(! ~ `{cat $home/lib/9social/index/state/feeds/linus} $head) fail localclone-state-value `{cat $home/lib/9social/index/state/feeds/linus} expected $head
 
 setup usage
 $cmd extra >$home/out >[2]$home/err
