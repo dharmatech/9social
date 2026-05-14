@@ -7,10 +7,42 @@ if(! ~ $#* 0){
 
 social=$home^/lib/9social
 index=$social^/index
+state=$index^/state
+zero=0000000000000000000000000000000000000000
+metadir=/tmp/9social
+changes=$metadir^/index-update-changes.^$pid
+
+fn cleanup {
+	rm -f $changes >[2]/dev/null
+}
 
 fn failstruct {
 	echo $0^': '^$* >[1=2]
+	cleanup
 	exit 'index update failed'
+}
+
+fn rebuildindex {
+	cleanup
+	9social/lib/index/rebuild
+	exit $status
+}
+
+fn githead {
+	source=$1
+	if(! test -d $source/.git)
+		test -d $source/.git
+	if not
+		@{cd $source && git/query HEAD} >[2]/dev/null
+}
+
+fn writestate {
+	statefile=$1
+	head=$2
+	if(! mkdir -p $state $state/feeds)
+		failstruct 'cannot create '^$state
+	if(! echo $head >$statefile)
+		failstruct 'cannot write '^$statefile
 }
 
 fn indexpost {
@@ -36,18 +68,62 @@ fn scanposts {
 	}
 }
 
+fn updatesource {
+	source=$1
+	posts=$2
+	statefile=$3
+
+	if(! test -d $source/.git)
+		scanposts $posts
+	if not {
+		head=`{githead $source}
+		if(! ~ $status '' || ! ~ $#head 1)
+			failstruct 'cannot read git head: '^$source
+
+		old=$zero
+		if(test -f $statefile)
+			old=`{cat $statefile >[2]/dev/null}
+		if(! ~ $#old 1)
+			rebuildindex
+
+		if(! ~ $old $head){
+			if(! @{cd $source && git/query -c $old $head} >$changes >[2]/dev/null)
+				rebuildindex
+
+			if(grep '^[-@] posts/' $changes >/dev/null)
+				rebuildindex
+
+			missing=()
+			for(relpost in `{awk '$1=="+" && index($2, "posts/")==1 { print $2 }' $changes}){
+				post=$source^/^$relpost
+				if(test -f $post)
+					indexpost $post
+				if not
+					missing=1
+			}
+			if(! ~ $#missing 0)
+				rebuildindex
+			writestate $statefile $head
+		}
+	}
+}
+
 if(! test -d $index){
 	9social/lib/index/rebuild
 	exit $status
 }
 
-scanposts $social^/self/posts
+if(! mkdir -p $metadir)
+	failstruct 'cannot create '^$metadir
+
+updatesource $social^/self $social^/self/posts $state/self
 
 if(test -d $social^/feeds){
 	for(feed in `{ls -p $social^/feeds >[2]/dev/null | sort}){
 		if(test -d $social^/feeds/^$feed)
-			scanposts $social^/feeds/^$feed^/posts
+			updatesource $social^/feeds/^$feed $social^/feeds/^$feed^/posts $state/feeds/^$feed
 	}
 }
 
+cleanup
 exit ''

@@ -7,11 +7,11 @@ fn maketestcmd {
 	testcmd=$testhome/refresh
 	cp $cmd $testcmd || fail cp-refresh
 	chmod +x $testcmd || fail chmod-refresh
-	>$testhome/bin/9social/lib/index/rebuild {
+	>$testhome/bin/9social/lib/index/update {
 		echo '#!/bin/rc'
-		echo 'echo reindex >>'^$testhome^'/reindex-log'
+		echo 'echo update-index >>'^$testhome^'/index-update-log'
 	}
-	chmod +x $testhome/bin/9social/lib/index/rebuild || fail chmod-reindex
+	chmod +x $testhome/bin/9social/lib/index/update || fail chmod-index-update
 }
 
 fn fail {
@@ -34,7 +34,7 @@ st=$status
 if(! ~ $st '') fail missing-status $st `{cat $home/err}
 if(! test -d $home/lib/9social/feeds) fail missing-feeds
 if(test -s $home/out) fail missing-output `{cat $home/out}
-if(! ~ `{cat $home/reindex-log} reindex) fail missing-reindex
+if(! ~ `{cat $home/index-update-log} update-index) fail missing-index-update
 
 setup clone
 maketestcmd
@@ -55,7 +55,7 @@ if(! ~ $st '') fail clone-status $st `{cat $home/err}
 if(! ~ `{cat $home/clone-url} git@github.com:dharmatech/9social-user-dennis.git) fail clone-url `{cat $home/clone-url}
 if(! ~ `{cat $home/clone-path} $home/lib/9social/feeds/9social-user-dennis) fail clone-path `{cat $home/clone-path}
 grep '^clone git@github.com:dharmatech/9social-user-dennis.git$' $home/out >/dev/null || fail clone-output `{cat $home/out}
-if(! ~ `{cat $home/reindex-log} reindex) fail clone-reindex
+if(! ~ `{cat $home/index-update-log} update-index) fail clone-index-update
 
 setup update
 maketestcmd
@@ -71,7 +71,7 @@ st=$status
 if(! ~ $st '') fail update-status $st `{cat $home/err}
 if(! ~ `{cat $home/pull-pwd} $home/lib/9social/feeds/9social-user-dennis) fail update-pwd `{cat $home/pull-pwd}
 grep '^update 9social-user-dennis$' $home/out >/dev/null || fail update-output `{cat $home/out}
-if(! ~ `{cat $home/reindex-log} reindex) fail update-reindex
+if(! ~ `{cat $home/index-update-log} update-index) fail update-index-update
 
 setup empty
 maketestcmd
@@ -82,19 +82,19 @@ $testcmd >$home/out >[2]$home/err
 st=$status
 if(! ~ $st '') fail empty-status $st `{cat $home/err}
 if(test -s $home/out) fail empty-output `{cat $home/out}
-if(! ~ `{cat $home/reindex-log} reindex) fail empty-reindex
+if(! ~ `{cat $home/index-update-log} update-index) fail empty-index-update
 
-setup reindexfail
+setup indexupdatefail
 maketestcmd
->$home/bin/9social/lib/index/rebuild {
+>$home/bin/9social/lib/index/update {
 	echo '#!/bin/rc'
 	echo 'exit fail'
 }
-chmod +x $home/bin/9social/lib/index/rebuild || fail reindexfail-chmod
+chmod +x $home/bin/9social/lib/index/update || fail indexupdatefail-chmod
 $testcmd >$home/out >[2]$home/err
 st=$status
-if(~ $st '') fail reindexfail-status
-grep 'reindex failed' $home/err >/dev/null || fail reindexfail-error `{cat $home/err}
+if(~ $st '') fail indexupdatefail-status
+grep 'index update failed' $home/err >/dev/null || fail indexupdatefail-error `{cat $home/err}
 
 setup usage
 $cmd extra >$home/out >[2]$home/err

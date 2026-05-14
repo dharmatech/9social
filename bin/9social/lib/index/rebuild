@@ -8,10 +8,31 @@ if(! ~ $#* 0){
 social=$home^/lib/9social
 index=$social^/index
 tmp=$social^/index.tmp.^$pid
+state=$tmp^/state
 fn failstruct {
 	echo $0^': '^$* >[1=2]
 	rm -rf $tmp
 	exit 'reindex failed'
+}
+
+fn githead {
+	source=$1
+	if(! test -d $source/.git)
+		test -d $source/.git
+	if not
+		@{cd $source && git/query HEAD} >[2]/dev/null
+}
+
+fn writestate {
+	source=$1
+	statefile=$2
+	if(test -f $source/profile && test -d $source/posts){
+		head=`{githead $source}
+		if(~ $status '' && ~ $#head 1){
+			if(! echo $head >$statefile)
+				failstruct 'cannot write '^$statefile
+		}
+	}
 }
 
 fn indexpost {
@@ -35,15 +56,18 @@ fn scanposts {
 }
 
 rm -rf $tmp
-if(! mkdir -p $tmp/posts $tmp/targets)
+if(! mkdir -p $tmp/posts $tmp/targets $state/feeds)
 	failstruct 'cannot create '^$tmp
 
 scanposts $social^/self/posts
+writestate $social^/self $state/self
 
 if(test -d $social^/feeds){
 	for(feed in `{ls -p $social^/feeds >[2]/dev/null | sort}){
-		if(test -d $social^/feeds/^$feed)
+		if(test -d $social^/feeds/^$feed){
 			scanposts $social^/feeds/^$feed^/posts
+			writestate $social^/feeds/^$feed $state/feeds/^$feed
+		}
 	}
 }
 

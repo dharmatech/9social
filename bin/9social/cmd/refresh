@@ -5,6 +5,19 @@ following=$social^/self/following
 feeds=$social^/feeds
 failed=()
 seen=()
+zero=0000000000000000000000000000000000000000
+
+fn checkouthead {
+	repo=$1
+	if(test -d $repo/.git){
+		head=`{@{cd $repo && git/query HEAD} >[2]/dev/null}
+		if(~ $status '' && ~ $#head 1){
+			files=`{@{cd $repo && git/query -c $zero $head} >[2]/dev/null | awk '$1=="+" && $2 !~ /\/$/ { print $2 }'}
+			if(! ~ $#files 0)
+				@{cd $repo && git/revert -c $head $files} >/dev/null >[2]/dev/null
+		}
+	}
+}
 if(! ~ $#* 0){
 	echo 'usage: 9social/cmd/refresh' >[1=2]
 	exit usage
@@ -61,14 +74,16 @@ if(test -e $following){
 						echo $0^': clone failed: '^$url >[1=2]
 						failed=1
 					}
+					if not
+						checkouthead $feedpath
 				}
 			}
 		}
 	}
 }
 
-if(! 9social/lib/index/rebuild){
-	echo $0^': reindex failed' >[1=2]
+if(! 9social/lib/index/update){
+	echo $0^': index update failed' >[1=2]
 	failed=1
 }
 

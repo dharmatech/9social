@@ -133,19 +133,21 @@ This includes:
      * skip the later feed
      * continue processing the remaining feeds
 
-4. **Rebuild local index**
+4. **Update local index**
 
    After feed processing, run:
 
    ```sh
-   9social/lib/index/rebuild
+   9social/lib/index/update
    ```
 
-   `refresh` should run `reindex` even if there is no `following` file or the following list is empty. This keeps the user's own `self/posts` indexed.
+   `refresh` should run `index/update` even if there is no `following` file or the following list is empty. This keeps the user's own `self/posts` indexed.
 
-   Warnings from `reindex`, such as malformed skipped posts, may be printed directly.
+   For Git-backed sources, `index/update` may use stored commit state to skip unchanged repositories or index newly committed posts. For non-Git source trees, it may scan the source posts directly.
 
-   If `reindex` fails structurally, print a short error and remember the failure.
+   Warnings from indexing, such as malformed skipped posts, may be printed directly.
+
+   If indexing fails structurally, print a short error and remember the failure.
 
 5. **Exit status**
 
@@ -155,7 +157,7 @@ This includes:
 
    * If one or more feeds fail, or indexing fails structurally:
 
-     * exit with failure after processing all URLs and attempting index rebuild
+     * exit with failure after processing all URLs and attempting index update
 
 ---
 
@@ -220,7 +222,7 @@ $home/lib/9social/feeds/
   * running it repeatedly should not create duplicates
 * Progress messages are optional, but success should remain easy to scan
 * A missing or empty `following` file is not an error in Level 1
-* `refresh` still rebuilds the local index when there are no followed feeds
+* `refresh` still updates the local index when there are no followed feeds
 
 ---
 
@@ -253,10 +255,11 @@ This separation ensures:
 
   * assumes repo contains valid `profile` and `posts/`
 
-* Current implementation uses full index rebuilds
+* Current implementation uses `9social/lib/index/update`
 
-  * future implementations may use Git change information to incrementally update the local index after refresh
-  * full rebuild should remain available as a repair fallback
+  * Git-backed sources use stored commit state for unchanged-source skips and committed add-only updates
+  * modified or deleted committed posts fall back to `9social/lib/index/rebuild`
+  * full rebuild remains available as a repair fallback
 
 ---
 

@@ -55,6 +55,39 @@ fn replyfile {
 	} >$file || fail write-reply
 }
 
+
+fn gitinit {
+	repodir=$1
+	if(! @{cd $repodir && git/init} >$home/git.out >[2]$home/git.err)
+		fail git-init `{cat $home/git.err}
+}
+
+fn gitcommit {
+	repodir=$1
+	rel=$2
+	msg=$3
+	if(! @{cd $repodir && git/add $rel} >$home/git.out >[2]$home/git.err)
+		fail git-add $rel `{cat $home/git.err}
+	if(! @{cd $repodir && git/commit -m $msg $rel} >$home/git.out >[2]$home/git.err)
+		fail git-commit $rel `{cat $home/git.err}
+}
+
+fn gitdeletecommit {
+	repodir=$1
+	rel=$2
+	msg=$3
+	if(! @{cd $repodir && git/rm $rel} >$home/git.out >[2]$home/git.err)
+		fail git-rm $rel `{cat $home/git.err}
+	if(! rm $repodir^/^$rel)
+		fail git-delete-rm $rel
+	if(! @{cd $repodir && git/commit -m $msg $rel} >$home/git.out >[2]$home/git.err)
+		fail git-delete-commit $rel `{cat $home/git.err}
+}
+
+fn githead {
+	@{cd $1 && git/query HEAD} >[2]/dev/null
+}
+
 fn runupdate {
 	$cmd >$home/out >[2]$home/err
 	st=$status
@@ -139,6 +172,58 @@ if(! ~ $st '') fail reply-status $st `{cat $home/err}
 assertfile $home/lib/9social/index/posts/$eid3
 assertfile $home/lib/9social/index/targets/$eid2/replies/$eid3
 assertcontent $home/lib/9social/index/targets/$eid2/replies/$eid3 $selfpost
+
+
+setup gitstate
+self=$home/lib/9social/self
+feed=$home/lib/9social/feeds/rms
+gitinit $self
+gitinit $feed
+selfpost=$self/posts/self
+feedpost=$feed/posts/feed
+echo glenda >$self/profile || fail gitstate-self-profile
+echo rms >$feed/profile || fail gitstate-feed-profile
+postfile $selfpost $id1 glenda
+postfile $feedpost $id2 rms
+gitcommit $self profile initial-self-profile
+gitcommit $feed profile initial-feed-profile
+gitcommit $self posts/self initial-self
+gitcommit $feed posts/feed initial-feed
+runupdate
+if(! ~ $st '') fail gitstate-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid1
+assertfile $home/lib/9social/index/posts/$eid2
+selfhead=`{githead $self}
+feedhead=`{githead $feed}
+assertcontent $home/lib/9social/index/state/self $selfhead
+assertcontent $home/lib/9social/index/state/feeds/rms $feedhead
+
+postfile $self/posts/uncommitted $id3 glenda
+runupdate
+if(! ~ $st '') fail gitstate-unchanged-status $st `{cat $home/err}
+if(test -f $home/lib/9social/index/posts/$eid3) fail gitstate-uncommitted-indexed
+
+gitcommit $self posts/uncommitted add-self
+runupdate
+if(! ~ $st '') fail gitstate-add-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid3
+selfhead=`{githead $self}
+assertcontent $home/lib/9social/index/state/self $selfhead
+
+rm -f $home/lib/9social/index/posts/$eid1 || fail gitstate-rm-index
+postfile $selfpost $id1 glenda
+{
+	echo appended
+} >>$selfpost || fail gitstate-modify-post
+gitcommit $self posts/self modify-self
+runupdate
+if(! ~ $st '') fail gitstate-modify-status $st `{cat $home/err}
+assertfile $home/lib/9social/index/posts/$eid1
+
+gitdeletecommit $feed posts/feed delete-feed
+runupdate
+if(! ~ $st '') fail gitstate-delete-status $st `{cat $home/err}
+if(test -f $home/lib/9social/index/posts/$eid2) fail gitstate-deleted-indexed
 
 setup usage
 $cmd extra >$home/out >[2]$home/err

@@ -66,9 +66,9 @@ A command such as:
 
 may rebuild the entire index by scanning the local post files under `self/` and `feeds/`.
 
-The current implementation prefers full rebuilds because full rebuilds are simpler, deterministic, and naturally handle deletions and edits.
+Full rebuilds are simple, deterministic, and naturally handle deletions and edits.
 
-Performance tests show that full rebuilds become noticeable as the local community grows. The long-term design should keep full rebuilds as the authoritative repair operation while adding incremental indexing for ordinary refresh and local commit paths.
+Performance tests show that full rebuilds become noticeable as the local community grows. The design keeps full rebuilds as the authoritative repair operation while using incremental indexing for ordinary refresh and local commit paths where the change set is reliable.
 
 ---
 
@@ -115,7 +115,18 @@ Candidate primitives:
 9social/lib/index/update-post <post-file>
 ```
 
-A practical first step is `add-post`: validate one post, add `index/posts/<encoded-id>`, and add any relationship entry under `index/targets`. `index/rebuild` can then be refactored to use the same add-post logic internally before local commands depend on it.
+A practical first step is `add-post`: validate one post, add `index/posts/<encoded-id>`, and add any relationship entry under `index/targets`. `index/rebuild` can then use the same add-post logic internally before local commands depend on it.
+
+`index/update` uses commit state for Git-backed sources. The current implementation records the last indexed commit for `self` and each feed under:
+
+```text
+$home/lib/9social/index/state/self
+$home/lib/9social/index/state/feeds/<feed-name>
+```
+
+Each state file contains the commit hash that was last indexed for that source. If the current `HEAD` matches the stored hash, `index/update` skips that source without scanning its posts. If the state file is missing, the source is treated as unindexed and committed added posts can be indexed from the zero hash.
+
+For Git-backed sources, the first incremental implementation handles committed additions under `posts/`. If committed modifications or deletions under `posts/` are detected, `index/update` falls back to `index/rebuild`. For non-Git source trees, `index/update` keeps the older direct scan behavior.
 
 Removal and update handling need a reliable way to remove relationship entries created by an older version of a post. The stability contract above keeps the first incremental implementation small: ordinary local commands mostly add new posts or delete known posts, while structural retargeting is not a supported edit path.
 
@@ -394,7 +405,7 @@ Deterministic order also makes warnings, tests, and rebuild output repeatable.
 `9social/lib/index/rebuild` should rebuild the index from scratch:
 
 1. Create a temporary index directory such as `$home/lib/9social/index.tmp.<pid>`.
-2. Create `posts` and `targets` inside the temporary index directory.
+2. Create `posts`, `targets`, and `state` inside the temporary index directory.
 3. Scan immediate child files under:
 
 ```text
@@ -427,6 +438,8 @@ index/targets/<encoded-target>/likes/<encoded-like-id>
 containing the like record file path.
 
 Malformed post files should be skipped with a clear warning, matching the existing timeline behavior.
+
+For Git-backed sources, the rebuild should also write the source's current commit hash under `index/state` so a later `index/update` can skip unchanged sources.
 
 ---
 
@@ -463,25 +476,23 @@ Warnings about malformed individual posts do not count as structural failures an
 
 ## Refresh Integration
 
-Level 1 should keep `reindex` as a standalone command:
+Full rebuild remains available as the standalone repair command:
 
 ```rc
 9social/lib/index/rebuild
 ```
 
-`9social/cmd/refresh` should run `9social/lib/index/rebuild` automatically after it finishes updating followed feeds.
+`9social/cmd/refresh` should run `9social/lib/index/update` automatically after it finishes updating followed feeds.
 
-`refresh` should run `reindex` even if there is no `following` file, or if the following list is empty. This keeps the user's own `self/posts` indexed.
+`refresh` should run `index/update` even if there is no `following` file, or if the following list is empty. This keeps the user's own `self/posts` indexed.
 
-Warnings from `reindex`, such as malformed skipped posts, may be printed directly by `refresh`.
+Warnings from indexing, such as malformed skipped posts, may be printed directly by `refresh`.
 
-If `reindex` fails structurally, `refresh` should exit nonzero after reporting that feed refresh completed but index rebuild failed.
+If indexing fails structurally, `refresh` should exit nonzero after reporting that feed refresh completed but index update failed.
 
-The current implementation rebuilds the full index every time `refresh` runs. This is simpler than detecting whether feeds changed, and it also catches local edits or deletes in `self/posts`.
+For Git-backed sources, `index/update` compares the stored indexed commit against the source's current `HEAD`. Unchanged sources are skipped. Committed additions under `posts/` are indexed directly. Committed modifications or deletions under `posts/` fall back to `index/rebuild` for correctness.
 
-The intended future implementation should use Git change information from refresh to update only changed feed posts when that is reliable. If the change set cannot be trusted, `refresh` can fall back to a full rebuild.
-
-This makes the index naturally track local feed updates while still allowing a faster incremental path for ordinary refreshes.
+This makes the index naturally track local feed updates while still preserving a full repair path when the incremental change set is not yet handled.
 
 ---
 
@@ -603,7 +614,7 @@ Recommended order:
 3. `9social/lib/index/rebuild`
 4. `9social/lib/post/path`
 5. update `9social/OpenPost` to accept canonical post IDs
-6. update `9social/cmd/refresh` to run `9social/lib/index/rebuild`
+6. update `9social/cmd/refresh` to run `9social/lib/index/update`
 7. later: update `9social/Post/Like` to use the index for idempotency
 
 `Like` idempotency should wait until the core index primitives are working and tested.
@@ -616,7 +627,7 @@ Future incremental index work should proceed in the same style:
 2. refactor `index/rebuild` to use the same single-post indexing logic
 3. add and test removal for known indexed posts
 4. update local commands to index the posts they create or delete
-5. update `refresh` to use Git change information where reliable, with full rebuild fallback
+5. update `refresh` to run `index/update`, using Git change information where reliable, with full rebuild fallback
 
 ---
 
@@ -669,10 +680,10 @@ Minimum tests:
 
 ### `9social/cmd/refresh`
 
-* runs `reindex` after feed processing
-* still rebuilds the index when no `following` file exists
-* still rebuilds the index when `following` exists but is empty
-* exits nonzero if `reindex` fails structurally
+* runs `index/update` after feed processing
+* still updates the index when no `following` file exists
+* still updates the index when `following` exists but is empty
+* exits nonzero if indexing fails structurally
 
 These tests should run under the existing 9social test harness and should avoid network access.
 
