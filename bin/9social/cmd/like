@@ -32,9 +32,6 @@ target=`{9social/lib/post/id.awk $source}
 if(! ~ $status '' || ! ~ $#target 1)
 	fail 'bad post id: '^$source
 
-# Rebuild before checking so duplicate detection is based on current local files.
-9social/lib/index/rebuild >/dev/null || fail 'cannot reindex'
-
 if(9social/lib/liked-post $target >[2]/dev/null){
 	echo 'already liked'
 	exit ''
