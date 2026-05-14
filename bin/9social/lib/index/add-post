@@ -9,9 +9,13 @@ if(! ~ $#* 1)
 	usage
 
 if(~ $#indexroot 0)
-	indexroot=$home^/lib/9social/index
+	addpost_indexroot=$home^/lib/9social/index
+if not
+	addpost_indexroot=$indexroot
 if(~ $#warn 0)
-	warn=()
+	addpost_warn=()
+if not
+	addpost_warn=$warn
 
 post=$1
 metadir=/tmp/9social
@@ -24,7 +28,7 @@ fn cleanup {
 }
 
 fn warnmsg {
-	if(! ~ $#warn 0)
+	if(! ~ $#addpost_warn 0)
 		echo $0^': '^$* >[1=2]
 }
 
@@ -46,8 +50,8 @@ fn field {
 
 if(! mkdir -p $metadir)
 	failstruct 'cannot create '^$metadir
-if(! mkdir -p $indexroot/posts $indexroot/targets)
-	failstruct 'cannot create '^$indexroot
+if(! mkdir -p $addpost_indexroot/posts $addpost_indexroot/targets)
+	failstruct 'cannot create '^$addpost_indexroot
 
 if(! 9social/lib/post/meta.awk $post >$meta >[2]$metaerr)
 	skip 'skip post (bad format): '^$post
@@ -60,7 +64,7 @@ encoded_id=`{9social/lib/id/encode.awk $id >[2]/dev/null}
 if(! ~ $status '')
 	skip 'skip post (malformed id): '^$post
 
-post_index=$indexroot^/posts/^$encoded_id
+post_index=$addpost_indexroot^/posts/^$encoded_id
 if(test -f $post_index){
 	old=`{cat $post_index >[2]/dev/null}
 	warnmsg 'skip post (duplicate id): '^$post^' already indexed: '^$old
@@ -86,9 +90,9 @@ if(! ~ $#type 0 && ~ $type reply like){
 		}
 		if not {
 			if(~ $type reply)
-				reldir=$indexroot^/targets/^$encoded_target^/replies
+				reldir=$addpost_indexroot^/targets/^$encoded_target^/replies
 			if(~ $type like)
-				reldir=$indexroot^/targets/^$encoded_target^/likes
+				reldir=$addpost_indexroot^/targets/^$encoded_target^/likes
 			if(! mkdir -p $reldir)
 				failstruct 'cannot create '^$reldir
 			relfile=$reldir^/^$encoded_id

@@ -28,6 +28,14 @@ fn setup {
 	indexroot=$home/lib/9social/index
 }
 
+fn setupdefault {
+	testhome=$base.$1
+	rm -rf $testhome
+	mkdir -p $testhome/posts || fail mkdir
+	home=$testhome
+	defaultindex=$home/lib/9social/index
+}
+
 fn assertfile {
 	if(! test -f $1) fail missing-file $1
 }
@@ -42,6 +50,31 @@ fn runadd {
 }
 
 bind -b $repo/bin /bin || fail bind
+
+setupdefault default-first
+indexroot=()
+post=$home/posts/post
+>$post {
+	echo id: $id1
+	echo
+}
+runadd $post
+if(! ~ $st '') fail default-first-status $st `{cat $home/err}
+assertfile $defaultindex/posts/$eid1
+assertcontent $defaultindex/posts/$eid1 $post
+firstdefault=$defaultindex
+
+setupdefault default-second
+post=$home/posts/post
+>$post {
+	echo id: $id2
+	echo
+}
+runadd $post
+if(! ~ $st '') fail default-second-status $st `{cat $home/err}
+assertfile $defaultindex/posts/$eid2
+assertcontent $defaultindex/posts/$eid2 $post
+if(test -f $firstdefault/posts/$eid2) fail default-indexroot-leaked
 
 setup basic
 post=$home/posts/post

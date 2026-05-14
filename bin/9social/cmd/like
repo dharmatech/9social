@@ -86,7 +86,7 @@ if(! @{cd $self && git/add $relpost})
 if(! @{cd $self && git/commit -m 'like: '^$target $relpost})
 	fail 'git commit failed'
 
-9social/lib/index/rebuild >/dev/null || fail 'cannot reindex'
+indexroot=$home^/lib/9social/index 9social/lib/index/add-post $likefile || fail 'cannot index like'
 
 echo 'liked: '^$target
 echo 'posted: '^$relpost

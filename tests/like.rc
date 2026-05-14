@@ -1,5 +1,8 @@
 #!/bin/rc
 rfork en
+repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+cmd=$repo/bin/9social/cmd/like
 u1=550e8400-e29b-41d4-a716-446655440000
 u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
 targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676
@@ -9,6 +12,8 @@ fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
+
+bind -b $repo/bin /bin || fail bind
 
 fn setup {
 	home=/tmp/9social-like-test.$pid.$1
@@ -34,12 +39,27 @@ fn setup {
 }
 
 fn runlike {
-	9social/cmd/like $source >$home/out >[2]$home/err
+	$cmd $source >$home/out >[2]$home/err
 	st=$status
 }
 
 fn likeposts {
 	posts=`{walk $home/lib/9social/self/posts | grep '/posts/' | grep -v '/posts$'}
+}
+
+fn assertlikeindexed {
+	likeid=`{grep '^id: ' $likefile | sed 's/^id: //'}
+	if(! ~ $#likeid 1) fail $1-like-id $likeid
+	encodedtarget=`{9social/lib/id/encode.awk $target}
+	if(! ~ $#encodedtarget 1) fail $1-encoded-target $encodedtarget
+	encodedlike=`{9social/lib/id/encode.awk $likeid}
+	if(! ~ $#encodedlike 1) fail $1-encoded-like $encodedlike
+	assertpath=$home/lib/9social/index/posts/$encodedlike
+	if(! test -f $assertpath) fail $1-index-post-missing $assertpath
+	if(! ~ `{cat $assertpath} $likefile) fail $1-index-post-content `{cat $assertpath} expected $likefile
+	assertpath=$home/lib/9social/index/targets/$encodedtarget/likes/$encodedlike
+	if(! test -f $assertpath) fail $1-index-like-missing $assertpath
+	if(! ~ `{cat $assertpath} $likefile) fail $1-index-like-content `{cat $assertpath} expected $likefile
 }
 
 setup ok
@@ -55,7 +75,7 @@ grep '^target: '^$target^'$' $likefile >/dev/null || fail ok-target
 grep '^author: dharmatech$' $likefile >/dev/null || fail ok-author
 grep '^liked: '^$target^'$' $home/out >/dev/null || fail ok-liked-output `{cat $home/out}
 grep '^posted: posts/' $home/out >/dev/null || fail ok-posted-output `{cat $home/out}
-if(! test -d $home/lib/9social/index/targets) fail ok-reindexed
+assertlikeindexed ok
 
 runlike
 if(! ~ $st '') fail duplicate-status $st `{cat $home/err}
@@ -74,6 +94,7 @@ likeposts
 if(! ~ $#posts 1) fail postid-post-count $#posts
 likefile=$posts(1)
 grep '^target: '^$target^'$' $likefile >/dev/null || fail postid-target
+assertlikeindexed postid
 
 setup self
 selfpost=$home/lib/9social/self/posts/2026-05-04-self
@@ -97,7 +118,7 @@ if(~ $st '') fail missing-status
 grep 'cannot resolve post' $home/err >/dev/null || fail missing-error `{cat $home/err}
 
 setup usage
-9social/cmd/like >$home/out >[2]$home/err
+$cmd >$home/out >[2]$home/err
 st=$status
 if(~ $st '') fail usage-status
 grep 'usage: 9social/cmd/like <post-ref>' $home/err >/dev/null || fail usage-error `{cat $home/err}
