@@ -73,11 +73,11 @@ $home/lib/9social/index/targets
 
 `show-threads` may run `9social/lib/index/rebuild` first if the index is missing.
 
-If `reindex` fails, or if `$home/lib/9social/index/posts` still does not exist after reindexing, `show-threads` should fail clearly rather than rendering a partial view.
+If `index/rebuild` fails, or if `$home/lib/9social/index/posts` still does not exist after rebuilding, `show-threads` should fail clearly rather than rendering a partial view.
 
 Level 1 should not perform network access.
 
-The user should run `9social/cmd/refresh` to update feeds and rebuild the index.
+The user should run `9social/cmd/refresh` to update feeds and update the index.
 
 ---
 
@@ -260,7 +260,7 @@ A straightforward `show-threads` implementation can:
 
 1. ensure `index/posts` exists, running `9social/lib/index/rebuild` if needed
 2. scan `index/posts` to collect locally available posts
-3. parse each post header with `post-meta`
+3. parse each post header with `9social/lib/post/meta.awk`
 4. identify roots and replies
 5. build parent-child relationships from `target:` values
 6. calculate `R:n` from the in-memory direct-child reply lists
@@ -273,6 +273,6 @@ A straightforward `ShowThreads` implementation can:
 2. run `9social/cmd/show-threads > <temp-file>`
 3. open that file in Acme with `9social/OpenPost` in the tag
 
-For Level 1, count calculation can live inside `render-threads`. A separate count helper can be extracted later if other views need the same data.
+For Level 1, count calculation can live inside `9social/lib/render/thread-records.awk`. A separate count helper can be extracted later if other views need the same data.
 
 When a future `Unlike` record exists, update like counting to use the latest valid like/unlike event for each `(author, target)` pair.

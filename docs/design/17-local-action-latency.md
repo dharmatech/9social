@@ -39,7 +39,7 @@ For a local action such as `like`:
 3. Add only that new like post to the local index.
 4. Return without rebuilding unrelated feed posts.
 
-For `refresh`, Git already reports which followed repositories changed. Future `refresh` implementations can use that change information to index only added or changed feed posts and remove entries for deleted feed posts.
+For `refresh`, Git already reports which followed repositories changed. Future `refresh` implementations can use that change information to index newly added feed posts while treating deletions as lazy cache cleanup.
 
 Full rebuild remains available as the repair path:
 
@@ -57,7 +57,7 @@ Full rebuild remains available as the repair path:
 ### Costs
 
 * Requires tested single-post index primitives.
-* Removal and update handling must avoid stale relationship entries.
+* Index readers must tolerate stale entries and validate referenced post paths before acting on them.
 * The design relies on structural post fields staying stable after publication.
 
 ### Stability Assumption
@@ -90,7 +90,7 @@ A later `9social/lib/index/rebuild`, `9social/cmd/refresh`, or other maintenance
 
 ### Costs
 
-* The UI may be stale until the next reindex.
+* The UI may be stale until the next index update or rebuild.
 * Like counts may not update immediately.
 * `OpenPost` may continue to show `9social/Post/Like` for the target until the index catches up.
 * Duplicate prevention cannot rely only on the derived index.
@@ -140,13 +140,13 @@ A later ingestion step converts queued intents into real immutable feed records 
 The exact command is intentionally undecided. Candidates include:
 
 * `9social/cmd/push` ingests queued actions before pushing
-* `9social/sync` ingests, reindexes, and perhaps pushes
+* `9social/sync` ingests, updates or rebuilds the index, and perhaps pushes
 * `9social/flush-outbox` only turns queued actions into committed posts
 
 ### Benefits
 
 * `Like` can return very quickly.
-* Many actions can be batched into one commit and one reindex.
+* Many actions can be batched into one commit and one index update or rebuild.
 * The model may generalize to other lightweight local actions.
 * Queued intents can potentially be inspected, edited, or deleted before publication.
 

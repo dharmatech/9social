@@ -117,7 +117,7 @@ Before creating a draft file or Acme window, `NewPost` should use `bin/9social/l
 
 ## 6. Draft Creation
 
-`NewPost` should prefer `$home/tmp` for draft files. If `$home/tmp` does not exist, `NewPost` should try to create it. It should fall back to `/tmp` only if `$home/tmp` cannot be created or used.
+`NewPost` creates draft files through `9social/lib/draft/new`, which uses `9social/lib/mk-temp-file`. The current helper stores 9social temporary files under `/tmp/9social`.
 
 Draft filenames should be unique for the command invocation. The preferred filename is:
 
@@ -136,7 +136,7 @@ The selected draft path must be checked immediately before writing.
 
 Draft paths created by `NewPost` are the only paths that `Publish` and `Cancel` should operate on in Level 1. A valid draft path is:
 
-* under `$home/tmp`, creating that directory if possible, or under `/tmp` if `$home/tmp` cannot be created or used
+* under `/tmp/9social` for newly created drafts
 * named `9social-new-post.<pid>` or `9social-new-post.<pid>.<n>` for collision suffixes
 
 This keeps pathless Acme tag commands ergonomic without letting them publish or delete an arbitrary current Acme file by accident.
@@ -336,7 +336,7 @@ Level 1 behavior:
 Possible output:
 
 ```text
-cancelled: /usr/glenda/tmp/9social-new-post.<pid>
+cancelled: /tmp/9social/9social-new-post.<pid>
 ```
 
 A future version may also ask Acme to close the draft window using `$winid`, after the exact `ctl` behavior has been tested.
@@ -359,7 +359,7 @@ draft removed; close the Acme window with Del
 If `Publish` is run again from a window whose backing draft was already removed, it should fail clearly:
 
 ```text
-Publish: draft file not found: /usr/glenda/tmp/9social-new-post.<pid>
+Publish: draft file not found: /tmp/9social/9social-new-post.<pid>
 ```
 
 ---
@@ -376,10 +376,9 @@ If preflight validation fails:
 * abort before creating a draft
 * print the reason to stderr
 
-If `$home/tmp` cannot be created or used:
+If `/tmp/9social` cannot be created or used:
 
-* fall back to `/tmp`
-* if `/tmp` also cannot be used, abort before creating a draft
+* abort before creating a draft
 
 If draft creation fails:
 
@@ -417,7 +416,7 @@ Level 1 does not require:
 * Fallback to `9social/cmd/new-post` when Acme is unavailable
 * Remote push after publishing
 * Editing existing posts
-* Replies or reactions
+* Additional draft-producing workflows beyond new posts and replies
 
 ---
 

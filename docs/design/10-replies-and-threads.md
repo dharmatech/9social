@@ -5,7 +5,7 @@
 
 Define how replies are represented in 9social and how clients may construct thread views from them.
 
-Replies are not part of Level 1 implementation, but the design affects foundational decisions such as:
+Replies are part of the current Level 1 implementation. This design also records the foundational decisions behind:
 
 - stable post IDs
 - future indexing
@@ -168,19 +168,7 @@ A thread view is a client-generated view showing:
 * direct replies
 * nested replies (optional)
 
-Level 1 does not implement this.
-
-Later clients may provide a command such as:
-
-```sh
-9social/thread <post-id>
-```
-
-or an ACME tag action like:
-
-```text
-Thread
-```
+Level 1 provides a local threaded view through `9social/cmd/show-threads` and `9social/ShowThreads`.
 
 ---
 
@@ -234,9 +222,7 @@ A client can reconstruct:
 
 ## Level 1 Implications
 
-Replies are not implemented in Level 1, but Level 1 should preserve the ability to add them cleanly later.
-
-This means Level 1 should already ensure:
+Replies are implemented in Level 1. The surrounding system should continue to preserve:
 
 ### 1. Stable post IDs
 
@@ -262,9 +248,7 @@ A post opened in Acme may include this tag command:
 9social/Post/Reply
 ```
 
-Level 1 does not require automatic insertion of `9social/Post/Reply` into post window tags. `Reply` should work when invoked from any Acme window whose `$%` names a readable 9social post file. The user may type `9social/Post/Reply` into the tag or body of that window and middle-click it.
-
-Later post-opening or post-view commands may add `9social/Post/Reply` to post window tags automatically.
+`9social/OpenPost` adds `9social/Post/Reply` to post window tags. `Reply` also works when invoked from any Acme window whose `$%` names a readable 9social post file.
 
 When the user middle-clicks `9social/Post/Reply`, the command should infer the reply target from the current Acme window. The user should not have to select or type the target post ID.
 
@@ -333,10 +317,10 @@ A small helper such as `bin/9social/lib/post/id.awk` should do this parsing and 
 The command-line reply core is:
 
 ```text
-9social/cmd/reply <post-file>
+9social/cmd/reply <post-ref>
 ```
 
-`reply` reads reply body text from standard input. It uses `9social/lib/draft/reply` to extract the target post ID from `<post-file>`, create a temporary draft, and write reply metadata in a sidecar file. It then appends the standard input body and delegates publication to `9social/lib/draft/publish`.
+`reply` reads reply body text from standard input. It uses `9social/lib/draft/reply` to resolve `<post-ref>`, extract the target post ID, create a temporary draft, and write reply metadata in a sidecar file. It then appends the standard input body and delegates publication to `9social/lib/draft/publish`.
 
 If the target post has a title, `reply` uses `Title: Re: <target title>` as the draft title. If the target title already starts with `Re:`, it does not add another prefix. If the target post has no title, `reply` writes a blank `Title:` line and lets publication preserve that blank title.
 
@@ -385,9 +369,9 @@ type: reply
 target: 9social:post:<user-uuid>:<post-uuid>
 ```
 
-`Publish` and `publish-draft` should read this sidecar, validate it, and include the metadata in the final post file. Ordinary posts created by `NewPost` or `new-post` have no sidecar.
+`Publish` and `9social/lib/draft/publish` should read this sidecar, validate it, and include the metadata in the final post file. Ordinary posts created by `NewPost` or `new-post` have no sidecar.
 
-Level 1 sidecar validation is intentionally narrow. `publish-draft` should accept only:
+Level 1 sidecar validation is intentionally narrow. `9social/lib/draft/publish` should accept only:
 
 ```text
 type: reply
@@ -396,7 +380,7 @@ target: 9social:post:<user-uuid>:<post-uuid>
 
 It should reject unknown fields, duplicate fields, missing `type`, missing `target`, `type` values other than `reply`, and malformed target IDs.
 
-When publishing a reply, `publish-draft` should write sidecar metadata after `date:` and before `title:`:
+When publishing a reply, `9social/lib/draft/publish` should write sidecar metadata after `date:` and before `title:`:
 
 ```text
 id: 9social:post:<author-user-uuid>:<new-post-uuid>
@@ -409,7 +393,7 @@ title: Re: <target title>
 <body>
 ```
 
-If no sidecar exists, `publish-draft` creates an ordinary post and emits no `type:` or `target:` fields.
+If no sidecar exists, `9social/lib/draft/publish` creates an ordinary post and emits no `type:` or `target:` fields.
 
 If publishing succeeds, the draft and sidecar should both be removed. If publishing fails, both should be preserved so the user can retry after fixing the draft. `Cancel` should remove both the draft and sidecar.
 
@@ -469,10 +453,9 @@ All reply relationships depend on canonical globally unique post IDs.
 
 ## Limitations (Not in Level 1)
 
-* no reply creation command yet
-* no thread view yet
-* no nested rendering yet
-* no reply indexing yet
+* no quoting selected text in replies yet
+* no reply notifications yet
+* no remote/global thread discovery beyond locally available feeds
 
 ---
 

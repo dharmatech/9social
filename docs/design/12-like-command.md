@@ -16,7 +16,7 @@ Define how a user likes another user's post from the command line and from Acme.
 9social/cmd/like <post-ref>
 ```
 
-`like` is the non-interactive core command. It accepts an explicit local post file path, creates a like record in the current user's `self/posts/`, commits it locally, and rebuilds the local index.
+`like` is the non-interactive core command. It accepts an explicit post reference, creates a like record in the current user's `self/posts/`, commits it locally, and adds the new like record to the local index.
 
 It does not require Acme. This command is suitable for terminal workflows and automated tests.
 
@@ -166,7 +166,7 @@ Level 1 does not show `Like` on the user's own posts.
 Before creating a like record, `like` should validate:
 
 * `$home/lib/9social/self` exists and is usable, using `bin/9social/lib/check-self`
-* the explicit `<post-file>` names a readable post file
+* the explicit `<post-ref>` resolves to a readable post file
 * the target post has a valid `id:` field, using `bin/9social/lib/post/id.awk`
 * the target post is not under `$home/lib/9social/self/posts/`
 
@@ -182,7 +182,7 @@ The filename only needs to be unique within the user's own `posts/` directory. L
 YYYY-MM-DD-like-<n>
 ```
 
-where `<n>` is omitted for the first available filename or incremented using the same collision handling style used by `new-post` and `publish-draft`.
+where `<n>` is omitted for the first available filename or incremented using the same collision handling style used by `new-post` and `9social/lib/draft/publish`.
 
 The Git commit should include only the new like record, not unrelated dirty files.
 
@@ -208,7 +208,7 @@ This check should live in a reusable helper such as:
 9social/lib/liked-post <post-id>
 ```
 
-The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `post-meta`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Post/Like`; `like` can use it to enforce idempotence.
+The helper should use `$home/lib/9social/index/targets/<encoded-target>/likes`, `9social/lib/post/meta.awk`, and the current profile name. It should exit successfully if the current user has already liked the target post, and nonzero otherwise. `OpenPost` can use this helper to decide whether to show `9social/Post/Like`; `like` can use it to enforce idempotence.
 
 If the current user has already liked the target post, `like` should print a short message such as:
 
@@ -220,9 +220,7 @@ and exit successfully without creating a new like record or Git commit.
 
 If no current-user like exists, `like` creates one `type: like` record and commits it locally.
 
-The current implementation runs `9social/lib/index/rebuild` after a successful commit so subsequent `OpenPost` calls can immediately omit `9social/Post/Like` for that target.
-
-The preferred future performance direction is to replace that full rebuild with an incremental index update for only the newly created like post. That keeps the index current enough for duplicate detection and counts without scanning unrelated posts.
+The current implementation runs `9social/lib/index/add-post` on the newly created like record after a successful commit. This keeps the index current enough for duplicate detection without rebuilding unrelated feed posts.
 
 On success, `like` should print:
 
@@ -233,9 +231,9 @@ posted: posts/<like-file>
 
 `like` does not push. `Like` also does not push because it delegates to `like`.
 
-If the index is missing or stale, the current implementation may run `9social/lib/index/rebuild` first and then check again. Future latency improvements are discussed in `17-local-action-latency.md`, especially incremental index maintenance, with commit-now-index-later and local outbox approaches kept as alternatives.
+If the index is missing or stale, duplicate detection may be incomplete until `9social/lib/index/rebuild` or `9social/cmd/refresh` repairs the derived cache. Future latency alternatives are discussed in `17-local-action-latency.md`.
 
-Historical duplicate like records may still exist. `reindex` should tolerate them. When calculating counts, clients should treat likes as a current-state signal by author and target:
+Historical duplicate like records may still exist. `9social/lib/index/rebuild` should tolerate them. When calculating counts, clients should treat likes as a current-state signal by author and target:
 
 * for each `(author, target)` pair, count at most one current like
 * if future unlike records are introduced, the latest event for that pair determines state
@@ -299,7 +297,7 @@ Level 1 does not support:
 * displaying like counts
 * implementing `Unlike`
 * pushing after liking
-* liking by post ID from the shell
+* liking by remote URL from the shell
 * global like counts
 
 

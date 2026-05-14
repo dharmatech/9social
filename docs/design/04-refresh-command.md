@@ -258,8 +258,9 @@ This separation ensures:
 * Current implementation uses `9social/lib/index/update`
 
   * Git-backed sources use stored commit state for unchanged-source skips and committed add-only updates
-  * modified or deleted committed posts fall back to `9social/lib/index/rebuild`
-  * full rebuild remains available as a repair fallback
+  * deleted committed posts may leave stale cache entries until lazy cleanup or full rebuild
+  * modified committed posts are assumed not to change structural fields
+  * full rebuild remains available as the exact repair fallback
 
 ---
 

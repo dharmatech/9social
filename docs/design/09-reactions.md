@@ -3,9 +3,9 @@
 
 ## Purpose
 
-Define how reactions (such as upvotes) are represented in 9social.
+Define how reactions are represented in 9social.
 
-Reactions are not part of Level 1 implementation, but their design influences:
+The general reaction model is broader than the current implementation. Level 1 currently implements `type: like` as the first concrete reaction command; other reactions remain future work. This design influences:
 
 - post identity
 - indexing strategy
@@ -36,13 +36,14 @@ If Dennis upvotes a post by Joe:
 
 ## Reaction Representation
 
-A reaction is a post with:
+A concrete like is a post with:
 
 - `type`
 - `target`
-- `reaction`
 
-### Example
+A future generic reaction record may also add a `reaction` field.
+
+### Generic Reaction Example
 
 ```text
 id: 9social:post:dennis-1973-10-10T12:30:00Z-upvote-joe-troff
@@ -58,13 +59,16 @@ reaction: upvote
 
 ## Fields
 
-### Required for reactions
+### Required for current likes
 
 * `id`
 * `author`
 * `date`
 * `type`
 * `target`
+
+### Possible for future generic reactions
+
 * `reaction`
 
 ---
@@ -74,10 +78,10 @@ reaction: upvote
 #### type
 
 ```text
-type: reaction
+type: like
 ```
 
-Identifies this post as a reaction event.
+Identifies this post as a like event. A future generic reaction record may use another `type:` value.
 
 ---
 
@@ -93,34 +97,21 @@ target: 9social:post:joe-1973-10-05T16:20:00Z-troff
 
 #### reaction
 
-Type of reaction.
-
-Level 1 (future) supports:
-
-```text
-reaction: upvote
-```
-
-To remove a previous upvote, the canonical event form is:
-
-```text
-reaction: remove-upvote
-```
+A separate `reaction:` field is not used by the current `type: like` implementation. It remains a possible future extension if 9social adds a generic reaction event type.
 
 ---
 
 ## Reaction Types
 
-Initially supported:
+Currently implemented:
 
-* `upvote`
+* `like`
 
 Future possibilities:
 
-* `downvote`
-* `like`
 * `bookmark`
 * `flag`
+* other explicit reaction types
 
 ---
 
@@ -249,7 +240,7 @@ Other reaction types should follow the same target-oriented shape if they are ad
 
 ## Level 1 Implications
 
-Although not implemented yet, Level 1 should:
+For reactions, Level 1 should:
 
 ### 1. Preserve post IDs
 
@@ -267,13 +258,14 @@ target:
 reaction:
 ```
 
-The current recommended pattern is:
+The current concrete like pattern is:
 
 ```text
-type: reaction
+type: like
 target: <canonical-post-id>
-reaction: upvote
 ```
+
+A broader future reaction vocabulary may add another reaction-specific field if needed.
 
 ---
 
@@ -313,9 +305,8 @@ Reactions reuse the same feed transport and parsing model as posts and replies, 
 
 ## Limitations (Not in Level 1)
 
-* no reaction commands yet
-* no UI support yet
-* no indexing yet
+* no generic reaction command yet
+* no unlike command yet
 * no filtering yet
 
 ---

@@ -130,7 +130,7 @@ When `-` is used:
 
 ### Draft Lifecycle
 
-Level 1 creates the draft in `$home/tmp` if that directory exists. Otherwise it uses `/tmp`.
+Level 1 creates drafts through `9social/lib/mk-temp-file`. The current helper stores 9social temporary files under `/tmp/9social`.
 
 Draft filenames should be unique for the current command invocation, for example:
 
@@ -441,7 +441,7 @@ new-post: cancelled
 On failure, print the reason to stderr. If a draft file is preserved, also print its path:
 
 ```text
-draft: /tmp/9social-new-post.<pid>
+draft: /tmp/9social/9social-new-post.<pid>
 ```
 
 ---
@@ -535,14 +535,9 @@ These may be introduced in future design documents.
 
 This design enables future features:
 
-* Replies (`reply_to` field)
-* Threading
-* `type:` field for replies, reactions, links, or other post-like records
-* Reactions/upvotes
-* Search and indexing
-* A setup command such as `9social/cmd/init-self <git-url>`
-* A push command for publishing local commits
-* A sync command that may combine refreshing followed feeds with pushing the user's self feed
+* Additional post-like record types beyond replies and likes
+* Search and richer indexing
+* More structured sync commands that may combine refreshing followed feeds with pushing the user's self feed
 * Nested or archive post storage if flat directories become too large
 
 ---

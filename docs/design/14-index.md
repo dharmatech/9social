@@ -23,6 +23,11 @@ Commands must treat post files as the source of truth.
 
 If index data disagrees with post files, post files win.
 
+The index is a lazy cache. Index entries may be stale between rebuilds. Commands
+that read index entries must validate the referenced post path before acting on
+the entry. Missing or invalid post files should be ignored or pruned by the
+reader, not treated as canonical data corruption.
+
 ---
 
 ## Consequences
@@ -33,7 +38,7 @@ Because the index is derived:
 * commands may remove and recreate it during a rebuild
 * the index does not need to be committed to the user's self repository
 * stale index data is a cache/rebuild problem, not canonical data loss
-* deleted posts disappear from the index after a rebuild
+* deleted posts may remain as stale entries until a rebuild or lazy cleanup
 * full rebuilds can repair derived state when incremental indexing misses a change
 * published structural fields are not expected to change in place
 
@@ -103,19 +108,19 @@ Day-to-day commands should eventually avoid rebuilding the whole index when Git 
 
 The intended incremental model is:
 
-* after `9social/cmd/refresh`, index only posts added or changed by the last feed update and remove entries for deleted feed posts
-* after local commands such as `new-post`, `reply`, `like`, `update`, or `delete`, index only the post or posts affected by the local commit
+* after `9social/cmd/refresh`, index newly added posts from changed feed repositories
+* after local commands such as `new-post`, `reply`, or `like`, index only the newly created post or posts
+* allow stale entries for deleted posts until a reader lazily ignores/prunes them or `index/rebuild` removes them
+* assume ordinary post updates do not change structural fields such as `id`, `type`, `target`, or local path
 * keep `index/rebuild` available for manual repair, testing, and cases where incremental state is uncertain
 
-Candidate primitives:
+Primary primitive:
 
 ```rc
 9social/lib/index/add-post <post-file>
-9social/lib/index/remove-post <post-id-or-post-file>
-9social/lib/index/update-post <post-file>
 ```
 
-A practical first step is `add-post`: validate one post, add `index/posts/<encoded-id>`, and add any relationship entry under `index/targets`. `index/rebuild` can then use the same add-post logic internally before local commands depend on it.
+`add-post` validates one post, adds `index/posts/<encoded-id>`, and adds any relationship entry under `index/targets`. `index/rebuild` uses the same add-post logic internally before local commands depend on it. Future cleanup helpers may prune stale entries, but immediate removal is not required for correctness because readers validate indexed paths.
 
 `index/update` uses commit state for Git-backed sources. The current implementation records the last indexed commit for `self` and each feed under:
 
@@ -126,9 +131,9 @@ $home/lib/9social/index/state/feeds/<feed-name>
 
 Each state file contains the commit hash that was last indexed for that source. If the current `HEAD` matches the stored hash, `index/update` skips that source without scanning its posts. If the state file is missing, the source is treated as unindexed and committed added posts can be indexed from the zero hash.
 
-For Git-backed sources, the first incremental implementation handles committed additions under `posts/`. If committed modifications or deletions under `posts/` are detected, `index/update` falls back to `index/rebuild`. For non-Git source trees, `index/update` keeps the older direct scan behavior.
+For Git-backed sources, the first incremental implementation handles committed additions under `posts/`. Committed deletions under `posts/` do not require immediate index removal; stale entries are allowed because readers validate indexed paths before using them. Committed modifications under `posts/` are assumed to preserve structural fields. If a command cannot rely on that stability assumption, it should run `index/rebuild` explicitly.
 
-Removal and update handling need a reliable way to remove relationship entries created by an older version of a post. The stability contract above keeps the first incremental implementation small: ordinary local commands mostly add new posts or delete known posts, while structural retargeting is not a supported edit path.
+This keeps the first incremental implementation small: ordinary local commands mostly add new immutable posts, deleted posts become lazy cache garbage, and structural retargeting is not a supported edit path.
 
 ---
 
@@ -283,23 +288,15 @@ This keeps ID-to-path lookup predictable and makes stale or missing index state 
 
 ## Open Post Integration
 
-After `post-path` exists, `9social/OpenPost` should accept either a local post path or a canonical post ID.
+`9social/OpenPost` is currently an Acme command with no arguments. It reads the current line from Acme, extracts the first local post path or canonical post ID, resolves that reference through `9social/lib/post/resolve`, and opens the resulting post file.
 
-Supported explicit forms:
+Current behavior:
 
-```rc
-9social/OpenPost /absolute/path/to/post
-9social/OpenPost 9social:post:<user-uuid>:<post-uuid>
-```
+* if the current line contains a full local post path, open that path
+* if the current line contains a post ID, resolve it through the local index and open it
+* do not scan `self/` or `feeds/` directly as a fallback when resolving IDs
 
-Behavior:
-
-* if the argument starts with `/`, treat it as a local path and open it directly
-* if the argument starts with `9social:post:`, resolve it through `9social/lib/post/path`
-* if no argument is given, keep the existing Acme current-line behavior
-* if the current line contains a full path, open that path
-* if the current line contains a post ID, resolve it through `post-path` and open it
-* do not scan `self/` or `feeds/` directly as a fallback
+An explicit argument form can be added later if terminal-oriented opening becomes useful.
 
 When `OpenPost` opens a post in Acme, it should populate the tag with actions appropriate to the post.
 
@@ -321,13 +318,13 @@ This lets timeline, thread, and relationship views use either full paths or cano
 
 ## Post Metadata Helper
 
-Before implementing `reindex`, add a small metadata helper:
+Before implementing `index/rebuild`, add a small metadata helper:
 
 ```rc
 9social/lib/post/meta.awk path
 ```
 
-`post-meta` reads only the metadata header of a post file and prints normalized tab-separated fields.
+`post/meta.awk` reads only the metadata header of a post file and prints normalized tab-separated fields.
 
 For example:
 
@@ -347,18 +344,18 @@ Behavior:
 * ignore the post body
 * preserve empty values, such as `title:` as `title	`
 * print known fields in file order
-* allow unknown fields to pass through or be ignored; `reindex` only needs `id`, `type`, and `target`
+* allow unknown fields to pass through or be ignored; `index/rebuild` only needs `id`, `type`, and `target`
 * exit nonzero for unreadable files or malformed header lines
 
-`post-meta` should not decide whether a post is indexable. It should parse metadata. Callers such as `reindex`, `timeline`, and future `Like` count logic decide which fields are required for their task.
+`post/meta.awk` should not decide whether a post is indexable. It should parse metadata. Callers such as `index/rebuild`, `timeline`, and count logic decide which fields are required for their task.
 
-This keeps `reindex` from growing its own private parser and gives future commands a shared metadata primitive.
+This keeps `index/rebuild` from growing its own private parser and gives future commands a shared metadata primitive.
 
 ---
 
 ## Scan Scope
 
-Level 1 `reindex` should scan only the known post directories:
+Level 1 `index/rebuild` should scan only the known post directories:
 
 ```text
 $home/lib/9social/self/posts
@@ -383,7 +380,7 @@ If 9social later adopts nested post directories, this rule should be changed del
 
 ## Scan Order
 
-`reindex` should use a deterministic scan order.
+`index/rebuild` should use a deterministic scan order.
 
 Order:
 
@@ -445,7 +442,7 @@ For Git-backed sources, the rebuild should also write the source's current commi
 
 ## Rebuild Atomicity
 
-`reindex` should avoid leaving a half-built index behind.
+`index/rebuild` should avoid leaving a half-built index behind.
 
 It should build the new index in a temporary sibling directory, such as:
 
@@ -490,9 +487,9 @@ Warnings from indexing, such as malformed skipped posts, may be printed directly
 
 If indexing fails structurally, `refresh` should exit nonzero after reporting that feed refresh completed but index update failed.
 
-For Git-backed sources, `index/update` compares the stored indexed commit against the source's current `HEAD`. Unchanged sources are skipped. Committed additions under `posts/` are indexed directly. Committed modifications or deletions under `posts/` fall back to `index/rebuild` for correctness.
+For Git-backed sources, `index/update` compares the stored indexed commit against the source's current `HEAD`. Unchanged sources are skipped. Committed additions under `posts/` are indexed directly. Committed deletions may leave stale index entries until lazy cleanup or full rebuild. Committed modifications are assumed not to change structural fields.
 
-This makes the index naturally track local feed updates while still preserving a full repair path when the incremental change set is not yet handled.
+This makes the index naturally track local feed updates while still preserving a full repair path when exact cache repair is needed.
 
 ---
 
@@ -502,7 +499,7 @@ This makes the index naturally track local feed updates while still preserving a
 
 A malformed post file should not prevent the rest of the index from being rebuilt.
 
-When `reindex` finds malformed data, it should:
+When `index/rebuild` finds malformed data, it should:
 
 * print a warning that includes the path
 * skip the malformed post or relationship
@@ -518,9 +515,9 @@ For relationship entries under `index/targets`, a post must have:
 * `type: reply` or `type: like`
 * a valid canonical `target:` field
 
-If the post has a valid `id:` but an invalid relationship field, `reindex` may still add the post to `index/posts` while skipping the relationship entry.
+If the post has a valid `id:` but an invalid relationship field, `index/rebuild` may still add the post to `index/posts` while skipping the relationship entry.
 
-`reindex` should exit nonzero only when the rebuild itself cannot complete, such as when it cannot create `$home/lib/9social/index` or cannot write required index files.
+`index/rebuild` should exit nonzero only when the rebuild itself cannot complete, such as when it cannot create `$home/lib/9social/index` or cannot write required index files.
 
 Warnings about individual malformed posts are not fatal.
 
@@ -564,7 +561,7 @@ Relationship records may point to target posts that are not present locally.
 
 For example, a followed user may reply to or like a post by someone the local user does not follow.
 
-`reindex` should still index those relationship records under:
+`index/rebuild` should still index those relationship records under:
 
 ```text
 index/targets/<encoded-target>/replies/<encoded-reply-id>
@@ -587,7 +584,7 @@ Commands that try to open or display the target post may later report that the t
 
 Duplicate canonical post IDs are malformed data.
 
-If two post files claim the same `id:`, `reindex` should:
+If two post files claim the same `id:`, `index/rebuild` should:
 
 * print a warning that includes both the duplicate path and the already-indexed path when possible
 * keep the first path it indexed in `index/posts`
@@ -597,7 +594,7 @@ If two post files claim the same `id:`, `reindex` should:
 
 Duplicate relationship targets are normal. Many replies may target the same post, and many likes from different authors may target the same post.
 
-Historical duplicate likes from the same author to the same target may exist. `reindex` should tolerate them and index the raw records. Higher-level commands that display counts should deduplicate likes by `(author, target)`.
+Historical duplicate likes from the same author to the same target may exist. `index/rebuild` should tolerate them and index the raw records. Higher-level commands that display counts should deduplicate likes by `(author, target)`.
 
 Once the index exists, `9social/Post/Like` should avoid creating new duplicate likes by checking the indexed likes for the target before writing a new like record.
 
@@ -615,9 +612,9 @@ Recommended order:
 4. `9social/lib/post/path`
 5. update `9social/OpenPost` to accept canonical post IDs
 6. update `9social/cmd/refresh` to run `9social/lib/index/update`
-7. later: update `9social/Post/Like` to use the index for idempotency
+7. update `9social/Post/Like` and `9social/cmd/like` to use the index for idempotency
 
-`Like` idempotency should wait until the core index primitives are working and tested.
+`Like` idempotency depends on the core index primitives.
 
 This order keeps each step small and gives every larger command a tested helper to build on.
 
@@ -625,9 +622,9 @@ Future incremental index work should proceed in the same style:
 
 1. add and test `9social/lib/index/add-post`
 2. refactor `index/rebuild` to use the same single-post indexing logic
-3. add and test removal for known indexed posts
-4. update local commands to index the posts they create or delete
-5. update `refresh` to run `index/update`, using Git change information where reliable, with full rebuild fallback
+3. update local commands to index newly created posts directly
+4. update `refresh` to run `index/update`, using Git change information where reliable
+5. add optional lazy cleanup helpers if stale entries become a practical problem
 
 ---
 
@@ -673,10 +670,9 @@ Minimum tests:
 
 ### `9social/OpenPost`
 
-* still opens explicit absolute paths
-* resolves explicit canonical post IDs through `post-path`
 * keeps existing Acme current-line path behavior
-* can resolve a current-line post ID through `post-path`
+* opens a current-line absolute post path
+* resolves a current-line post ID through `post/path`
 
 ### `9social/cmd/refresh`
 

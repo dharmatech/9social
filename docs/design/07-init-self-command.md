@@ -105,7 +105,7 @@ When auto-migrating, save `following` aside, replace the pre-init `self/` with t
 The saved file should live outside `self/`, for example:
 
 ```text
-$home/lib/9social/cmd/following.<pid>.tmp
+$home/lib/9social/following.<pid>.tmp
 ```
 
 Remove the temporary file after a successful restore or merge. If migration fails, leave diagnostics clear enough that the user can recover the saved follow list manually.

@@ -43,6 +43,7 @@ $home/lib/9social/
         following
         posts/
     feeds/
+    index/
 ```
 
 ---
@@ -182,9 +183,9 @@ https://github.com/dharmatech/9social-user-joe.git
 
 ---
 
-### 9social/cmd/timeline (future)
+### 9social/cmd/timeline
 
-* Reads posts from all directories under `feeds/`
+* Reads posts from `self/posts/` and all directories under `feeds/`
 
 ---
 
@@ -221,15 +222,14 @@ Commands operate on local data after `refresh`.
 ## Limitations (Level 1)
 
 * No collision handling for feed directory names
-* No metadata or index directories yet
-* No caching or partial fetch support
+* No network caching or partial fetch support
+* `index/` is derived cache data and may be rebuilt
 
 ---
 
 ## Future Extensions (Not in Level 1)
 
-* `index/` directory for derived data
-* `state/` directory for mappings (URL → path → feed ID)
+* More detailed state mappings, such as URL → path → feed ID
 * Improved feed naming strategy
 * Archive storage
 
@@ -242,6 +242,7 @@ The filesystem layout is simple and explicit:
 * `self/` stores the user's own feed
 * `self/following` defines what to fetch and is part of the public self repository
 * `feeds/` stores fetched data
+* `index/` stores derived cache data
 * commands operate directly on these paths
 
 This structure enables a minimal, transparent, and composable system.

@@ -93,9 +93,7 @@ Before committing, `Update` should validate:
 * the file has a valid UTC `date:` field in Level 1 format: `YYYY-MM-DDThh:mm:ssZ`
 * `title:` is optional and may be empty
 
-For Level 1, `Update` may allow metadata edits, including changed `date:` or `author:`, as long as the final file remains valid.
-
-A future version may enforce stronger identity rules, such as rejecting changes to the original `id:`.
+For the index model, structural fields such as `id:`, `type:`, and `target:` should not be changed in place. The current implementation validates the final file format but does not yet compare those fields against their previous values.
 
 ---
 

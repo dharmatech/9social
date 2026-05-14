@@ -25,9 +25,10 @@ This is the primary read interface for 9social.
 
 ## Files Used
 
+* `$home/lib/9social/self/`
 * `$home/lib/9social/feeds/`
 
-Each feed directory is expected to contain:
+Each source directory is expected to contain:
 
 ```text
 profile
@@ -40,19 +41,20 @@ posts/
 
 ### 1. Discover feeds
 
+* Include `$home/lib/9social/self/` when present
 * List all directories under:
 
 ```text
 $home/lib/9social/feeds/
 ```
 
-* Each directory represents one feed
+* Each directory represents one feed source
 
 ---
 
 ### 2. Load feed metadata
 
-For each feed:
+For each source:
 
 * Read `profile`
 * Extract:
@@ -68,7 +70,7 @@ For each feed:
 
 ### 3. Discover posts
 
-For each feed:
+For each source:
 
 * Read all files under:
 
@@ -287,9 +289,9 @@ This means timeline output can continue to show full paths for transparency, whi
 * No pagination
 * No filtering
 * No grouping
-* No threading
-* No reactions
-* No indexing
+* No threading in the timeline view
+* No reaction enrichment in the timeline view
+* No timeline-specific index
 
 ---
 
@@ -330,7 +332,7 @@ This means timeline output can continue to show full paths for transparency, whi
 
 `9social/cmd/timeline`:
 
-* reads all local feeds
+* reads the user's self feed and all local followed feeds
 * merges posts
 * sorts by date
 * displays summaries
