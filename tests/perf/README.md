@@ -76,6 +76,17 @@ script chooses the first unliked post from another user's feed, prints the targe
 path and ID, times the `like` command, and leaves the generated root modified for
 inspection or follow-up measurements.
 
+## Measure Reply
+
+`reply.rc` measures one real `9social/cmd/reply` operation for a simulated user:
+
+    tests/perf/reply.rc /tmp/9social/perf/12345 rms
+
+The script chooses the first valid post from another user's feed, writes a small
+deterministic reply body under the generated root's `logs` directory, prints the
+target path and ID, times the `reply` command, and leaves the generated root
+modified for inspection or follow-up measurements.
+
 ## Measure Reindex
 
 `reindex.rc` rebuilds the index for one simulated user and prints timing output:
