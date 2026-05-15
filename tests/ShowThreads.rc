@@ -1,7 +1,8 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
-base=/tmp/9social-ShowThreads-test.$pid
+base=/tmp/9social/tests/ShowThreads.$pid
 
 fn fail {
 	echo FAIL: $* >[1=2]

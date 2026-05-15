@@ -1,9 +1,10 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 render=9social/lib/render/threads
 reindex=$repo/bin/9social/lib/index/rebuild
-base=/tmp/9social-render-threads-test.$pid
+base=/tmp/9social/tests/render-threads.$pid
 u1=550e8400-e29b-41d4-a716-446655440000
 u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
 root1=11111111-1111-4111-8111-111111111111

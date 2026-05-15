@@ -1,8 +1,9 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/lib/liked-post
-base=/tmp/9social-liked-post-test.$pid
+base=/tmp/9social/tests/liked-post.$pid
 u1=550e8400-e29b-41d4-a716-446655440000
 u2=9acf94aa-8504-4585-b7e5-2ff0b9847fe3
 targetuuid=d74aacda-68ee-4d1c-9f83-35e89a956676

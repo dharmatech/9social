@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/Draft/Cancel
 
@@ -9,7 +10,7 @@ fn fail {
 }
 
 fn setup {
-	testhome=/tmp/9social-cancel-test.$pid.$1
+	testhome=/tmp/9social/tests/cancel.$pid.$1
 	rm -rf $testhome
 	mkdir -p $testhome/tmp || fail mkdir
 	home=$testhome

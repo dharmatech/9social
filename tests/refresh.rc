@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/cmd/refresh
 basepath=$path
@@ -21,7 +22,7 @@ fn fail {
 }
 
 fn setup {
-	testhome=/tmp/9social-refresh-test.$pid.$1
+	testhome=/tmp/9social/tests/refresh.$pid.$1
 	rm -rf $testhome
 	mkdir -p $testhome/bin/git $testhome/bin/9social/lib/index || fail mkdir-bin
 	home=$testhome

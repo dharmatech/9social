@@ -1,4 +1,5 @@
 #!/bin/rc
+mkdir -p /tmp/9social/tests
 
 fn section {
 	echo
@@ -41,7 +42,7 @@ section 'full namespace'
 ns
 
 section 'git local smoke'
-root=/tmp/9social-capture-git.$pid
+root=/tmp/9social/tests/capture-git.$pid
 rm -rf $root
 mkdir -p $root/remote $root/seed $root/clone || {
 	echo 'mkdir failed: '^$root

@@ -1,8 +1,9 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=9social/lib/post/id.awk
-base=/tmp/9social-post-id-test.$pid
+base=/tmp/9social/tests/post-id.$pid
 id=9social:post:550e8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 badid=9social:post:not-a-uuid:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 upperid=9social:post:550E8400-e29b-41d4-a716-446655440000:4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1

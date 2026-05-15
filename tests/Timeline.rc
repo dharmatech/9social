@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/Timeline
 useruuid=550e8400-e29b-41d4-a716-446655440000
@@ -11,7 +12,7 @@ fn fail {
 }
 
 # Non-Acme command should fail before creating a timeline file.
-home=/tmp/9social-Timeline-test.$pid.noacme
+home=/tmp/9social/tests/Timeline.$pid.noacme
 rm -rf $home
 mkdir -p $home/tmp || fail mkdir-noacme
 $cmd >$home/out >[2]$home/err

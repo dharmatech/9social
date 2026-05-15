@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/Post/Update
 useruuid=550e8400-e29b-41d4-a716-446655440000
@@ -12,7 +13,7 @@ fn fail {
 }
 
 fn setup {
-	testhome=/tmp/9social-update-test.$pid.$1
+	testhome=/tmp/9social/tests/update.$pid.$1
 	rm -rf $testhome
 	mkdir -p $testhome/lib/9social/self/posts || fail mkdir
 	cd $testhome/lib/9social/self || fail cd

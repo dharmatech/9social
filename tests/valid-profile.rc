@@ -1,8 +1,9 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=9social/lib/valid-profile.awk
-base=/tmp/9social-valid-profile-test.$pid
+base=/tmp/9social/tests/valid-profile.$pid
 useruuid=550e8400-e29b-41d4-a716-446655440000
 
 fn fail {

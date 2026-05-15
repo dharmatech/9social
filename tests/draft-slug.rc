@@ -1,9 +1,10 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/lib/draft/slug.awk
-base=/tmp/9social-draft-slug-test.$pid
+base=/tmp/9social/tests/draft-slug.$pid
 
 fn fail {
 	echo FAIL: $* >[1=2]

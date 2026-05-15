@@ -1,6 +1,7 @@
 #!/bin/rc
 rfork en
-base=/tmp/9social-show-threads-test.$pid
+mkdir -p /tmp/9social/tests
+base=/tmp/9social/tests/show-threads.$pid
 
 fn fail {
 	echo FAIL: $* >[1=2]

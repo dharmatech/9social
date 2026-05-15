@@ -1,8 +1,9 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
-root=/tmp/9social-workflow.$pid
+root=/tmp/9social/tests/workflow.$pid
 verbose=0
 
 fn fail {

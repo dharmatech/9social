@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/lib/post/check.awk
 useruuid=550e8400-e29b-41d4-a716-446655440000
@@ -14,7 +15,7 @@ fn fail {
 bind -b $repo/bin /bin || fail bind
 
 fn setup {
-	testhome=/tmp/9social-check-post-test.$pid.$1
+	testhome=/tmp/9social/tests/check-post.$pid.$1
 	rm -rf $testhome
 	mkdir -p $testhome || fail mkdir
 	post=$testhome/post

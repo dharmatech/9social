@@ -1,9 +1,10 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/cmd/new-post
-testhome=/tmp/9social-new-post-editor.$pid
+testhome=/tmp/9social/tests/new-post-editor.$pid
 rm -rf $testhome
 mkdir -p $testhome/lib/9social/self
 cd $testhome/lib/9social/self || exit cd

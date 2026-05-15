@@ -1,10 +1,11 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/lib/acme/line-at-position.awk
-file=/tmp/9social-line-at-position.^$pid
-out=/tmp/9social-line-at-position-out.^$pid
-err=/tmp/9social-line-at-position-err.^$pid
+file=/tmp/9social/tests/line-at-position.^$pid
+out=/tmp/9social/tests/line-at-position-out.^$pid
+err=/tmp/9social/tests/line-at-position-err.^$pid
 
 fn fail {
 	echo FAIL: $* >[1=2]

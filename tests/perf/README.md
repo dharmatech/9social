@@ -118,6 +118,7 @@ the number of indexed posts. The generated root is left intact.
 
     tests/perf/shell-as.rc /tmp/9social/perf/12345 rms
     tests/perf/shell-as.rc /tmp/9social/perf/12345 rms 9social/Menu
+    tests/perf/shell-as.rc /tmp/9social/perf/12345 rms acme
 
 The target root must contain:
 
@@ -126,6 +127,23 @@ The target root must contain:
 The script binds this repository's `bin` directory before `/bin` in the
 subprocess namespace, so the simulated shell uses the working tree version of
 9social.
+
+## Interactive Acme Browsing
+
+A generated community can be explored interactively by starting acme as a
+simulated user:
+
+    tests/perf/list.rc
+    tests/perf/shell-as.rc /tmp/9social/perf/12345 rms acme
+
+The acme process starts with `$home` set to the simulated user's home and
+`$user` set to the simulated user name. Inside that acme, run:
+
+    9social/Menu
+
+This opens the normal 9social acme menu against the simulated environment.
+`Timeline`, `ShowThreads`, `Like`, and `Reply` have been manually verified with
+this workflow.
 
 ## Cleanup
 

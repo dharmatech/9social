@@ -12,7 +12,8 @@ fn fail {
 bind -b $repo/bin /bin || fail bind
 
 tmp=/tmp/9social
-rm -rf $tmp
+mkdir -p $tmp || fail mkdir-tmp
+rm -f $tmp/9social-new-post.* $tmp/out $tmp/err
 
 draft=`{$cmd}
 st=$status

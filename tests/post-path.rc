@@ -1,8 +1,9 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/lib/post/path
-base=/tmp/9social-post-path-test.$pid
+base=/tmp/9social/tests/post-path.$pid
 u=550e8400-e29b-41d4-a716-446655440000
 p=4f5b32de-2f02-4f13-bf8c-f0f1a5c7e6a1
 id=9social:post:$u:$p

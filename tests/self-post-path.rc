@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 cmd=$repo/bin/9social/lib/post/self-path
 
@@ -8,7 +9,7 @@ fn fail {
 	exit fail
 }
 
-home=/tmp/9social-self-post-path-test.$pid
+home=/tmp/9social/tests/self-post-path.$pid
 rm -rf $home
 mkdir -p $home/lib/9social/self/posts || fail mkdir
 

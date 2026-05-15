@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/cmd/like
@@ -16,7 +17,7 @@ fn fail {
 bind -b $repo/bin /bin || fail bind
 
 fn setup {
-	home=/tmp/9social-like-test.$pid.$1
+	home=/tmp/9social/tests/like.$pid.$1
 	rm -rf $home
 	mkdir -p $home/lib/9social/self $home/lib/9social/feeds/9social-user-dennis/posts || fail mkdir
 	cd $home/lib/9social/self || fail cd
@@ -123,6 +124,6 @@ st=$status
 if(~ $st '') fail usage-status
 grep 'usage: 9social/cmd/like <post-ref>' $home/err >/dev/null || fail usage-error `{cat $home/err}
 
-rm -rf /tmp/9social-like-test.$pid.*
+rm -rf /tmp/9social/tests/like.$pid.*
 echo ok
 exit ''

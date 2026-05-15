@@ -1,5 +1,6 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 repo=`{echo $0 | sed 's;/tests/[^/]*$;;'}
 repo=`{cd $repo && pwd}
 cmd=$repo/bin/9social/Draft/Publish
@@ -13,7 +14,7 @@ fn fail {
 bind -b $repo/bin /bin || fail bind
 
 fn setup {
-	testhome=/tmp/9social-publish-test.$pid.$1
+	testhome=/tmp/9social/tests/publish.$pid.$1
 	rm -rf $testhome
 	mkdir -p $testhome/lib/9social/self $testhome/tmp || fail mkdir
 	cd $testhome/lib/9social/self || fail cd

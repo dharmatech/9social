@@ -1,12 +1,13 @@
 #!/bin/rc
 rfork en
+mkdir -p /tmp/9social/tests
 
 fn fail {
 	echo FAIL: $* >[1=2]
 	exit fail
 }
 
-home=/tmp/9social-Like-test.$pid
+home=/tmp/9social/tests/Like.$pid
 rm -rf $home
 mkdir -p $home || fail mkdir
 
