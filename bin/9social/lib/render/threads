@@ -2,6 +2,7 @@
 
 fn fail {
 	echo $0^': '^$* >[1=2]
+	cleanup
 	exit $1
 }
 
@@ -15,7 +16,8 @@ if(! ~ $#* 0)
 
 social=$home^/lib/9social
 index=$social^/index
-records=/tmp/9social-render-threads.^$pid
+tmpdir=/tmp/9social
+records=$tmpdir^/render-threads.^$pid
 
 fn cleanup {
 	rm -f $records
@@ -24,11 +26,14 @@ fn cleanup {
 if(! test -d $index/posts)
 	fail 'index not found' 'no index'
 
->$records
-for(entry in `{ls -p $index/posts >[2]/dev/null | sort}){
-	post=`{cat $index/posts/$entry}
-	if(test -f $post)
-		9social/lib/post/thread-record.awk $post >>$records
+if(! mkdir -p $tmpdir)
+	fail 'cannot create temp directory' $tmpdir
+
+ls -p $index/posts >[2]/dev/null | sort | 9social/lib/render/thread-records-from-index.awk $index/posts >$records
+st=$status
+if(! ~ $st ''){
+	cleanup
+	exit $st
 }
 
 9social/lib/render/thread-records.awk $records

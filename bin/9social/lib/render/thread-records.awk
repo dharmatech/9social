@@ -13,15 +13,14 @@ function better(a, b, newest)
 	return id[a] < id[b]
 }
 
-function sortlist(list, n, newest, i, j, tmp)
+function sortlist(list, n, newest, gap, i, j, tmp)
 {
-	for(i = 1; i <= n; i++){
-		for(j = i + 1; j <= n; j++){
-			if(!better(list[i], list[j], newest)){
-				tmp = list[i]
-				list[i] = list[j]
-				list[j] = tmp
-			}
+	for(gap = int(n / 2); gap > 0; gap = int(gap / 2)){
+		for(i = gap + 1; i <= n; i++){
+			tmp = list[i]
+			for(j = i; j > gap && !better(list[j - gap], tmp, newest); j = j - gap)
+				list[j] = list[j - gap]
+			list[j] = tmp
 		}
 	}
 }
@@ -49,15 +48,15 @@ function printentry(node, depth,    indent, i)
 		print indent "title: " title[node]
 }
 
-function sortchildren(parent,    i, j, tmp)
+function sortchildren(parent,    gap, i, j, tmp, n)
 {
-	for(i = 1; i <= childn[parent]; i++){
-		for(j = i + 1; j <= childn[parent]; j++){
-			if(!better(child[parent, i], child[parent, j], 0)){
-				tmp = child[parent, i]
-				child[parent, i] = child[parent, j]
-				child[parent, j] = tmp
-			}
+	n = childn[parent]
+	for(gap = int(n / 2); gap > 0; gap = int(gap / 2)){
+		for(i = gap + 1; i <= n; i++){
+			tmp = child[parent, i]
+			for(j = i; j > gap && !better(child[parent, j - gap], tmp, 0); j = j - gap)
+				child[parent, j] = child[parent, j - gap]
+			child[parent, j] = tmp
 		}
 	}
 }

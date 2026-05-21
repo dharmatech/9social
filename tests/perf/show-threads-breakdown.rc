@@ -1,0 +1,95 @@
+#!/bin/rc
+rfork en
+repo=`{echo $0 | sed 's;/tests/perf/[^/]*$;;'}
+repo=`{cd $repo && pwd}
+
+fn fail {
+	echo $0^': '^$1 >[1=2]
+	cleanup
+	exit $1
+}
+
+fn usage {
+	echo 'usage: tests/perf/show-threads-breakdown.rc <root> <user>' >[1=2]
+	exit usage
+}
+
+fn cleanup {
+	if(! ~ $#prefix 0)
+		rm -f $entries $records $listscript $recordscript $renderscript >[2]/dev/null
+}
+
+fn timed {
+	label=$1
+	script=$2
+	echo
+	echo 'phase: '^$label
+	echo 'time:'
+	time rc $script
+	st=$status
+	if(! ~ $st '')
+		fail $label^' failed: '^$st
+}
+
+fn countlines {
+	file=$1
+	if(test -f $file)
+		cat $file | wc -l
+	if not
+		echo 0
+}
+
+if(~ $#* 1 && ~ $1 --inner){
+	tmpdir=/tmp/9social
+	if(! mkdir -p $tmpdir)
+		fail 'cannot create '^$tmpdir
+
+	prefix=$tmpdir^/show-threads-breakdown.^$pid
+	entries=$prefix^.entries
+	records=$prefix^.records
+	listscript=$prefix^.list.rc
+	recordscript=$prefix^.records.rc
+	renderscript=$prefix^.render.rc
+
+	index=$home^/lib/9social/index
+	if(! test -d $index/posts)
+		fail 'index not found: '^$index^/posts
+
+	echo 'user: '^$user
+	echo 'home: '^$home
+	echo 'index: '^$index
+
+	{
+		echo '#!/bin/rc'
+		echo 'ls -p '^$index^'/posts >[2]/dev/null | sort >'^$entries
+	} >$listscript || fail 'cannot write phase script'
+
+	{
+		echo '#!/bin/rc'
+		echo 'cat '^$entries^' | 9social/lib/render/thread-records-from-index.awk '^$index^'/posts >'^$records
+	} >$recordscript || fail 'cannot write phase script'
+
+	{
+		echo '#!/bin/rc'
+		echo '9social/lib/render/thread-records.awk '^$records^' >/dev/null'
+	} >$renderscript || fail 'cannot write phase script'
+
+	timed 'list index entries' $listscript
+	echo 'indexed entries: '^`{countlines $entries}
+
+	timed 'generate thread records from index' $recordscript
+	echo 'thread records: '^`{countlines $records}
+
+	timed 'render thread records' $renderscript
+
+	cleanup
+	exit ''
+}
+
+if(! ~ $#* 2)
+	usage
+
+root=$1
+simuser=$2
+
+exec $repo/tests/perf/shell-as.rc $root $simuser $repo/tests/perf/show-threads-breakdown.rc --inner
